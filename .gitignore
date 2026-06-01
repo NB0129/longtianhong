@@ -1,0 +1,6 @@
+.godot/
+.claude/
+ios_export/
+.DS_Store
+*.tmp
+test_hook_*.txt

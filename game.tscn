@@ -1,0 +1,430 @@
+[gd_scene format=3 uid="uid://cq858e1bmmtis"]
+
+[ext_resource type="Script" uid="uid://cjg1vy2ghnelq" path="res://game.gd" id="1_80nbo"]
+[ext_resource type="FontFile" uid="uid://rqtorcaeqkr4" path="res://assets/font/font_1_kokumr_1.00_rls.ttf" id="2_e2o6t"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
+bg_color = Color(0.1, 0.1, 0.1, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_e2o6t"]
+bg_color = Color(0.14117648, 0.14117648, 0.14117648, 1)
+
+[node name="Game" type="Control" unique_id=1988534952]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 480.0
+offset_bottom = 854.0
+script = ExtResource("1_80nbo")
+
+[node name="BG" type="TextureRect" parent="." unique_id=1154035313]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 5
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1423045547]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.39215687)
+
+[node name="FaceBoss" type="TextureRect" parent="." unique_id=311625449]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FaceMain" type="TextureRect" parent="." unique_id=702202456]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TopBar" type="HBoxContainer" parent="." unique_id=900613503]
+layout_mode = 0
+offset_top = 20.0
+offset_right = 480.0
+offset_bottom = 80.0
+alignment = 2
+
+[node name="BtnLayout" type="Button" parent="TopBar" unique_id=1011091291]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+
+[node name="BtnSettings" type="Button" parent="TopBar" unique_id=158560244]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+
+[node name="BtnHome" type="Button" parent="TopBar" unique_id=324168078]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+
+[node name="HandArea" type="Control" parent="." unique_id=2066869555]
+anchors_preset = 0
+offset_top = 200.0
+offset_right = 480.0
+offset_bottom = 400.0
+
+[node name="TileBoxRow1" type="HBoxContainer" parent="HandArea" unique_id=614311525]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 95.0
+alignment = 1
+
+[node name="TileBoxRow2" type="HBoxContainer" parent="HandArea" unique_id=1715710580]
+visible = false
+layout_mode = 0
+offset_top = 100.0
+offset_right = 480.0
+offset_bottom = 195.0
+alignment = 1
+
+[node name="Keypad" type="GridContainer" parent="." unique_id=779379262]
+layout_mode = 0
+offset_left = 69.0
+offset_top = 480.0
+offset_right = 411.0
+offset_bottom = 778.0
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+columns = 3
+
+[node name="Btn1" type="Button" parent="Keypad" unique_id=1971696569]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn2" type="Button" parent="Keypad" unique_id=358555030]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn3" type="Button" parent="Keypad" unique_id=1718871926]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn4" type="Button" parent="Keypad" unique_id=766241224]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn5" type="Button" parent="Keypad" unique_id=248352043]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn6" type="Button" parent="Keypad" unique_id=1361347346]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn7" type="Button" parent="Keypad" unique_id=172980141]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn8" type="Button" parent="Keypad" unique_id=319394668]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="Btn9" type="Button" parent="Keypad" unique_id=905219054]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+icon_alignment = 1
+
+[node name="BtnClear" type="Button" parent="Keypad" unique_id=1361072739]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "クリア"
+
+[node name="BtnSubmit" type="Button" parent="Keypad" unique_id=1023440537]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "提出"
+
+[node name="BtnNone" type="Button" parent="Keypad" unique_id=588365588]
+custom_minimum_size = Vector2(110, 70)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "なし"
+
+[node name="SelectedPanel" type="Label" parent="." unique_id=462241679]
+visible = false
+layout_mode = 0
+offset_top = 435.0
+offset_right = 480.0
+offset_bottom = 477.0
+theme_override_font_sizes/font_size = 30
+text = "選択中："
+horizontal_alignment = 1
+
+[node name="PopupResult" type="Control" parent="." unique_id=951330318]
+visible = false
+anchors_preset = 0
+offset_right = 480.0
+offset_bottom = 854.0
+
+[node name="PopupPanel" type="Panel" parent="PopupResult" unique_id=486361989]
+layout_mode = 0
+offset_left = 95.0
+offset_right = 395.0
+offset_bottom = 280.0
+
+[node name="GameOverImage" type="TextureRect" parent="PopupResult/PopupPanel" unique_id=303466722]
+visible = false
+layout_mode = 0
+offset_top = 8.0
+offset_right = 300.0
+offset_bottom = 83.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CorrectNoneLabel" type="Label" parent="PopupResult/PopupPanel" unique_id=35627518]
+visible = false
+layout_mode = 0
+offset_top = 95.0
+offset_right = 300.0
+offset_bottom = 130.0
+theme_override_font_sizes/font_size = 26
+text = "正解：なし"
+horizontal_alignment = 1
+
+[node name="CorrectTilesRow1" type="HBoxContainer" parent="PopupResult/PopupPanel" unique_id=1466542764]
+visible = false
+layout_mode = 0
+offset_top = 90.0
+offset_right = 300.0
+offset_bottom = 140.0
+alignment = 1
+
+[node name="CorrectTilesRow2" type="HBoxContainer" parent="PopupResult/PopupPanel" unique_id=514914273]
+visible = false
+layout_mode = 0
+offset_top = 143.0
+offset_right = 300.0
+offset_bottom = 193.0
+alignment = 1
+
+[node name="ResultLabel" type="Label" parent="PopupResult/PopupPanel" unique_id=432262788]
+layout_mode = 0
+offset_top = 40.0
+offset_right = 300.0
+offset_bottom = 120.0
+theme_override_font_sizes/font_size = 50
+text = "結果"
+horizontal_alignment = 1
+
+[node name="BtnRetry" type="Button" parent="PopupResult/PopupPanel" unique_id=1134512116]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 210.0
+offset_right = 140.0
+offset_bottom = 260.0
+theme_override_font_sizes/font_size = 24
+text = "もう一度"
+
+[node name="BtnHome" type="Button" parent="PopupResult/PopupPanel" unique_id=425644531]
+layout_mode = 0
+offset_left = 160.0
+offset_top = 210.0
+offset_right = 250.0
+offset_bottom = 260.0
+theme_override_font_sizes/font_size = 24
+text = "ホーム"
+
+[node name="QuestionCounter" type="Label" parent="." unique_id=428087497]
+layout_mode = 0
+offset_left = 350.0
+offset_top = 80.0
+offset_right = 450.0
+offset_bottom = 114.0
+theme_override_font_sizes/font_size = 24
+
+[node name="DebugLabel" type="Label" parent="." unique_id=1855297591]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 750.0
+offset_right = 60.0
+offset_bottom = 773.0
+theme_override_font_sizes/font_size = 20
+
+[node name="TimerLabel" type="Label" parent="." unique_id=1502907259]
+visible = false
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
+theme_override_font_sizes/font_size = 24
+
+[node name="HomeConfirmPopup" type="Panel" parent="." unique_id=201548151]
+visible = false
+layout_mode = 0
+offset_left = 40.0
+offset_top = 300.0
+offset_right = 440.0
+offset_bottom = 550.0
+
+[node name="ConfirmLabel" type="Label" parent="HomeConfirmPopup" unique_id=1001994059]
+layout_mode = 0
+offset_top = 50.0
+offset_right = 400.0
+offset_bottom = 78.0
+theme_override_font_sizes/font_size = 30
+text = "ステージ選択に戻りますか？"
+horizontal_alignment = 1
+
+[node name="BtnConfirmYes" type="Button" parent="HomeConfirmPopup" unique_id=435839645]
+layout_mode = 0
+offset_left = 50.0
+offset_top = 170.0
+offset_right = 190.0
+offset_bottom = 220.0
+text = "はい"
+
+[node name="BtnConfirmNo" type="Button" parent="HomeConfirmPopup" unique_id=1115472829]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 170.0
+offset_right = 350.0
+offset_bottom = 220.0
+text = "いいえ"
+
+[node name="SettingsPopup" type="Panel" parent="." unique_id=600000001]
+visible = false
+layout_mode = 0
+offset_left = 60.0
+offset_top = 230.0
+offset_right = 420.0
+offset_bottom = 580.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPopup" unique_id=600000002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="LabelBgm" type="Label" parent="SettingsPopup/VBox" unique_id=600000003]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "BGM音量"
+
+[node name="BgmSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=600000004]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.3
+
+[node name="LabelSe" type="Label" parent="SettingsPopup/VBox" unique_id=600000005]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SE音量"
+
+[node name="SeSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=600000006]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="BtnSettingsClose" type="Button" parent="SettingsPopup/VBox" unique_id=600000007]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "閉じる"
+
+[node name="StageIntro" type="CanvasLayer" parent="." unique_id=886844702]
+
+[node name="IntroPanel" type="ColorRect" parent="StageIntro" unique_id=1081606180]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="StageName" type="Label" parent="StageIntro/IntroPanel" unique_id=1678049626]
+layout_mode = 0
+offset_top = 240.0
+offset_right = 480.0
+offset_bottom = 300.0
+theme_override_fonts/font = ExtResource("2_e2o6t")
+theme_override_font_sizes/font_size = 50
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BgmName" type="Label" parent="StageIntro/IntroPanel" unique_id=1199928483]
+layout_mode = 0
+offset_top = 320.0
+offset_right = 480.0
+offset_bottom = 380.0
+theme_override_fonts/font = ExtResource("2_e2o6t")
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="UnlockPopup" type="Panel" parent="." unique_id=1565803273]
+visible = false
+layout_mode = 0
+offset_left = 40.0
+offset_top = 300.0
+offset_right = 440.0
+offset_bottom = 520.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_e2o6t")
+
+[node name="UnlockVBox" type="VBoxContainer" parent="UnlockPopup" unique_id=149746440]
+layout_mode = 0
+offset_right = 320.0
+offset_bottom = 102.0
+alignment = 1
+
+[node name="LabelSpacer" type="Label" parent="UnlockPopup/UnlockVBox" unique_id=601960756]
+layout_mode = 2
+
+[node name="UnlockLabel" type="Label" parent="UnlockPopup/UnlockVBox" unique_id=143552493]
+custom_minimum_size = Vector2(400, 80)
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+horizontal_alignment = 1
+
+[node name="BtnUnlockOK" type="Button" parent="UnlockPopup/UnlockVBox" unique_id=1583179046]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "OK"
+icon_alignment = 1
+
+[connection signal="pressed" from="TopBar/BtnHome" to="." method="_on_btn_home_pressed"]
+[connection signal="pressed" from="PopupResult/PopupPanel/BtnRetry" to="." method="_on_btn_retry_pressed"]
+[connection signal="pressed" from="PopupResult/PopupPanel/BtnHome" to="." method="_on_popup_btn_home_pressed"]

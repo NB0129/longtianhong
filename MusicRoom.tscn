@@ -1,0 +1,239 @@
+[gd_scene format=3 uid="uid://bsqstyd3dj81i"]
+
+[ext_resource type="Script" uid="uid://bd4s4ahgclm10" path="res://MusicRoom.gd" id="1_s8nec"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.1, 0.1, 0.1, 0.85)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_list_bg"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
+bg_color = Color(0.1, 0.1, 0.1, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="MusicRoom" type="Control" unique_id=1718872959]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_s8nec")
+
+[node name="BG" type="TextureRect" parent="." unique_id=1397101890]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 854.0
+stretch_mode = 5
+
+[node name="PlayerPanel" type="Panel" parent="." unique_id=1376296265]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 470.0
+offset_bottom = 130.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="TrackNameLabel" type="Label" parent="PlayerPanel" unique_id=2095208503]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 15.0
+offset_right = 450.0
+offset_bottom = 55.0
+theme_override_font_sizes/font_size = 22
+text = "ー"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BtnPlay" type="Button" parent="PlayerPanel" unique_id=366235862]
+layout_mode = 0
+offset_left = 70.0
+offset_top = 70.0
+offset_right = 130.0
+offset_bottom = 110.0
+theme_override_font_sizes/font_size = 22
+text = "再生"
+
+[node name="BtnPause" type="Button" parent="PlayerPanel" unique_id=1286369873]
+layout_mode = 0
+offset_left = 200.0
+offset_top = 70.0
+offset_right = 260.0
+offset_bottom = 110.0
+theme_override_font_sizes/font_size = 18
+text = "一時停止"
+
+[node name="BtnStop" type="Button" parent="PlayerPanel" unique_id=1428124648]
+layout_mode = 0
+offset_left = 330.0
+offset_top = 70.0
+offset_right = 390.0
+offset_bottom = 110.0
+theme_override_font_sizes/font_size = 22
+text = "停止"
+
+[node name="FullListLabel" type="Label" parent="." unique_id=21528880]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 140.0
+offset_right = 470.0
+offset_bottom = 165.0
+theme_override_font_sizes/font_size = 20
+text = "全曲リスト"
+
+[node name="BtnAdd" type="Button" parent="." unique_id=1292677832]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 245.0
+offset_right = 70.0
+offset_bottom = 295.0
+theme_override_font_sizes/font_size = 22
+text = "追加"
+
+[node name="FullListScroll" type="ScrollContainer" parent="." unique_id=956573910]
+layout_mode = 0
+offset_left = 80.0
+offset_top = 170.0
+offset_right = 470.0
+offset_bottom = 370.0
+horizontal_scroll_mode = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_list_bg")
+
+[node name="FullListVBox" type="VBoxContainer" parent="FullListScroll" unique_id=1392933571]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="PlaylistLabel" type="Label" parent="." unique_id=1939125117]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 375.0
+offset_right = 470.0
+offset_bottom = 400.0
+theme_override_font_sizes/font_size = 20
+text = "プレイリスト"
+
+[node name="PlaylistScroll" type="ScrollContainer" parent="." unique_id=197320542]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 405.0
+offset_right = 470.0
+offset_bottom = 625.0
+horizontal_scroll_mode = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_list_bg")
+
+[node name="PlaylistVBox" type="VBoxContainer" parent="PlaylistScroll" unique_id=781120085]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="BtnReset" type="Button" parent="." unique_id=1030152237]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 635.0
+offset_right = 110.0
+offset_bottom = 680.0
+theme_override_font_sizes/font_size = 22
+text = "リセット"
+
+[node name="BtnPlayMode" type="Button" parent="." unique_id=2145679931]
+layout_mode = 0
+offset_left = 120.0
+offset_top = 635.0
+offset_right = 260.0
+offset_bottom = 680.0
+theme_override_font_sizes/font_size = 22
+text = "順次"
+
+[node name="BtnBack" type="Button" parent="." unique_id=379948997]
+layout_mode = 0
+offset_left = 190.0
+offset_top = 695.0
+offset_right = 290.0
+offset_bottom = 745.0
+theme_override_font_sizes/font_size = 24
+text = "戻る"
+
+[node name="BtnSettings" type="Button" parent="." unique_id=1234567890]
+layout_mode = 0
+offset_left = 395.0
+offset_top = 760.0
+offset_right = 465.0
+offset_bottom = 840.0
+flat = true
+expand_icon = true
+
+[node name="SettingsPopup" type="Panel" parent="." unique_id=700000001]
+visible = false
+layout_mode = 0
+offset_left = 60.0
+offset_top = 230.0
+offset_right = 420.0
+offset_bottom = 580.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPopup" unique_id=700000002]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="LabelBgm" type="Label" parent="SettingsPopup/VBox" unique_id=700000003]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "BGM音量"
+
+[node name="BgmSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=700000004]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.3
+
+[node name="LabelSe" type="Label" parent="SettingsPopup/VBox" unique_id=700000005]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SE音量"
+
+[node name="SeSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=700000006]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="BtnSettingsClose" type="Button" parent="SettingsPopup/VBox" unique_id=700000007]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "閉じる"
+
+[connection signal="pressed" from="PlayerPanel/BtnPlay" to="." method="_on_btn_play_pressed"]
+[connection signal="pressed" from="PlayerPanel/BtnPause" to="." method="_on_btn_pause_pressed"]
+[connection signal="pressed" from="PlayerPanel/BtnStop" to="." method="_on_btn_stop_pressed"]
+[connection signal="pressed" from="BtnAdd" to="." method="_on_btn_add_pressed"]
+[connection signal="pressed" from="BtnReset" to="." method="_on_btn_reset_pressed"]
+[connection signal="pressed" from="BtnPlayMode" to="." method="_on_btn_play_mode_pressed"]
+[connection signal="pressed" from="BtnBack" to="." method="_on_btn_back_pressed"]
+[connection signal="pressed" from="BtnSettings" to="." method="_on_btn_settings_pressed"]
+[connection signal="value_changed" from="SettingsPopup/VBox/BgmSlider" to="." method="_on_bgm_slider_changed"]
+[connection signal="value_changed" from="SettingsPopup/VBox/SeSlider" to="." method="_on_se_slider_changed"]
+[connection signal="pressed" from="SettingsPopup/VBox/BtnSettingsClose" to="." method="_on_btn_settings_close_pressed"]

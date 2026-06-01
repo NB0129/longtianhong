@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://b7x5s6nsvs3np"]
+
+[ext_resource type="Script" uid="uid://nbp1b7ly2xqn" path="res://MahjongLogic.gd" id="1_ig7tw"]
+
+[node name="Node2D" type="Node2D" unique_id=1650705497]
+script = ExtResource("1_ig7tw")

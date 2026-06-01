@@ -1,0 +1,135 @@
+[gd_scene format=3 uid="uid://cqkk7c4lmb30l"]
+
+[ext_resource type="Script" uid="uid://cvnjyng22ulbl" path="res://title.gd" id="1_c0dwi"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
+bg_color = Color(0.1, 0.1, 0.1, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="title" type="Control" unique_id=936858855]
+clip_contents = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_c0dwi")
+
+[node name="BG" type="TextureRect" parent="." unique_id=395026217]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StoryFrame" type="Control" parent="." unique_id=595324819]
+anchors_preset = 0
+offset_left = 100.0
+offset_top = 420.0
+offset_right = 380.0
+offset_bottom = 511.0
+
+[node name="StoryImg" type="TextureRect" parent="StoryFrame" unique_id=1748129277]
+layout_mode = 0
+offset_left = -169.4
+offset_top = -55.05
+offset_right = 449.4
+offset_bottom = 146.05
+
+[node name="BtnStory" type="Button" parent="StoryFrame" unique_id=421174046]
+layout_mode = 0
+offset_left = -169.4
+offset_top = -55.05
+offset_right = 449.4
+offset_bottom = 146.05
+
+[node name="InstantFrame" type="Control" parent="." unique_id=554604832]
+anchors_preset = 0
+offset_left = 100.0
+offset_top = 571.0
+offset_right = 380.0
+offset_bottom = 662.0
+
+[node name="InstantImg" type="TextureRect" parent="InstantFrame" unique_id=1373544065]
+layout_mode = 0
+offset_left = -169.4
+offset_top = -55.05
+offset_right = 449.4
+offset_bottom = 146.05
+
+[node name="BtnInstant" type="Button" parent="InstantFrame" unique_id=900000001]
+layout_mode = 0
+offset_left = -169.4
+offset_top = -55.05
+offset_right = 449.4
+offset_bottom = 146.05
+
+[node name="BtnSettings" type="Button" parent="." unique_id=900000002]
+layout_mode = 0
+offset_left = 410.0
+offset_top = 780.0
+offset_right = 470.0
+offset_bottom = 840.0
+
+[node name="SettingsPopup" type="Panel" parent="." unique_id=900000003]
+visible = false
+layout_mode = 0
+offset_left = 60.0
+offset_top = 230.0
+offset_right = 420.0
+offset_bottom = 580.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPopup" unique_id=900000004]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="LabelBgm" type="Label" parent="SettingsPopup/VBox" unique_id=900000005]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "BGM音量"
+
+[node name="BgmSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=900000006]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.3
+
+[node name="LabelSe" type="Label" parent="SettingsPopup/VBox" unique_id=900000007]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SE音量"
+
+[node name="SeSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=900000008]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="BtnSettingsClose" type="Button" parent="SettingsPopup/VBox" unique_id=900000009]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "閉じる"
+
+[connection signal="pressed" from="StoryFrame/BtnStory" to="." method="_on_btn_story_pressed"]
+[connection signal="pressed" from="InstantFrame/BtnInstant" to="." method="_on_btn_instant_pressed"]
+[connection signal="pressed" from="BtnSettings" to="." method="_on_btn_settings_pressed"]
+[connection signal="value_changed" from="SettingsPopup/VBox/BgmSlider" to="." method="_on_bgm_slider_changed"]
+[connection signal="value_changed" from="SettingsPopup/VBox/SeSlider" to="." method="_on_se_slider_changed"]
+[connection signal="pressed" from="SettingsPopup/VBox/BtnSettingsClose" to="." method="_on_btn_settings_close_pressed"]

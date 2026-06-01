@@ -1,0 +1,177 @@
+[gd_scene format=3 uid="uid://dc7j4nbdn5vd5"]
+
+[ext_resource type="Script" uid="uid://5s47yunnhjo1" path="res://StageSelect.gd" id="1_ntx73"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
+bg_color = Color(0.1, 0.1, 0.1, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="StageSelect" type="Control" unique_id=1473153298]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+clip_contents = true
+script = ExtResource("1_ntx73")
+
+[node name="SlideContainer" type="Control" parent="." unique_id=700000001]
+layout_mode = 0
+offset_right = 960.0
+offset_bottom = 854.0
+
+[node name="SurfaceBG" type="TextureRect" parent="SlideContainer" unique_id=481443997]
+layout_mode = 0
+offset_top = -500.0
+offset_right = 480.0
+offset_bottom = 854.0
+stretch_mode = 6
+
+[node name="SurfaceSelectImg" type="TextureRect" parent="SlideContainer" unique_id=800000200]
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 120.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharaPyoko" type="TextureRect" parent="SlideContainer" unique_id=500000002]
+layout_mode = 0
+offset_left = 270.0
+offset_top = 130.0
+offset_right = 470.0
+offset_bottom = 794.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SurfaceStageArea" type="Control" parent="SlideContainer" unique_id=800000001]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 130.0
+offset_right = 270.0
+offset_bottom = 780.0
+
+[node name="BtnSideChange" type="Button" parent="SlideContainer" unique_id=500000003]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 790.0
+offset_right = 340.0
+offset_bottom = 845.0
+
+[node name="EXBG" type="TextureRect" parent="SlideContainer" unique_id=700000003]
+layout_mode = 0
+offset_left = 480.0
+offset_top = -500.0
+offset_right = 960.0
+offset_bottom = 854.0
+stretch_mode = 6
+
+[node name="EXSelectImg" type="TextureRect" parent="SlideContainer" unique_id=800000201]
+layout_mode = 0
+offset_left = 480.0
+offset_top = 0.0
+offset_right = 960.0
+offset_bottom = 120.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CharaEX" type="TextureRect" parent="SlideContainer" unique_id=700000005]
+layout_mode = 0
+offset_left = 490.0
+offset_top = 130.0
+offset_right = 730.0
+offset_bottom = 794.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EXStageArea" type="Control" parent="SlideContainer" unique_id=800000002]
+layout_mode = 0
+offset_left = 700.0
+offset_top = 130.0
+offset_right = 960.0
+offset_bottom = 780.0
+
+[node name="BtnSideChangeBack" type="Button" parent="SlideContainer" unique_id=700000016]
+layout_mode = 0
+offset_left = 580.0
+offset_top = 783.0
+offset_right = 830.0
+offset_bottom = 845.0
+
+[node name="BtnHome" type="Button" parent="." unique_id=900000011]
+layout_mode = 0
+offset_left = 360.0
+offset_top = 790.0
+offset_right = 415.0
+offset_bottom = 845.0
+
+[node name="BtnSettings" type="Button" parent="." unique_id=900000010]
+layout_mode = 0
+offset_left = 420.0
+offset_top = 790.0
+offset_right = 475.0
+offset_bottom = 845.0
+
+[node name="SettingsPopup" type="Panel" parent="." unique_id=900000012]
+visible = false
+layout_mode = 0
+offset_left = 60.0
+offset_top = 230.0
+offset_right = 420.0
+offset_bottom = 580.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
+
+[node name="VBox" type="VBoxContainer" parent="SettingsPopup" unique_id=900000013]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="LabelBgm" type="Label" parent="SettingsPopup/VBox" unique_id=900000014]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "BGM音量"
+
+[node name="BgmSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=900000015]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.3
+
+[node name="LabelSe" type="Label" parent="SettingsPopup/VBox" unique_id=900000016]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "SE音量"
+
+[node name="SeSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=900000017]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.5
+
+[node name="BtnSettingsClose" type="Button" parent="SettingsPopup/VBox" unique_id=900000018]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "閉じる"
+
+[connection signal="pressed" from="SlideContainer/BtnSideChange" to="." method="_on_btn_side_change_pressed"]
+[connection signal="pressed" from="SlideContainer/BtnSideChangeBack" to="." method="_on_btn_side_change_back_pressed"]
+[connection signal="pressed" from="BtnSettings" to="." method="_on_btn_settings_pressed"]
+[connection signal="pressed" from="BtnHome" to="." method="_on_btn_home_pressed"]
+[connection signal="pressed" from="SettingsPopup/VBox/BtnSettingsClose" to="." method="_on_btn_settings_close_pressed"]
+[connection signal="value_changed" from="SettingsPopup/VBox/BgmSlider" to="." method="_on_bgm_slider_changed"]
+[connection signal="value_changed" from="SettingsPopup/VBox/SeSlider" to="." method="_on_se_slider_changed"]

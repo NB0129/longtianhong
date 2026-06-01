@@ -1,0 +1,204 @@
+[gd_scene format=3 uid="uid://banwtf36hqm8m"]
+
+[ext_resource type="Script" uid="uid://c8x75pw451cyw" path="res://Custom.gd" id="1_xi6cs"]
+
+[node name="Custom" type="Control" unique_id=769569607]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_xi6cs")
+
+[node name="BG" type="TextureRect" parent="." unique_id=800000100]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 5
+
+[node name="MainVBox" type="VBoxContainer" parent="." unique_id=949954859]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 760.0
+grow_horizontal = 2
+theme_override_constants/separation = 16
+
+[node name="DiffLabel" type="Label" parent="MainVBox" unique_id=2098873064]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "難易度"
+
+[node name="DiffBox" type="HBoxContainer" parent="MainVBox" unique_id=2045456401]
+layout_mode = 2
+
+[node name="BtnEasy" type="Button" parent="MainVBox/DiffBox" unique_id=1208224543]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "7枚"
+
+[node name="BtnNormal" type="Button" parent="MainVBox/DiffBox" unique_id=1784023664]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "10枚"
+
+[node name="BtnHard" type="Button" parent="MainVBox/DiffBox" unique_id=1056334746]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "13枚"
+
+[node name="SortLabel" type="Label" parent="MainVBox" unique_id=800000101]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "理牌"
+
+[node name="SortBox" type="HBoxContainer" parent="MainVBox" unique_id=800000102]
+layout_mode = 2
+
+[node name="BtnSortOn" type="Button" parent="MainVBox/SortBox" unique_id=800000103]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "あり"
+
+[node name="BtnSortOff" type="Button" parent="MainVBox/SortBox" unique_id=800000104]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "なし"
+
+[node name="TimerLabel" type="Label" parent="MainVBox" unique_id=378760244]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "タイム"
+
+[node name="TimerBox" type="HBoxContainer" parent="MainVBox" unique_id=843977376]
+layout_mode = 2
+
+[node name="BtnTimerOff" type="Button" parent="MainVBox/TimerBox" unique_id=662618152]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "なし"
+
+[node name="BtnTimerOn" type="Button" parent="MainVBox/TimerBox" unique_id=618367433]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "あり"
+
+[node name="SecondsBox" type="HBoxContainer" parent="MainVBox" unique_id=447933422]
+layout_mode = 2
+
+[node name="SecondsHeadLabel" type="Label" parent="MainVBox/SecondsBox" unique_id=1162939865]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "秒数："
+
+[node name="BtnMinus" type="Button" parent="MainVBox/SecondsBox" unique_id=1500598838]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "－"
+
+[node name="SecondsLabel" type="Label" parent="MainVBox/SecondsBox" unique_id=660295985]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "30秒"
+
+[node name="BtnPlus" type="Button" parent="MainVBox/SecondsBox" unique_id=815647595]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "＋"
+
+[node name="CountLabel" type="Label" parent="MainVBox" unique_id=700000001]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "問題数"
+
+[node name="CountBox" type="HBoxContainer" parent="MainVBox" unique_id=700000002]
+layout_mode = 2
+
+[node name="Btn10" type="Button" parent="MainVBox/CountBox" unique_id=700000003]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "10"
+
+[node name="Btn20" type="Button" parent="MainVBox/CountBox" unique_id=700000004]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "20"
+
+[node name="Btn30" type="Button" parent="MainVBox/CountBox" unique_id=700000005]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "30"
+
+[node name="BtnInf" type="Button" parent="MainVBox/CountBox" unique_id=700000006]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+toggle_mode = true
+text = "∞"
+
+[node name="BgmLabel" type="Label" parent="MainVBox" unique_id=377333976]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "BGM"
+
+[node name="BgmGrid" type="GridContainer" parent="MainVBox" unique_id=800000105]
+layout_mode = 2
+columns = 2
+
+[node name="CheckYume" type="CheckBox" parent="MainVBox/BgmGrid" unique_id=775788061]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "幽夢"
+
+[node name="CheckUtu" type="CheckBox" parent="MainVBox/BgmGrid" unique_id=484200514]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "現棘"
+
+[node name="CheckMaboA" type="CheckBox" parent="MainVBox/BgmGrid" unique_id=1419076387]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "幻朧A"
+
+[node name="CheckMaboB" type="CheckBox" parent="MainVBox/BgmGrid" unique_id=1605219847]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "幻朧B"
+
+[node name="BottomBox" type="HBoxContainer" parent="." unique_id=331847192]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
+
+[node name="BtnBack" type="Button" parent="BottomBox" unique_id=237781920]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "戻る"
+
+[node name="BtnStart" type="Button" parent="BottomBox" unique_id=1900262011]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "ゲーム開始"
