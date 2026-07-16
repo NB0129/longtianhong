@@ -21,6 +21,10 @@ AudioManager="*uid://bxcwnkne1s64a"
 MahjongLogic="*uid://nbp1b7ly2xqn"
 GameState="*uid://b6atrsxoi0b6n"
 SaveData="*uid://ccobpecv53eu3"
+SupportPurchase="*res://SupportPurchase.gd"
+RankingManager="*res://RankingManager.gd"
+TransitionOverlay="*res://TransitionOverlay.gd"
+DebugScreenshot="*res://DebugScreenshot.gd"
 
 [display]
 
@@ -28,6 +32,7 @@ window/size/viewport_width=480
 window/size/viewport_height=854
 window/size/mode=1
 window/stretch/mode="canvas_items"
+window/handheld/orientation=1
 
 [physics]
 
@@ -37,3 +42,4 @@ window/stretch/mode="canvas_items"
 
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true

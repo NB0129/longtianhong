@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cjg1vy2ghnelq" path="res://game.gd" id="1_80nbo"]
 [ext_resource type="FontFile" uid="uid://rqtorcaeqkr4" path="res://assets/font/font_1_kokumr_1.00_rls.ttf" id="2_e2o6t"]
+[ext_resource type="Script" path="res://TileSuitSelector.gd" id="3_tile_suit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
 bg_color = Color(0.1, 0.1, 0.1, 0.95)
@@ -71,6 +72,15 @@ layout_mode = 2
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 
+[node name="ScoreDisplay" type="HBoxContainer" parent="." unique_id=700000018]
+layout_mode = 0
+offset_left = 204.0
+offset_top = 18.0
+offset_right = 470.0
+offset_bottom = 63.0
+theme_override_constants/separation = 0
+alignment = 2
+
 [node name="HandArea" type="Control" parent="." unique_id=2066869555]
 anchors_preset = 0
 offset_top = 200.0
@@ -93,11 +103,11 @@ alignment = 1
 
 [node name="Keypad" type="GridContainer" parent="." unique_id=779379262]
 layout_mode = 0
-offset_left = 69.0
-offset_top = 480.0
-offset_right = 411.0
-offset_bottom = 778.0
-theme_override_constants/h_separation = 6
+offset_left = 51.0
+offset_top = 470.0
+offset_right = 429.0
+offset_bottom = 800.0
+theme_override_constants/h_separation = 24
 theme_override_constants/v_separation = 6
 columns = 3
 
@@ -156,38 +166,41 @@ theme_override_font_sizes/font_size = 30
 icon_alignment = 1
 
 [node name="BtnClear" type="Button" parent="Keypad" unique_id=1361072739]
-custom_minimum_size = Vector2(110, 70)
+custom_minimum_size = Vector2(98, 64)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
 theme_override_font_sizes/font_size = 30
 text = "クリア"
 
 [node name="BtnSubmit" type="Button" parent="Keypad" unique_id=1023440537]
-custom_minimum_size = Vector2(110, 70)
+custom_minimum_size = Vector2(102, 102)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
 theme_override_font_sizes/font_size = 30
 text = "提出"
 
 [node name="BtnNone" type="Button" parent="Keypad" unique_id=588365588]
-custom_minimum_size = Vector2(110, 70)
+custom_minimum_size = Vector2(98, 64)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
 theme_override_font_sizes/font_size = 30
 text = "なし"
-
-[node name="SelectedPanel" type="Label" parent="." unique_id=462241679]
-visible = false
-layout_mode = 0
-offset_top = 435.0
-offset_right = 480.0
-offset_bottom = 477.0
-theme_override_font_sizes/font_size = 30
-text = "選択中："
-horizontal_alignment = 1
 
 [node name="PopupResult" type="Control" parent="." unique_id=951330318]
 visible = false
 anchors_preset = 0
 offset_right = 480.0
 offset_bottom = 854.0
+
+[node name="ResultMask" type="ColorRect" parent="PopupResult" unique_id=700000012]
+visible = false
+layout_mode = 0
+offset_right = 480.0
+offset_bottom = 854.0
+color = Color(0, 0, 0, 0.45)
 
 [node name="PopupPanel" type="Panel" parent="PopupResult" unique_id=486361989]
 layout_mode = 0
@@ -257,12 +270,82 @@ offset_bottom = 260.0
 theme_override_font_sizes/font_size = 24
 text = "ホーム"
 
+[node name="StageClearImage" type="TextureRect" parent="PopupResult" unique_id=700000010]
+visible = false
+layout_mode = 0
+offset_left = 40.0
+offset_top = 30.0
+offset_right = 440.0
+offset_bottom = 150.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ResultChara" type="TextureRect" parent="PopupResult" unique_id=700000011]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 285.0
+offset_right = 260.0
+offset_bottom = 725.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ResultPanel" type="TextureRect" parent="PopupResult" unique_id=700000016]
+visible = false
+layout_mode = 0
+offset_left = 218.0
+offset_top = 212.0
+offset_right = 517.0
+offset_bottom = 796.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ResultScores" type="VBoxContainer" parent="PopupResult/ResultPanel" unique_id=700000015]
+visible = false
+layout_mode = 0
+offset_left = -9.0
+offset_top = 150.0
+offset_right = 239.0
+offset_bottom = 575.0
+theme_override_constants/separation = 4
+alignment = 0
+
+[node name="CorrectImage" type="TextureRect" parent="PopupResult" unique_id=700000013]
+visible = false
+layout_mode = 0
+offset_left = 20.0
+offset_top = 300.0
+offset_right = 420.0
+offset_bottom = 460.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CorrectScore" type="HBoxContainer" parent="PopupResult" unique_id=700000014]
+visible = false
+layout_mode = 0
+offset_left = 210.0
+offset_top = 405.0
+offset_right = 455.0
+offset_bottom = 465.0
+alignment = 2
+
+[node name="ResultButtons" type="GridContainer" parent="PopupResult" unique_id=700000017]
+visible = false
+layout_mode = 0
+offset_left = 50.0
+offset_top = 735.0
+offset_right = 430.0
+offset_bottom = 850.0
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 8
+columns = 2
+
 [node name="QuestionCounter" type="Label" parent="." unique_id=428087497]
 layout_mode = 0
-offset_left = 350.0
-offset_top = 80.0
-offset_right = 450.0
-offset_bottom = 114.0
+offset_left = 20.0
+offset_top = 800.0
+offset_right = 140.0
+offset_bottom = 834.0
 theme_override_font_sizes/font_size = 24
 
 [node name="DebugLabel" type="Label" parent="." unique_id=1855297591]
@@ -284,43 +367,44 @@ theme_override_font_sizes/font_size = 24
 [node name="HomeConfirmPopup" type="Panel" parent="." unique_id=201548151]
 visible = false
 layout_mode = 0
-offset_left = 40.0
-offset_top = 300.0
-offset_right = 440.0
-offset_bottom = 550.0
+offset_left = 35.0
+offset_top = 255.0
+offset_right = 445.0
+offset_bottom = 555.0
 
 [node name="ConfirmLabel" type="Label" parent="HomeConfirmPopup" unique_id=1001994059]
 layout_mode = 0
-offset_top = 50.0
-offset_right = 400.0
-offset_bottom = 78.0
-theme_override_font_sizes/font_size = 30
+offset_left = 56.0
+offset_top = 80.0
+offset_right = 354.0
+offset_bottom = 124.0
+theme_override_font_sizes/font_size = 24
 text = "ステージ選択に戻りますか？"
 horizontal_alignment = 1
 
 [node name="BtnConfirmYes" type="Button" parent="HomeConfirmPopup" unique_id=435839645]
 layout_mode = 0
-offset_left = 50.0
-offset_top = 170.0
-offset_right = 190.0
-offset_bottom = 220.0
+offset_left = 68.0
+offset_top = 166.0
+offset_right = 188.0
+offset_bottom = 210.0
 text = "はい"
 
 [node name="BtnConfirmNo" type="Button" parent="HomeConfirmPopup" unique_id=1115472829]
 layout_mode = 0
-offset_left = 210.0
-offset_top = 170.0
-offset_right = 350.0
-offset_bottom = 220.0
+offset_left = 222.0
+offset_top = 166.0
+offset_right = 342.0
+offset_bottom = 210.0
 text = "いいえ"
 
 [node name="SettingsPopup" type="Panel" parent="." unique_id=600000001]
 visible = false
 layout_mode = 0
-offset_left = 60.0
-offset_top = 230.0
-offset_right = 420.0
-offset_bottom = 580.0
+offset_left = 30.0
+offset_top = 95.0
+offset_right = 450.0
+offset_bottom = 760.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
 
 [node name="VBox" type="VBoxContainer" parent="SettingsPopup" unique_id=600000002]
@@ -329,12 +413,12 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_top = 30.0
+offset_right = -28.0
+offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
 [node name="LabelBgm" type="Label" parent="SettingsPopup/VBox" unique_id=600000003]
 layout_mode = 2
@@ -354,11 +438,47 @@ theme_override_font_sizes/font_size = 26
 text = "SE音量"
 
 [node name="SeSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=600000006]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 max_value = 1.0
 step = 0.01
 value = 0.5
+
+[node name="LabelTileSuit" type="Label" parent="SettingsPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "牌の種類"
+
+[node name="TileSuitGrid" type="GridContainer" parent="SettingsPopup/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 4
+columns = 2
+script = ExtResource("3_tile_suit")
+
+[node name="BtnPinzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "筒子"
+
+[node name="BtnSouzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "索子"
+
+[node name="BtnManzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "萬子"
+
+[node name="BtnManzu2" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "萬子2"
 
 [node name="BtnSettingsClose" type="Button" parent="SettingsPopup/VBox" unique_id=600000007]
 layout_mode = 2
@@ -394,36 +514,6 @@ theme_override_fonts/font = ExtResource("2_e2o6t")
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="UnlockPopup" type="Panel" parent="." unique_id=1565803273]
-visible = false
-layout_mode = 0
-offset_left = 40.0
-offset_top = 300.0
-offset_right = 440.0
-offset_bottom = 520.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_e2o6t")
-
-[node name="UnlockVBox" type="VBoxContainer" parent="UnlockPopup" unique_id=149746440]
-layout_mode = 0
-offset_right = 320.0
-offset_bottom = 102.0
-alignment = 1
-
-[node name="LabelSpacer" type="Label" parent="UnlockPopup/UnlockVBox" unique_id=601960756]
-layout_mode = 2
-
-[node name="UnlockLabel" type="Label" parent="UnlockPopup/UnlockVBox" unique_id=143552493]
-custom_minimum_size = Vector2(400, 80)
-layout_mode = 2
-theme_override_font_sizes/font_size = 26
-horizontal_alignment = 1
-
-[node name="BtnUnlockOK" type="Button" parent="UnlockPopup/UnlockVBox" unique_id=1583179046]
-layout_mode = 2
-theme_override_font_sizes/font_size = 32
-text = "OK"
-icon_alignment = 1
 
 [connection signal="pressed" from="TopBar/BtnHome" to="." method="_on_btn_home_pressed"]
 [connection signal="pressed" from="PopupResult/PopupPanel/BtnRetry" to="." method="_on_btn_retry_pressed"]

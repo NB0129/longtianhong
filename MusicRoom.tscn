@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://bsqstyd3dj81i"]
 
 [ext_resource type="Script" uid="uid://bd4s4ahgclm10" path="res://MusicRoom.gd" id="1_s8nec"]
+[ext_resource type="Script" path="res://TileSuitSelector.gd" id="2_tile_suit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.1, 0.1, 0.1, 0.85)
@@ -93,15 +94,6 @@ offset_bottom = 165.0
 theme_override_font_sizes/font_size = 20
 text = "全曲リスト"
 
-[node name="BtnAdd" type="Button" parent="." unique_id=1292677832]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 245.0
-offset_right = 70.0
-offset_bottom = 295.0
-theme_override_font_sizes/font_size = 22
-text = "追加"
-
 [node name="FullListScroll" type="ScrollContainer" parent="." unique_id=956573910]
 layout_mode = 0
 offset_left = 80.0
@@ -115,47 +107,6 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_list_bg")
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 0
-
-[node name="PlaylistLabel" type="Label" parent="." unique_id=1939125117]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 375.0
-offset_right = 470.0
-offset_bottom = 400.0
-theme_override_font_sizes/font_size = 20
-text = "プレイリスト"
-
-[node name="PlaylistScroll" type="ScrollContainer" parent="." unique_id=197320542]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 405.0
-offset_right = 470.0
-offset_bottom = 625.0
-horizontal_scroll_mode = 0
-theme_override_styles/panel = SubResource("StyleBoxFlat_list_bg")
-
-[node name="PlaylistVBox" type="VBoxContainer" parent="PlaylistScroll" unique_id=781120085]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="BtnReset" type="Button" parent="." unique_id=1030152237]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 635.0
-offset_right = 110.0
-offset_bottom = 680.0
-theme_override_font_sizes/font_size = 22
-text = "リセット"
-
-[node name="BtnPlayMode" type="Button" parent="." unique_id=2145679931]
-layout_mode = 0
-offset_left = 120.0
-offset_top = 635.0
-offset_right = 260.0
-offset_bottom = 680.0
-theme_override_font_sizes/font_size = 22
-text = "順次"
 
 [node name="BtnBack" type="Button" parent="." unique_id=379948997]
 layout_mode = 0
@@ -178,10 +129,10 @@ expand_icon = true
 [node name="SettingsPopup" type="Panel" parent="." unique_id=700000001]
 visible = false
 layout_mode = 0
-offset_left = 60.0
-offset_top = 230.0
-offset_right = 420.0
-offset_bottom = 580.0
+offset_left = 30.0
+offset_top = 95.0
+offset_right = 450.0
+offset_bottom = 760.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
 
 [node name="VBox" type="VBoxContainer" parent="SettingsPopup" unique_id=700000002]
@@ -190,12 +141,12 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_top = 30.0
+offset_right = -28.0
+offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
 [node name="LabelBgm" type="Label" parent="SettingsPopup/VBox" unique_id=700000003]
 layout_mode = 2
@@ -215,11 +166,47 @@ theme_override_font_sizes/font_size = 26
 text = "SE音量"
 
 [node name="SeSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=700000006]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 max_value = 1.0
 step = 0.01
 value = 0.5
+
+[node name="LabelTileSuit" type="Label" parent="SettingsPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "牌の種類"
+
+[node name="TileSuitGrid" type="GridContainer" parent="SettingsPopup/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 4
+columns = 2
+script = ExtResource("2_tile_suit")
+
+[node name="BtnPinzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "筒子"
+
+[node name="BtnSouzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "索子"
+
+[node name="BtnManzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "萬子"
+
+[node name="BtnManzu2" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "萬子2"
 
 [node name="BtnSettingsClose" type="Button" parent="SettingsPopup/VBox" unique_id=700000007]
 layout_mode = 2
@@ -229,9 +216,6 @@ text = "閉じる"
 [connection signal="pressed" from="PlayerPanel/BtnPlay" to="." method="_on_btn_play_pressed"]
 [connection signal="pressed" from="PlayerPanel/BtnPause" to="." method="_on_btn_pause_pressed"]
 [connection signal="pressed" from="PlayerPanel/BtnStop" to="." method="_on_btn_stop_pressed"]
-[connection signal="pressed" from="BtnAdd" to="." method="_on_btn_add_pressed"]
-[connection signal="pressed" from="BtnReset" to="." method="_on_btn_reset_pressed"]
-[connection signal="pressed" from="BtnPlayMode" to="." method="_on_btn_play_mode_pressed"]
 [connection signal="pressed" from="BtnBack" to="." method="_on_btn_back_pressed"]
 [connection signal="pressed" from="BtnSettings" to="." method="_on_btn_settings_pressed"]
 [connection signal="value_changed" from="SettingsPopup/VBox/BgmSlider" to="." method="_on_bgm_slider_changed"]

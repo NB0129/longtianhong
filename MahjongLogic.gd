@@ -12,9 +12,12 @@ extends Node
 # 手牌の枚数は自由（7枚→8枚で完成、10枚→11枚で完成、13枚→14枚で完成、など）
 func find_waiting_tiles(hand: Array) -> Array:
 	var waiting = []  # 待ち牌を入れるリスト
+	var counts := count_tiles(hand)
 	
 	# 1〜9を一枚ずつ加えて完成形になるか試す
 	for tile in range(1, 10):
+		if counts.get(tile, 0) >= 4:
+			continue
 		var test_hand = hand.duplicate()  # 手牌をコピー（元の手牌を変えないため）
 		test_hand.append(tile)            # 試す牌を1枚追加
 		test_hand.sort()                  # 並び替え（判定しやすくするため）

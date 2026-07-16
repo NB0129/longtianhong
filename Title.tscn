@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://cqkk7c4lmb30l"]
 
 [ext_resource type="Script" uid="uid://cvnjyng22ulbl" path="res://title.gd" id="1_c0dwi"]
+[ext_resource type="Script" path="res://TileSuitSelector.gd" id="2_tile_suit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
 bg_color = Color(0.1, 0.1, 0.1, 0.95)
@@ -79,10 +80,10 @@ offset_bottom = 840.0
 [node name="SettingsPopup" type="Panel" parent="." unique_id=900000003]
 visible = false
 layout_mode = 0
-offset_left = 60.0
-offset_top = 230.0
-offset_right = 420.0
-offset_bottom = 580.0
+offset_left = 30.0
+offset_top = 95.0
+offset_right = 450.0
+offset_bottom = 760.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_settings")
 
 [node name="VBox" type="VBoxContainer" parent="SettingsPopup" unique_id=900000004]
@@ -90,13 +91,13 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = 28.0
+offset_top = 30.0
+offset_right = -28.0
+offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 10
 
 [node name="LabelBgm" type="Label" parent="SettingsPopup/VBox" unique_id=900000005]
 layout_mode = 2
@@ -116,11 +117,47 @@ theme_override_font_sizes/font_size = 26
 text = "SE音量"
 
 [node name="SeSlider" type="HSlider" parent="SettingsPopup/VBox" unique_id=900000008]
-custom_minimum_size = Vector2(0, 40)
+custom_minimum_size = Vector2(0, 32)
 layout_mode = 2
 max_value = 1.0
 step = 0.01
 value = 0.5
+
+[node name="LabelTileSuit" type="Label" parent="SettingsPopup/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "牌の種類"
+
+[node name="TileSuitGrid" type="GridContainer" parent="SettingsPopup/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 4
+columns = 2
+script = ExtResource("2_tile_suit")
+
+[node name="BtnPinzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "筒子"
+
+[node name="BtnSouzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "索子"
+
+[node name="BtnManzu" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "萬子"
+
+[node name="BtnManzu2" type="CheckBox" parent="SettingsPopup/VBox/TileSuitGrid"]
+custom_minimum_size = Vector2(150, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "萬子2"
 
 [node name="BtnSettingsClose" type="Button" parent="SettingsPopup/VBox" unique_id=900000009]
 layout_mode = 2
