@@ -119,13 +119,13 @@ func _current_stage_sorts_hand() -> bool:
 		return GameState.current_stage == "ex_stage3"
 	if GameState.current_stage == "custom":
 		return SaveData.custom_sort_enabled
-	var effective_stage := GameState.current_stage
+	var effective_stage: String = GameState.current_stage
 	if GameState.current_stage == "tutorial":
 		effective_stage = "stage1"
 	return effective_stage != "stage4"
 
 
 func _text(key: String) -> String:
-	var language := SaveData.normalize_language_code(SaveData.language_code)
+	var language: String = SaveData.normalize_language_code(SaveData.language_code)
 	var texts: Dictionary = TEXT.get(language, TEXT["ja"])
 	return str(texts.get(key, TEXT["ja"].get(key, "")))

@@ -162,20 +162,20 @@ func _set_texture(rect: TextureRect, path: String) -> void:
 
 
 func _localized_title_path(file_base: String, fallback_path: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
-	var normalized_path := "res://assets/language/normalized/" + locale + "/" + file_base + ".webp"
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
+	var normalized_path: String = "res://assets/language/normalized/" + locale + "/" + file_base + ".webp"
 	if ResourceLoader.exists(normalized_path):
 		return normalized_path
 	if locale == "ja":
 		return fallback_path
-	var path := "res://assets/language/" + locale + "/" + file_base + ".webp"
+	var path: String = "res://assets/language/" + locale + "/" + file_base + ".webp"
 	if ResourceLoader.exists(path):
 		return path
 	return fallback_path
 
 
 func _apply_title_language() -> void:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	TranslationServer.set_locale(locale)
 	_set_texture(_logo, _localized_title_path("matiate", PATH_LOGO))
 	_set_texture(_subtitle, _localized_title_path("tinitukuizu", PATH_SUBTITLE))
@@ -191,7 +191,7 @@ func _apply_title_language() -> void:
 
 
 func _text_value(key: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	var dict: Dictionary = UI_TEXT.get(locale, UI_TEXT["ja"])
 	return str(dict.get(key, UI_TEXT["ja"].get(key, "")))
 
@@ -517,7 +517,7 @@ func _setup_language_controls() -> void:
 
 
 func _refresh_language_buttons() -> void:
-	var current := SaveData.normalize_language_code(SaveData.language_code)
+	var current: String = SaveData.normalize_language_code(SaveData.language_code)
 	for option in LANGUAGE_OPTIONS:
 		var code: String = option["code"]
 		if not _language_buttons.has(code):

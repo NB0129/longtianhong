@@ -216,7 +216,7 @@ func _native_restore_message(success: bool, message: String, owns_product: bool)
 
 
 func _support_message(key: String) -> String:
-	var language := SaveData.normalize_language_code(SaveData.language_code)
+	var language: String = SaveData.normalize_language_code(SaveData.language_code)
 	var messages: Dictionary = SUPPORT_MESSAGES.get(language, SUPPORT_MESSAGES["ja"])
 	return str(messages.get(key, SUPPORT_MESSAGES["ja"].get(key, "")))
 
