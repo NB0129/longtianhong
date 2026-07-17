@@ -2,10 +2,11 @@
 pluginManagement {
     apply from: 'config.gradle'
 
-    plugins {
-        id 'com.android.application' version versions.androidGradlePlugin
-        id 'org.jetbrains.kotlin.android' version versions.kotlinVersion
-    }
+	plugins {
+		id 'com.android.application' version versions.androidGradlePlugin
+		id 'com.android.asset-pack' version versions.androidGradlePlugin
+		id 'org.jetbrains.kotlin.android' version versions.kotlinVersion
+	}
     repositories {
         google()
         mavenCentral()

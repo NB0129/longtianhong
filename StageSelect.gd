@@ -110,6 +110,7 @@ func _ready() -> void:
 	_setup_settings_home_icons()
 	_create_support_popup()
 	_connect_support_purchase_signals()
+	SupportPurchase.refresh_product_info()
 	SupportPurchase.refresh_entitlements()
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
@@ -481,7 +482,6 @@ func _create_support_popup() -> void:
 	vbox.add_child(title)
 
 	var body: Label = Label.new()
-	body.text = "ゲーム本編はすべて無料で遊べます。\n500円で開発を支援できます。\n支援してくれた方には、お礼としてMusicroomが開放されます。"
 	body.name = "SupportBody"
 	body.text = _support_ui_text("body")
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -541,6 +541,8 @@ func _connect_support_purchase_signals() -> void:
 func _show_support_popup() -> void:
 	if _support_popup == null or not is_instance_valid(_support_popup):
 		_create_support_popup()
+	if not SupportPurchase.product_info_loading and not SupportPurchase.product_available:
+		SupportPurchase.refresh_product_info()
 	PopupSkin.apply_support_popup(_support_popup)
 	_refresh_support_popup_texts()
 	_update_support_popup_state()
@@ -549,13 +551,11 @@ func _show_support_popup() -> void:
 
 func _on_support_purchase_pressed() -> void:
 	AudioManager.play_se("se_btntap")
-	_set_support_message("購入処理を開始しています...")
 	_set_support_message(_support_ui_text("purchase_start"))
 	SupportPurchase.purchase_support()
 
 func _on_support_restore_pressed() -> void:
 	AudioManager.play_se("se_btntap")
-	_set_support_message("購入情報を確認しています...")
 	_set_support_message(_support_ui_text("restore_start"))
 	SupportPurchase.restore_support()
 
@@ -565,6 +565,7 @@ func _on_support_close_pressed() -> void:
 		_support_popup.visible = false
 
 func _on_support_state_changed() -> void:
+	_refresh_support_popup_texts()
 	_update_support_popup_state()
 	_build_ex_buttons()
 	_update_lock_display()
@@ -588,18 +589,18 @@ func _close_support_popup_after_support() -> void:
 func _update_support_popup_state() -> void:
 	var busy: bool = SupportPurchase.is_busy
 	if _support_buy_button != null and is_instance_valid(_support_buy_button):
-		_support_buy_button.disabled = busy or SupportPurchase.is_supporter()
+		_support_buy_button.disabled = busy or SupportPurchase.is_supporter() or not SupportPurchase.product_available
 	if _support_restore_button != null and is_instance_valid(_support_restore_button):
 		_support_restore_button.disabled = busy
-	if SupportPurchase.is_supporter():
-		_set_support_message("開発支援済みです。Musicroomを利用できます。")
-	elif busy:
-		_set_support_message("処理中です...")
 
 	if SupportPurchase.is_supporter():
 		_set_support_message(_support_ui_text("supported"))
 	elif busy:
 		_set_support_message(_support_ui_text("busy"))
+	elif SupportPurchase.product_info_loading or not SupportPurchase.product_info_loaded:
+		_set_support_message(_support_ui_text("product_loading"))
+	elif not SupportPurchase.product_available:
+		_set_support_message(_support_ui_text("product_unavailable"))
 
 func _set_support_message(message: String) -> void:
 	if _support_message_label != null and is_instance_valid(_support_message_label):
@@ -614,48 +615,98 @@ func _refresh_support_popup_texts() -> void:
 	var title := _support_popup.get_node_or_null("VBox/SupportTitle") as Label
 	if title != null:
 		title.text = ""
+	var buy_button := _support_popup.get_node_or_null("VBox/BtnSupportBuy") as Button
+	if buy_button != null:
+		buy_button.text = _support_ui_text("buy")
+	var restore_button := _support_popup.get_node_or_null("VBox/BtnSupportRestore") as Button
+	if restore_button != null:
+		restore_button.text = _support_ui_text("restore")
+	var close_button := _support_popup.get_node_or_null("VBox/BtnSupportClose") as Button
+	if close_button != null:
+		close_button.text = _support_ui_text("close")
 
 func _support_ui_text(key: String) -> String:
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
 	var texts := {
 		"ja": {
-			"body": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援(500円)をご検討ください。\n支援の特典として、Musicroom(BGM全曲を自由に聴ける機能)が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"body": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援をご検討ください。\n支援の特典として、Musicroom（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"body_with_price": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援（{price}）をご検討ください。\n支援の特典として、Musicroom（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"buy": "購入する",
+			"buy_with_price": "{price}で購入する",
+			"restore": "購入を復元",
+			"close": "閉じる",
 			"purchase_start": "購入処理を開始しています...",
 			"restore_start": "購入情報を確認しています...",
 			"supported": "開発支援済みです。Musicroomを利用できます。",
 			"busy": "処理中です...",
+			"product_loading": "Google Playから価格を確認しています...",
+			"product_unavailable": "現在、購入情報を取得できません。購入済みの場合は「購入を復元」をお試しください。",
 		},
 		"en": {
-			"body": "Thank you for playing Machi-ate!\nWolf Heaven Games will keep developing games, mainly mahjong and werewolf games.\nIf you enjoyed this game or are looking forward to future titles, please consider supporting development (¥500).\nAs a supporter benefit, Music Room unlocks, letting you freely listen to every BGM track.\n*Even without support, the full main game is free to play.",
+			"body": "Thank you for playing Machi-ate!\nWolf Heaven Games will keep developing games, mainly mahjong and werewolf games.\nIf you enjoyed this game or are looking forward to future titles, please consider supporting development.\nAs a supporter benefit, Music Room unlocks, letting you freely listen to all 21 BGM tracks.\n*Even without support, the full main game is free to play.",
+			"body_with_price": "Thank you for playing Machi-ate!\nWolf Heaven Games will keep developing games, mainly mahjong and werewolf games.\nIf you enjoyed this game or are looking forward to future titles, please consider supporting development ({price}).\nAs a supporter benefit, Music Room unlocks, letting you freely listen to all 21 BGM tracks.\n*Even without support, the full main game is free to play.",
+			"buy": "Buy",
+			"buy_with_price": "Buy for {price}",
+			"restore": "Restore purchase",
+			"close": "Close",
 			"purchase_start": "Starting purchase...",
 			"restore_start": "Checking purchase information...",
 			"supported": "Development support confirmed. Music Room is available.",
 			"busy": "Processing...",
+			"product_loading": "Checking the price on Google Play...",
+			"product_unavailable": "Purchase information is currently unavailable. If you already purchased, try Restore purchase.",
 		},
 		"zh_CN": {
-			"body": "感谢您游玩《待牌猜猜看！》。\n狼天红 Games 今后也会继续以麻将游戏、人狼游戏为中心进行开发。\n如果您觉得“这个游戏很有趣”或“也期待今后的作品”，欢迎考虑开发支援（500日元）。\n作为支援特典，将解锁 Music Room（可自由聆听全部 BGM 的功能）。\n※即使不支援，也可以免费游玩全部游戏本篇。",
+			"body": "感谢您游玩《待牌猜猜看！》。\n狼天红 Games 今后也会继续以麻将游戏、人狼游戏为中心进行开发。\n如果您觉得“这个游戏很有趣”或“也期待今后的作品”，欢迎考虑开发支援。\n作为支援特典，将解锁 Music Room（可自由聆听全部21首 BGM）。\n※即使不支援，也可以免费游玩全部游戏本篇。",
+			"body_with_price": "感谢您游玩《待牌猜猜看！》。\n狼天红 Games 今后也会继续以麻将游戏、人狼游戏为中心进行开发。\n如果您觉得“这个游戏很有趣”或“也期待今后的作品”，欢迎考虑开发支援（{price}）。\n作为支援特典，将解锁 Music Room（可自由聆听全部21首 BGM）。\n※即使不支援，也可以免费游玩全部游戏本篇。",
+			"buy": "购买",
+			"buy_with_price": "以 {price} 购买",
+			"restore": "恢复购买",
+			"close": "关闭",
 			"purchase_start": "正在开始购买处理...",
 			"restore_start": "正在确认购买信息...",
 			"supported": "已完成开发支援。可以使用 Music Room。",
 			"busy": "处理中...",
+			"product_loading": "正在从 Google Play 确认价格...",
+			"product_unavailable": "目前无法获取购买信息。如果已经购买，请尝试“恢复购买”。",
 		},
 		"zh_TW": {
-			"body": "感謝您遊玩《待牌猜猜看！》。\n狼天紅 Games 今後也會繼續以麻將遊戲、人狼遊戲為中心進行開發。\n如果您覺得「這款遊戲很有趣」或「也期待今後的作品」，歡迎考慮開發支援（500日圓）。\n作為支援特典，將解鎖 Music Room（可自由聆聽全部 BGM 的功能）。\n※即使不支援，也可以免費遊玩全部遊戲本篇。",
+			"body": "感謝您遊玩《待牌猜猜看！》。\n狼天紅 Games 今後也會繼續以麻將遊戲、人狼遊戲為中心進行開發。\n如果您覺得「這款遊戲很有趣」或「也期待今後的作品」，歡迎考慮開發支援。\n作為支援特典，將解鎖 Music Room（可自由聆聽全部21首 BGM）。\n※即使不支援，也可以免費遊玩全部遊戲本篇。",
+			"body_with_price": "感謝您遊玩《待牌猜猜看！》。\n狼天紅 Games 今後也會繼續以麻將遊戲、人狼遊戲為中心進行開發。\n如果您覺得「這款遊戲很有趣」或「也期待今後的作品」，歡迎考慮開發支援（{price}）。\n作為支援特典，將解鎖 Music Room（可自由聆聽全部21首 BGM）。\n※即使不支援，也可以免費遊玩全部遊戲本篇。",
+			"buy": "購買",
+			"buy_with_price": "以 {price} 購買",
+			"restore": "復原購買",
+			"close": "關閉",
 			"purchase_start": "正在開始購買處理...",
 			"restore_start": "正在確認購買資訊...",
 			"supported": "已完成開發支援。可以使用 Music Room。",
 			"busy": "處理中...",
+			"product_loading": "正在從 Google Play 確認價格...",
+			"product_unavailable": "目前無法取得購買資訊。如果已經購買，請嘗試「復原購買」。",
 		},
 		"ko": {
-			"body": "마치아테!를 플레이해 주셔서 감사합니다.\n늑천홍 Games는 앞으로도 마작 게임과 인랑 게임을 중심으로 개발을 이어 나가겠습니다.\n“이 게임이 재미있었다”, “앞으로의 작품도 기대된다”고 느끼셨다면 개발 지원(500엔)을 검토해 주세요.\n지원 특전으로 Music Room(모든 BGM을 자유롭게 들을 수 있는 기능)이 해금됩니다.\n※지원을 하지 않아도 게임 본편은 모두 무료로 즐길 수 있습니다.",
+			"body": "마치아테!를 플레이해 주셔서 감사합니다.\n늑천홍 Games는 앞으로도 마작 게임과 인랑 게임을 중심으로 개발을 이어 나가겠습니다.\n“이 게임이 재미있었다”, “앞으로의 작품도 기대된다”고 느끼셨다면 개발 지원을 검토해 주세요.\n지원 특전으로 Music Room(21곡의 모든 BGM을 자유롭게 들을 수 있는 기능)이 해금됩니다.\n※지원을 하지 않아도 게임 본편은 모두 무료로 즐길 수 있습니다.",
+			"body_with_price": "마치아테!를 플레이해 주셔서 감사합니다.\n늑천홍 Games는 앞으로도 마작 게임과 인랑 게임을 중심으로 개발을 이어 나가겠습니다.\n“이 게임이 재미있었다”, “앞으로의 작품도 기대된다”고 느끼셨다면 개발 지원({price})을 검토해 주세요.\n지원 특전으로 Music Room(21곡의 모든 BGM을 자유롭게 들을 수 있는 기능)이 해금됩니다.\n※지원을 하지 않아도 게임 본편은 모두 무료로 즐길 수 있습니다.",
+			"buy": "구매",
+			"buy_with_price": "{price}에 구매",
+			"restore": "구매 복원",
+			"close": "닫기",
 			"purchase_start": "구매 처리를 시작하고 있습니다...",
 			"restore_start": "구매 정보를 확인하고 있습니다...",
 			"supported": "개발 지원이 완료되었습니다. Music Room을 이용할 수 있습니다.",
 			"busy": "처리 중입니다...",
+			"product_loading": "Google Play에서 가격을 확인하고 있습니다...",
+			"product_unavailable": "현재 구매 정보를 가져올 수 없습니다. 이미 구매했다면 '구매 복원'을 시도해 주세요.",
 		},
 	}
 	var locale_texts: Dictionary = texts.get(locale, texts["ja"])
-	return str(locale_texts.get(key, texts["ja"].get(key, "")))
+	var lookup_key := key
+	if key == "body" and not SupportPurchase.formatted_price.is_empty():
+		lookup_key = "body_with_price"
+	elif key == "buy" and not SupportPurchase.formatted_price.is_empty():
+		lookup_key = "buy_with_price"
+	var value := str(locale_texts.get(lookup_key, texts["ja"].get(lookup_key, "")))
+	return value.replace("{price}", SupportPurchase.formatted_price)
 
 # ============================================================
 # ステージ表示状態の更新
@@ -687,7 +738,7 @@ func _update_lock_display() -> void:
 func _input(event: InputEvent) -> void:
 	_handle_page_swipe(event)
 
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F3:
+	if OS.is_debug_build() and event is InputEventKey and event.pressed and event.keycode == KEY_F3:
 		SupportPurchase.debug_reset_supporter()
 		_build_ex_buttons()
 		_update_lock_display()

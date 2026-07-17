@@ -10,10 +10,10 @@ config_version=5
 
 [application]
 
-config/name="Longtianhong"
+config/name="まちあて！"
 run/main_scene="uid://cqkk7c4lmb30l"
 config/features=PackedStringArray("4.6", "Mobile")
-config/icon="res://icon.svg"
+config/icon="res://assets/app_icon/machiate_launcher_192.png"
 
 [autoload]
 

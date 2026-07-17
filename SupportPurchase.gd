@@ -5,6 +5,9 @@ signal purchase_finished(success: bool, message: String)
 signal restore_finished(success: bool, message: String)
 
 const SUPPORT_PRODUCT_ID := "support_pack"
+const OPERATION_NONE := ""
+const OPERATION_PURCHASE := "purchase"
+const OPERATION_RESTORE := "restore"
 const NATIVE_BRIDGE_SINGLETON_CANDIDATES: Array[String] = [
 	"LongtianhongStoreKit",
 	"LongtianhongBilling",
@@ -79,19 +82,74 @@ const SUPPORT_MESSAGES: Dictionary = {
 }
 
 var is_busy: bool = false
+var product_info_loaded: bool = false
+var product_info_loading: bool = false
+var product_available: bool = false
+var formatted_price: String = ""
+var product_info_message: String = ""
 var _native_bridge: Object = null
+var _entitlement_refresh_in_flight: bool = false
+var _entitlement_refresh_pending: bool = false
+var _entitlement_refresh_revision: int = -1
+var _ownership_revision: int = 0
+var _active_operation: String = OPERATION_NONE
+var _active_operation_revision: int = -1
+var _refresh_after_resume_pending: bool = false
 
 
 func _ready() -> void:
 	_detect_native_bridge()
 
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_RESUMED:
+		call_deferred("_refresh_after_resume")
+
+
+func _refresh_after_resume() -> void:
+	if not _has_native_bridge():
+		return
+	if is_busy:
+		_refresh_after_resume_pending = true
+		return
+	_refresh_after_resume_pending = false
+	refresh_product_info()
+	refresh_entitlements()
+
+
 func is_supporter() -> bool:
 	return SaveData.is_supporter
 
 
-func refresh_entitlements() -> void:
+func refresh_product_info() -> void:
+	if product_info_loading:
+		return
 	if _has_native_bridge():
+		product_info_loading = true
+		product_info_loaded = false
+		product_available = false
+		formatted_price = ""
+		product_info_message = ""
+		state_changed.emit()
+		_call_native_bridge("query_product_info", [SUPPORT_PRODUCT_ID])
+		return
+	product_info_loading = false
+	product_info_loaded = true
+	product_available = OS.is_debug_build()
+	formatted_price = ""
+	product_info_message = "debug_product" if product_available else "purchase_unavailable"
+	state_changed.emit()
+
+
+func refresh_entitlements() -> void:
+	if _entitlement_refresh_in_flight or is_busy:
+		if _has_native_bridge():
+			_entitlement_refresh_pending = true
+		return
+	if _has_native_bridge():
+		_entitlement_refresh_pending = false
+		_entitlement_refresh_in_flight = true
+		_entitlement_refresh_revision = _ownership_revision
 		_call_native_bridge("refresh_entitlements", [SUPPORT_PRODUCT_ID])
 		return
 	state_changed.emit()
@@ -100,13 +158,15 @@ func refresh_entitlements() -> void:
 func purchase_support() -> void:
 	if is_busy:
 		return
-	is_busy = true
-	state_changed.emit()
+	if not product_available:
+		purchase_finished.emit(false, _support_message("purchase_unavailable"))
+		return
+	_begin_operation(OPERATION_PURCHASE)
 	if _has_native_bridge():
 		_call_native_bridge("purchase_support", [SUPPORT_PRODUCT_ID])
 		return
 	if OS.is_debug_build():
-		_set_supporter_from_purchase(true)
+		_apply_verified_ownership(true)
 		_finish_purchase(true, _support_message("purchase_success"))
 	else:
 		_finish_purchase(false, _support_message("purchase_unavailable"))
@@ -115,8 +175,7 @@ func purchase_support() -> void:
 func restore_support() -> void:
 	if is_busy:
 		return
-	is_busy = true
-	state_changed.emit()
+	_begin_operation(OPERATION_RESTORE)
 	if _has_native_bridge():
 		_call_native_bridge("restore_support", [SUPPORT_PRODUCT_ID])
 		return
@@ -129,42 +188,115 @@ func restore_support() -> void:
 
 
 func debug_reset_supporter() -> void:
+	if not OS.is_debug_build():
+		return
 	SaveData.set_supporter(false)
+	_ownership_revision += 1
 	state_changed.emit()
 
 
 func complete_native_purchase(success: bool, message: String, owns_product: bool) -> void:
 	if owns_product:
-		_set_supporter_from_purchase(true)
+		_apply_verified_ownership(true)
+	if _active_operation != OPERATION_PURCHASE:
+		state_changed.emit()
+		return
 	var display_message := _native_purchase_message(success, message, owns_product)
 	_finish_purchase(success and owns_product, display_message)
 
 
-func complete_native_restore(success: bool, message: String, owns_product: bool) -> void:
-	_set_supporter_from_purchase(owns_product)
-	var display_message := _native_restore_message(success, message, owns_product)
-	_finish_restore(success and owns_product, display_message)
+func complete_native_restore(query_succeeded: bool, message: String, owns_product: bool) -> void:
+	if _active_operation != OPERATION_RESTORE:
+		return
+	var resolved_ownership := SaveData.is_supporter
+	if query_succeeded and _active_operation_revision == _ownership_revision:
+		_apply_verified_ownership(owns_product)
+		resolved_ownership = owns_product
+	var display_message := _native_restore_message(query_succeeded, message, resolved_ownership)
+	_finish_restore(query_succeeded and resolved_ownership, display_message)
 
 
-func complete_native_entitlement_check(owns_product: bool) -> void:
-	_set_supporter_from_purchase(owns_product)
+func complete_native_entitlement_check(query_succeeded: bool, owns_product: bool, _message: String) -> void:
+	_entitlement_refresh_in_flight = false
+	if query_succeeded and _entitlement_refresh_revision == _ownership_revision:
+		_apply_verified_ownership(owns_product)
+	state_changed.emit()
+	_flush_pending_entitlement_refresh()
+
+
+func complete_native_product_info(
+	query_succeeded: bool,
+	product_id: String,
+	available: bool,
+	price: String,
+	message: String
+) -> void:
+	if product_id != SUPPORT_PRODUCT_ID:
+		product_info_loading = false
+		product_info_loaded = true
+		product_available = false
+		formatted_price = ""
+		product_info_message = "product_mismatch"
+		state_changed.emit()
+		return
+	product_info_loading = false
+	product_info_loaded = true
+	product_available = query_succeeded and available and not price.is_empty()
+	formatted_price = price if product_available else ""
+	product_info_message = message
 	state_changed.emit()
 
 
-func _set_supporter_from_purchase(value: bool) -> void:
-	SaveData.set_supporter(value)
+func _invalidate_entitlement_queries() -> void:
+	_ownership_revision += 1
+
+
+func _begin_operation(operation: String) -> void:
+	_invalidate_entitlement_queries()
+	is_busy = true
+	_active_operation = operation
+	_active_operation_revision = _ownership_revision
+	state_changed.emit()
+
+
+func _apply_verified_ownership(value: bool) -> void:
+	_ownership_revision += 1
+	if SaveData.is_supporter != value:
+		SaveData.set_supporter(value)
 
 
 func _finish_purchase(success: bool, message: String) -> void:
+	if _active_operation != OPERATION_PURCHASE:
+		return
+	_active_operation = OPERATION_NONE
+	_active_operation_revision = -1
 	is_busy = false
 	state_changed.emit()
 	purchase_finished.emit(success, message)
+	_flush_pending_resume_refresh()
+	_flush_pending_entitlement_refresh()
 
 
 func _finish_restore(success: bool, message: String) -> void:
+	if _active_operation != OPERATION_RESTORE:
+		return
+	_active_operation = OPERATION_NONE
+	_active_operation_revision = -1
 	is_busy = false
 	state_changed.emit()
 	restore_finished.emit(success, message)
+	_flush_pending_resume_refresh()
+	_flush_pending_entitlement_refresh()
+
+
+func _flush_pending_resume_refresh() -> void:
+	if _refresh_after_resume_pending and not is_busy:
+		call_deferred("_refresh_after_resume")
+
+
+func _flush_pending_entitlement_refresh() -> void:
+	if _entitlement_refresh_pending and not _entitlement_refresh_in_flight and not is_busy:
+		call_deferred("refresh_entitlements")
 
 
 func _has_native_bridge() -> bool:
@@ -176,12 +308,30 @@ func _call_native_bridge(method_name: String, args: Array) -> void:
 	_detect_native_bridge()
 	var bridge: Object = _native_bridge
 	if bridge != null and bridge.has_method(method_name):
-		bridge.callv(method_name, args)
+		var accepted: Variant = bridge.callv(method_name, args)
+		if not (accepted is bool) or bool(accepted):
+			return
+		_handle_native_call_failure(method_name)
 		return
+	_handle_native_call_failure(method_name)
+
+
+func _handle_native_call_failure(method_name: String) -> void:
 	if method_name == "purchase_support":
 		_finish_purchase(false, _support_message("purchase_init_failed"))
 	elif method_name == "restore_support":
 		_finish_restore(false, _support_message("restore_init_failed"))
+	elif method_name == "query_product_info":
+		product_info_loading = false
+		product_info_loaded = true
+		product_available = false
+		formatted_price = ""
+		product_info_message = "purchase_init_failed"
+		state_changed.emit()
+	elif method_name == "refresh_entitlements":
+		_entitlement_refresh_in_flight = false
+		state_changed.emit()
+		_flush_pending_entitlement_refresh()
 	else:
 		state_changed.emit()
 
@@ -198,18 +348,24 @@ func _native_purchase_message(success: bool, message: String, owns_product: bool
 			return _support_message("purchase_missing")
 		"purchase_completed":
 			return _support_message("purchase_success")
+		"product_not_found", "product_offer_unavailable", "product_refresh_required":
+			return _support_message("purchase_unavailable")
+	if message.begins_with("product_unfetched_"):
+		return _support_message("purchase_unavailable")
 	if message.begins_with("billing_"):
 		return _support_message("purchase_failed")
 	return _support_message("purchase_failed")
 
 
-func _native_restore_message(success: bool, message: String, owns_product: bool) -> String:
-	if success and owns_product:
+func _native_restore_message(query_succeeded: bool, message: String, owns_product: bool) -> String:
+	if query_succeeded and owns_product:
 		return _support_message("restore_success")
-	if message == "not_owned":
+	if query_succeeded and message == "not_owned":
 		return _support_message("restore_none")
-	if message == "restore_completed":
+	if query_succeeded and message == "restore_completed":
 		return _support_message("restore_success")
+	if not query_succeeded:
+		return _support_message("restore_init_failed")
 	if message.begins_with("billing_"):
 		return _support_message("restore_init_failed")
 	return _support_message("restore_none")
@@ -241,15 +397,27 @@ func _connect_native_bridge_signals() -> void:
 		_native_bridge.restore_finished.connect(_on_native_restore_finished)
 	if _native_bridge.has_signal("entitlement_check_finished") and not _native_bridge.entitlement_check_finished.is_connected(_on_native_entitlement_check_finished):
 		_native_bridge.entitlement_check_finished.connect(_on_native_entitlement_check_finished)
+	if _native_bridge.has_signal("product_info_finished") and not _native_bridge.product_info_finished.is_connected(_on_native_product_info_finished):
+		_native_bridge.product_info_finished.connect(_on_native_product_info_finished)
 
 
 func _on_native_purchase_finished(success: bool, message: String, owns_product: bool) -> void:
 	complete_native_purchase(success, message, owns_product)
 
 
-func _on_native_restore_finished(success: bool, message: String, owns_product: bool) -> void:
-	complete_native_restore(success, message, owns_product)
+func _on_native_restore_finished(query_succeeded: bool, message: String, owns_product: bool) -> void:
+	complete_native_restore(query_succeeded, message, owns_product)
 
 
-func _on_native_entitlement_check_finished(owns_product: bool) -> void:
-	complete_native_entitlement_check(owns_product)
+func _on_native_entitlement_check_finished(query_succeeded: bool, owns_product: bool, message: String) -> void:
+	complete_native_entitlement_check(query_succeeded, owns_product, message)
+
+
+func _on_native_product_info_finished(
+	query_succeeded: bool,
+	product_id: String,
+	available: bool,
+	price: String,
+	message: String
+) -> void:
+	complete_native_product_info(query_succeeded, product_id, available, price, message)

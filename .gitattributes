@@ -4,7 +4,15 @@
 *.tscn text eol=lf
 *.tres text eol=lf
 *.cfg text eol=lf
+*.godot text eol=lf
+*.gradle text eol=lf
+*.kt text eol=lf
+*.xml text eol=lf
+*.svg text eol=lf
+*.import text eol=lf
 *.md text eol=lf
 *.json text eol=lf
 *.csv text eol=lf
 *.py text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf

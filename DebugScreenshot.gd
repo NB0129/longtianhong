@@ -1,15 +1,17 @@
 extends Node
 
-const SCREENSHOT_DIR := "E:/FileHistory/狼天紅/3麻シミュレーション/スクリーンショット"
+const SCREENSHOT_DIR := "user://screenshots"
 
 var _capturing := false
 
 
 func _ready() -> void:
-	set_process_input(true)
+	set_process_input(OS.is_debug_build())
 
 
 func _input(event: InputEvent) -> void:
+	if not OS.is_debug_build():
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_F12 or event.physical_keycode == KEY_F12:
 			get_viewport().set_input_as_handled()
@@ -17,6 +19,8 @@ func _input(event: InputEvent) -> void:
 
 
 func capture() -> void:
+	if not OS.is_debug_build():
+		return
 	if _capturing:
 		return
 	_capturing = true
@@ -26,7 +30,8 @@ func capture() -> void:
 		push_error("スクリーンショットの取得に失敗しました")
 		_capturing = false
 		return
-	var directory_error: Error = DirAccess.make_dir_recursive_absolute(SCREENSHOT_DIR)
+	var absolute_directory := ProjectSettings.globalize_path(SCREENSHOT_DIR)
+	var directory_error: Error = DirAccess.make_dir_recursive_absolute(absolute_directory)
 	if directory_error != OK:
 		push_error("スクリーンショット保存先を作成できません: " + str(directory_error))
 		_capturing = false
@@ -41,7 +46,7 @@ func capture() -> void:
 		int(datetime["second"]),
 		Time.get_ticks_msec() % 1000,
 	]
-	var output_path: String = SCREENSHOT_DIR.path_join(filename)
+	var output_path: String = absolute_directory.path_join(filename)
 	var save_error: Error = image.save_png(output_path)
 	if save_error == OK:
 		print("スクリーンショットを保存しました: ", output_path)

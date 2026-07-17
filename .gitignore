@@ -6,7 +6,8 @@ ios_export/
 android/build/.gradle/
 android/build/build/
 android/build/libs/
-android/build/assetPackInstallTime/
+android/build/assetPackInstallTime/*
+!android/build/assetPackInstallTime/build.gradle
 android/build/src/instrumented/
 android/build/src/androidTestInstrumented/
 android/build/src/main/assets/

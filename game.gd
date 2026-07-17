@@ -2650,6 +2650,8 @@ func on_time_up() -> void:
 func _input(event: InputEvent) -> void:
 	if _is_tutorial_stage() and _handle_tutorial_advance_input(event):
 		return
+	if not OS.is_debug_build():
+		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
 		GameState.debug_mode = not GameState.debug_mode
 		update_debug_display()
@@ -2667,6 +2669,10 @@ func _input(event: InputEvent) -> void:
 		return
 
 func update_debug_display() -> void:
+	if not OS.is_debug_build():
+		GameState.debug_mode = false
+		$DebugLabel.visible = false
+		return
 	if GameState.debug_mode:
 		$DebugLabel.visible = true
 		if correct_tiles.is_empty():
@@ -2863,6 +2869,8 @@ func _remove_exhausted_selected_tiles() -> void:
 	selected_tiles = filtered
 
 func _force_exhausted_tile_question() -> void:
+	if not OS.is_debug_build():
+		return
 	if is_animating or is_game_over:
 		return
 	current_hand = [1, 1, 2, 2, 3, 3, 3, 3, 4, 5, 7, 8, 9]
@@ -2875,6 +2883,8 @@ func _force_exhausted_tile_question() -> void:
 	print("縲舌ョ繝舌ャ繧ｰ縲鞫ｯF6 4譫壻ｽｿ縺・・謇狗煙: ", current_hand, " 豁｣隗｣: ", correct_tiles, " 4譫壻ｽｿ縺・・ ", _get_exhausted_tiles())
 
 func _force_clear_current_question() -> void:
+	if not OS.is_debug_build():
+		return
 	if is_animating or is_game_over:
 		return
 	print("【デバッグ】F2 強制クリア")
