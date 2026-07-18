@@ -601,6 +601,8 @@ func _update_support_popup_state() -> void:
 		_set_support_message(_support_ui_text("product_loading"))
 	elif not SupportPurchase.product_available:
 		_set_support_message(_support_ui_text("product_unavailable"))
+	else:
+		_set_support_message("")
 
 func _set_support_message(message: String) -> void:
 	if _support_message_label != null and is_instance_valid(_support_message_label):

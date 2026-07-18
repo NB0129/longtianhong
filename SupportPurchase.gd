@@ -20,6 +20,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_canceled": "購入をキャンセルしました。",
 		"purchase_pending": "購入が保留中です。Google Play の処理完了後にもう一度確認してください。",
 		"purchase_missing": "購入情報を確認できませんでした。時間をおいて再度お試しください。",
+		"purchase_price_updated": "価格情報が更新されました。表示価格を確認して、もう一度購入してください。",
 		"purchase_failed": "購入処理に失敗しました。時間をおいて再度お試しください。",
 		"restore_success": "購入済み状態を確認しました。",
 		"restore_none": "復元できる購入はありません。",
@@ -33,6 +34,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_canceled": "Purchase canceled.",
 		"purchase_pending": "Purchase is pending. Please check again after Google Play finishes processing it.",
 		"purchase_missing": "Purchase information could not be confirmed. Please try again later.",
+		"purchase_price_updated": "The price was updated. Check the displayed price, then tap purchase again.",
 		"purchase_failed": "Purchase failed. Please try again later.",
 		"restore_success": "Purchased status confirmed.",
 		"restore_none": "No purchase is available to restore.",
@@ -46,6 +48,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_canceled": "已取消购买。",
 		"purchase_pending": "购买正在处理中。请在 Google Play 处理完成后再次确认。",
 		"purchase_missing": "无法确认购买信息。请稍后重试。",
+		"purchase_price_updated": "价格信息已更新。请确认显示的价格后再次购买。",
 		"purchase_failed": "购买失败。请稍后重试。",
 		"restore_success": "已确认购买状态。",
 		"restore_none": "没有可恢复的购买。",
@@ -59,6 +62,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_canceled": "已取消購買。",
 		"purchase_pending": "購買正在處理中。請在 Google Play 處理完成後再次確認。",
 		"purchase_missing": "無法確認購買資訊。請稍後再試。",
+		"purchase_price_updated": "價格資訊已更新。請確認顯示的價格後再次購買。",
 		"purchase_failed": "購買失敗。請稍後再試。",
 		"restore_success": "已確認購買狀態。",
 		"restore_none": "沒有可復原的購買。",
@@ -72,6 +76,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_canceled": "구매를 취소했습니다.",
 		"purchase_pending": "구매가 처리 중입니다. Google Play 처리가 끝난 뒤 다시 확인해 주세요.",
 		"purchase_missing": "구매 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+		"purchase_price_updated": "가격 정보가 업데이트되었습니다. 표시된 가격을 확인한 뒤 다시 구매해 주세요.",
 		"purchase_failed": "구매에 실패했습니다. 잠시 후 다시 시도해 주세요.",
 		"restore_success": "구매 상태를 확인했습니다.",
 		"restore_none": "복원할 수 있는 구매가 없습니다.",
@@ -348,7 +353,9 @@ func _native_purchase_message(success: bool, message: String, owns_product: bool
 			return _support_message("purchase_missing")
 		"purchase_completed":
 			return _support_message("purchase_success")
-		"product_not_found", "product_offer_unavailable", "product_refresh_required":
+		"product_refresh_required":
+			return _support_message("purchase_price_updated")
+		"product_not_found", "product_offer_unavailable":
 			return _support_message("purchase_unavailable")
 	if message.begins_with("product_unfetched_"):
 		return _support_message("purchase_unavailable")

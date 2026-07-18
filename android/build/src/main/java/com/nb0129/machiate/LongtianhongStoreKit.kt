@@ -82,7 +82,8 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 	private var billingClient: BillingClient? = null
 	private var billingConnectionInProgress = false
 	private var pendingPurchaseProductId: String? = null
-	private var cachedSelectedOffer: SelectedOffer? = null
+	private var displayedOfferProductId: String? = null
+	private var displayedOfferFormattedPrice: String? = null
 
 	override fun getPluginName() = "LongtianhongStoreKit"
 
@@ -103,7 +104,7 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 		billingClient = null
 		billingConnectionInProgress = false
 		pendingPurchaseProductId = null
-		cachedSelectedOffer = null
+		clearDisplayedOffer()
 		super.onMainDestroy()
 	}
 
@@ -111,25 +112,26 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 	fun query_product_info(productId: String): Boolean {
 		runOnHostThread {
 			if (!isSupportedProduct(productId)) {
+				clearDisplayedOffer()
 				emitProductInfoFinished(false, productId, false, "", "product_invalid")
 				return@runOnHostThread
 			}
 			withReadyBillingClient("query_product_info", onError = {
-				cachedSelectedOffer = null
+				clearDisplayedOffer()
 				emitProductInfoFinished(false, productId, false, "", it)
 			}) { client, _ ->
 				querySelectedOffer(client, productId) { result, selectedOffer, message ->
 					if (!isOk(result)) {
-						cachedSelectedOffer = null
+						clearDisplayedOffer()
 						emitProductInfoFinished(false, productId, false, "", errorCode(result))
 						return@querySelectedOffer
 					}
 					if (selectedOffer == null) {
-						cachedSelectedOffer = null
+						clearDisplayedOffer()
 						emitProductInfoFinished(true, productId, false, "", message)
 						return@querySelectedOffer
 					}
-					cachedSelectedOffer = selectedOffer
+					rememberDisplayedOffer(productId, selectedOffer.offerDetails.formattedPrice)
 					emitProductInfoFinished(
 						true,
 						productId,
@@ -153,33 +155,50 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 			withReadyBillingClient("purchase_support", onError = {
 				emitPurchaseFinished(false, it, false)
 			}) { client, currentActivity ->
-				val cachedOffer = cachedSelectedOffer
-				if (cachedOffer != null && cachedOffer.productDetails.productId == productId) {
-					launchPurchaseFlow(client, currentActivity, productId, cachedOffer)
-					return@withReadyBillingClient
-				}
 				querySelectedOffer(client, productId) { result, selectedOffer, message ->
 					if (!isOk(result)) {
 						emitPurchaseFinished(false, errorCode(result), false)
 						return@querySelectedOffer
 					}
 					if (selectedOffer == null) {
+						clearDisplayedOffer()
+						emitProductInfoFinished(true, productId, false, "", message)
 						emitPurchaseFinished(false, message, false)
 						return@querySelectedOffer
 					}
-					cachedSelectedOffer = selectedOffer
-					emitProductInfoFinished(
-						true,
-						productId,
-						true,
-						selectedOffer.offerDetails.formattedPrice,
-						"product_available"
-					)
-					emitPurchaseFinished(false, "product_refresh_required", false)
+					val freshPrice = selectedOffer.offerDetails.formattedPrice
+					val priceMatchesDisplay = isDisplayedOfferPriceCurrent(productId, freshPrice)
+					rememberDisplayedOffer(productId, freshPrice)
+					if (!priceMatchesDisplay) {
+						emitProductInfoFinished(
+							true,
+							productId,
+							true,
+							freshPrice,
+							"product_available"
+						)
+						emitPurchaseFinished(false, "product_refresh_required", false)
+						return@querySelectedOffer
+					}
+					launchPurchaseFlow(client, currentActivity, productId, selectedOffer)
 				}
 			}
 		}
 		return true
+	}
+
+	private fun clearDisplayedOffer() {
+		displayedOfferProductId = null
+		displayedOfferFormattedPrice = null
+	}
+
+	private fun rememberDisplayedOffer(productId: String, formattedPrice: String) {
+		displayedOfferProductId = productId
+		displayedOfferFormattedPrice = formattedPrice
+	}
+
+	private fun isDisplayedOfferPriceCurrent(productId: String, formattedPrice: String): Boolean {
+		return displayedOfferProductId == productId && displayedOfferFormattedPrice == formattedPrice
 	}
 
 	@UsedByGodot
