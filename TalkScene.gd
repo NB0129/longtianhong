@@ -97,6 +97,7 @@ const TUTORIAL_INTRO_LINES: Array[Dictionary] = [
 	},
 	{
 		"speaker": SPEAKER_MABOROSHI,
+		"display_speaker": SPEAKER_PYOKO,
 		"name": "ぴょこたん",
 		"text": "幻朧（まぼろし）ちゃん。\nミステリアスで素敵なのだ！",
 		"portrait": CHARA_MABOROSHI_DEFAULT,
@@ -1496,9 +1497,9 @@ func _refresh_current_line_text() -> void:
 	if _line_index < 0 or _line_index >= _lines.size():
 		return
 	var line: Dictionary = _lines[_line_index]
-	var speaker := str(line.get("speaker", SPEAKER_PYOKO))
+	var display_speaker := str(line.get("display_speaker", line.get("speaker", SPEAKER_PYOKO)))
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
-	_name_label.text = TalkLocalization.speaker_name(locale, speaker, str(line.get("name", "")))
+	_name_label.text = TalkLocalization.speaker_name(locale, display_speaker, str(line.get("name", "")))
 	_body_label.text = TalkLocalization.talk_text(locale, GameState.talk_scene_id, _line_index, str(line.get("text", "")))
 
 
