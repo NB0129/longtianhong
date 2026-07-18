@@ -105,6 +105,12 @@ static func apply_credit_popup(panel: Panel) -> void:
 		body.add_theme_font_size_override("font_size", 16)
 		body.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0))
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if panel.has_node("VBox/BtnPrivacyPolicy"):
+		var privacy_button := panel.get_node("VBox/BtnPrivacyPolicy") as Button
+		privacy_button.custom_minimum_size = Vector2(260.0, 44.0)
+		privacy_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		privacy_button.focus_mode = Control.FOCUS_ALL
+		privacy_button.add_theme_font_size_override("font_size", 18)
 	if panel.has_node("VBox/BtnCreditClose"):
 		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_CLOSE_V2)
 		apply_generated_text_button(panel.get_node("VBox/BtnCreditClose"), close_path, close_path)

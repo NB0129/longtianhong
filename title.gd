@@ -14,6 +14,7 @@ const PATH_ICON_SETTINGS := "res://assets/bg/music_icon_settings_ui.webp"
 const PATH_CREDIT_BUTTON := "res://assets/ui/title_btn_credit.webp"
 const PATH_IPA_LICENSE := "res://assets/font/IPA_Font_License_Agreement_v1.0.txt"
 const PATH_ANDROID_OSS_NOTICES := "res://assets/legal/android_oss_notices.txt"
+const PRIVACY_POLICY_URL := "https://rotenkogames.com/privacy"
 
 const LANGUAGE_OPTIONS: Array[Dictionary] = [
 	{"code": "ja", "label": "日本語"},
@@ -32,6 +33,7 @@ const UI_TEXT := {
 		"settings_se": "SE音量",
 		"settings_tile": "牌の種類",
 		"language": "Language",
+		"privacy_policy": "プライバシーポリシー",
 		"credit": "企画・制作\n狼天紅ゲームズ\n\n原画・キャラクターデザイン\n椿式\n\nコーディング\nCodex\nClaude Code\n\nUI・ビジュアル制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM・サウンド制作\nSuno\n\nフォント\n刻明朝 Regular / Koku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\nライセンス全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n効果音協力\n効果音ラボ\n\nゲームエンジン\nGodot Engine\n\nGodot Engine License\n",
 	},
 	"en": {
@@ -39,6 +41,7 @@ const UI_TEXT := {
 		"settings_se": "SE volume",
 		"settings_tile": "Tile suit",
 		"language": "Language",
+		"privacy_policy": "Privacy Policy",
 		"credit": "Planning / Production\n狼天紅 games\n\nOriginal art / Character design\n椿式\n\nCoding\nCodex\nClaude Code\n\nUI / Visual production\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / Sound production\nSuno\n\nFont\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\nLicense text: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\nSound effects\nSound Effect Lab\n\nGame engine\nGodot Engine\n\nGodot Engine License\n",
 	},
 	"zh_CN": {
@@ -46,6 +49,7 @@ const UI_TEXT := {
 		"settings_se": "SE 音量",
 		"settings_tile": "牌面花色",
 		"language": "Language",
+		"privacy_policy": "隐私政策",
 		"credit": "企划 / 制作\n狼天红 games\n\n原画 / 角色设计\n椿式\n\n程序\nCodex\nClaude Code\n\nUI / 视觉制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 音效制作\nSuno\n\n字体\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\n许可证全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n音效\nSound Effect Lab\n\n游戏引擎\nGodot Engine\n\nGodot Engine License\n",
 	},
 	"zh_TW": {
@@ -53,6 +57,7 @@ const UI_TEXT := {
 		"settings_se": "SE 音量",
 		"settings_tile": "牌面花色",
 		"language": "Language",
+		"privacy_policy": "隱私權政策",
 		"credit": "企劃 / 製作\n狼天紅 games\n\n原畫 / 角色設計\n椿式\n\n程式\nCodex\nClaude Code\n\nUI / 視覺製作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 音效製作\nSuno\n\n字型\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\n授權全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n音效\nSound Effect Lab\n\n遊戲引擎\nGodot Engine\n\nGodot Engine License\n",
 	},
 	"ko": {
@@ -60,6 +65,7 @@ const UI_TEXT := {
 		"settings_se": "SE 볼륨",
 		"settings_tile": "패 종류",
 		"language": "Language",
+		"privacy_policy": "개인정보처리방침",
 		"credit": "기획 / 제작\n狼天紅 games\n\n원화 / 캐릭터 디자인\n椿式\n\n코딩\nCodex\nClaude Code\n\nUI / 비주얼 제작\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 사운드 제작\nSuno\n\n폰트\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\n라이선스 전문: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n효과음\nSound Effect Lab\n\n게임 엔진\nGodot Engine\n\nGodot Engine License\n",
 	},
 }
@@ -89,6 +95,7 @@ var _credit_text_loaded: bool = false
 var _legal_notice_cache: String = ""
 var _settings_dragging: bool = false
 var _settings_last_drag_y: float = 0.0
+var _shell_open_override: Callable = Callable()
 
 
 func _ready() -> void:
@@ -213,6 +220,9 @@ func _apply_text_language() -> void:
 	if _credit_popup != null and _credit_popup.has_node("VBox/CreditScroll/CreditBody"):
 		var body := _credit_popup.get_node("VBox/CreditScroll/CreditBody") as Label
 		body.text = _make_credit_text() if _credit_text_loaded else _text_value("credit")
+	if _credit_popup != null and _credit_popup.has_node("VBox/BtnPrivacyPolicy"):
+		var privacy_button := _credit_popup.get_node("VBox/BtnPrivacyPolicy") as Button
+		privacy_button.text = _text_value("privacy_policy")
 
 
 func _set_label_text(node_name: String, value: String) -> void:
@@ -571,11 +581,25 @@ func _setup_credit_popup() -> void:
 		body.text = _text_value("credit")
 		body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		scroll.add_child(body)
-		var close_button := Button.new()
+	var credit_vbox := _credit_popup.get_node("VBox") as VBoxContainer
+	var privacy_button := credit_vbox.get_node_or_null("BtnPrivacyPolicy") as Button
+	if privacy_button == null:
+		privacy_button = Button.new()
+		privacy_button.name = "BtnPrivacyPolicy"
+		privacy_button.focus_mode = Control.FOCUS_ALL
+		privacy_button.pressed.connect(_on_btn_privacy_policy_pressed)
+		credit_vbox.add_child(privacy_button)
+	ButtonFeedback.skip(privacy_button)
+	var close_button := credit_vbox.get_node_or_null("BtnCreditClose") as Button
+	if close_button == null:
+		close_button = Button.new()
 		close_button.name = "BtnCreditClose"
 		close_button.pressed.connect(_on_btn_credit_close_pressed)
-		vbox.add_child(close_button)
+		credit_vbox.add_child(close_button)
+	if privacy_button.get_index() > close_button.get_index():
+		credit_vbox.move_child(privacy_button, close_button.get_index())
 	_credit_scroll = _credit_popup.get_node("VBox/CreditScroll")
+	privacy_button.text = _text_value("privacy_policy")
 	PopupSkin.apply_credit_popup(_credit_popup)
 
 
@@ -773,6 +797,19 @@ func _on_btn_credit_close_pressed() -> void:
 	_credit_overlay.visible = false
 	_credit_popup.visible = false
 	_credit_dragging = false
+
+
+func _on_btn_privacy_policy_pressed() -> void:
+	_open_external_https_url(PRIVACY_POLICY_URL)
+
+
+func _open_external_https_url(url: String) -> Error:
+	if not url.begins_with("https://"):
+		return ERR_INVALID_PARAMETER
+	if _shell_open_override.is_valid():
+		_shell_open_override.call(url)
+		return OK
+	return OS.shell_open(url)
 
 
 func _on_settings_scroll_gui_input(event: InputEvent) -> void:
