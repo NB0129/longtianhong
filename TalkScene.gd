@@ -92,7 +92,7 @@ const TUTORIAL_INTRO_LINES: Array[Dictionary] = [
 	{
 		"speaker": SPEAKER_PYOKO,
 		"name": "ぴょこたん",
-		"text": "実は最近、気になっている女の子がいるのだ…",
+		"text": "実は最近、気になっている女の子がいるのだ……",
 		"portrait": CHARA_PYOKO_NARUHODO,
 	},
 	{
