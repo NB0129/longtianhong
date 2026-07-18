@@ -107,9 +107,11 @@ static func apply_credit_popup(panel: Panel) -> void:
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if panel.has_node("VBox/BtnPrivacyPolicy"):
 		var privacy_button := panel.get_node("VBox/BtnPrivacyPolicy") as Button
+		apply_button(privacy_button, "gold")
 		privacy_button.custom_minimum_size = Vector2(260.0, 44.0)
 		privacy_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		privacy_button.focus_mode = Control.FOCUS_ALL
+		privacy_button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 		privacy_button.add_theme_font_size_override("font_size", 18)
 	if panel.has_node("VBox/BtnCreditClose"):
 		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_CLOSE_V2)
@@ -404,6 +406,25 @@ static func _make_style(texture_path: String, margin: float) -> StyleBoxTexture:
 	style.texture_margin_top = margin
 	style.texture_margin_right = margin
 	style.texture_margin_bottom = margin
+	return style
+
+
+static func _make_keyboard_focus_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color.TRANSPARENT
+	style.border_color = Color(1.0, 0.88, 0.45, 1.0)
+	style.border_width_left = 3
+	style.border_width_top = 3
+	style.border_width_right = 3
+	style.border_width_bottom = 3
+	style.corner_radius_top_left = 10
+	style.corner_radius_top_right = 10
+	style.corner_radius_bottom_left = 10
+	style.corner_radius_bottom_right = 10
+	style.expand_margin_left = 2.0
+	style.expand_margin_top = 2.0
+	style.expand_margin_right = 2.0
+	style.expand_margin_bottom = 2.0
 	return style
 
 
