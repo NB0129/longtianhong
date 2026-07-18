@@ -104,12 +104,18 @@ Generated localized high score labels currently live at `assets/language/normali
 | `assets/ui/popups/popup_btn_buy_generated_pressed.webp` | 購入 | Buy | 购买 | 購買 | 구매 | Required |
 | `assets/ui/popups/popup_btn_restore_generated.webp` | 復元 | Restore | 恢复购买 | 恢復購買 | 복원 | Required |
 | `assets/ui/popups/popup_btn_restore_generated_pressed.webp` | 復元 | Restore | 恢复购买 | 恢復購買 | 복원 | Required |
-| `assets/ui/popups/popup_btn_support_buy_generated.webp` | 応援購入 | Support | 支持 | 支援 | 응원하기 | Required |
-| `assets/ui/popups/popup_btn_support_buy_generated_pressed.webp` | 応援購入 | Support | 支持 | 支援 | 응원하기 | Required |
-| `assets/ui/popups/popup_btn_support_restore_generated.webp` | 購入を復元 | Restore | 恢复购买 | 恢復購買 | 구매 복원 | Required |
-| `assets/ui/popups/popup_btn_support_restore_generated_pressed.webp` | 購入を復元 | Restore | 恢复购买 | 恢復購買 | 구매 복원 | Required |
-| `assets/ui/popups/popup_btn_support_close_generated.webp` | 閉じる | Close | 关闭 | 關閉 | 닫기 | Required |
-| `assets/ui/popups/popup_btn_support_close_generated_pressed.webp` | 閉じる | Close | 关闭 | 關閉 | 닫기 | Required |
+| `assets/ui/popups/popup_btn_support_buy_generated.webp` | 旧・価格入り応援購入 | Legacy | Legacy | Legacy | Legacy | Do not use |
+| `assets/ui/popups/popup_btn_support_buy_generated_pressed.webp` | 旧・価格入り応援購入 | Legacy | Legacy | Legacy | Legacy | Do not use |
+| `assets/ui/popups/popup_btn_support_restore_generated.webp` | 旧・購入を復元 | Legacy | Legacy | Legacy | Legacy | Do not use |
+| `assets/ui/popups/popup_btn_support_restore_generated_pressed.webp` | 旧・購入を復元 | Legacy | Legacy | Legacy | Legacy | Do not use |
+| `assets/ui/popups/popup_btn_support_close_generated.webp` | 旧・閉じる | Legacy | Legacy | Legacy | Legacy | Do not use |
+| `assets/ui/popups/popup_btn_support_close_generated_pressed.webp` | 旧・閉じる | Legacy | Legacy | Legacy | Legacy | Do not use |
+
+The support popup uses text-free `popup_btn_gold.webp`, `popup_btn_green.webp`, and
+`popup_btn_blue.webp` backgrounds. Its labels and price must remain runtime text;
+only the localized price returned by Google Play may be displayed. The legacy
+support button images above and the localized `support_buttons` images are kept
+as source history only and are excluded from mobile exports.
 
 ## Stage Intro
 

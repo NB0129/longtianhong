@@ -31,17 +31,10 @@ const BTN_BUY_GENERATED := "res://assets/ui/popups/popup_btn_buy_generated.webp"
 const BTN_BUY_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_buy_generated_pressed.webp"
 const BTN_RESTORE_GENERATED := "res://assets/ui/popups/popup_btn_restore_generated.webp"
 const BTN_RESTORE_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_restore_generated_pressed.webp"
-const BTN_SUPPORT_BUY_GENERATED := "res://assets/ui/popups/popup_btn_support_buy_generated.webp"
-const BTN_SUPPORT_BUY_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_support_buy_generated_pressed.webp"
-const BTN_SUPPORT_RESTORE_GENERATED := "res://assets/ui/popups/popup_btn_support_restore_generated.webp"
-const BTN_SUPPORT_RESTORE_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_support_restore_generated_pressed.webp"
-const BTN_SUPPORT_CLOSE_GENERATED := "res://assets/ui/popups/popup_btn_support_close_generated.webp"
-const BTN_SUPPORT_CLOSE_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_support_close_generated_pressed.webp"
 const LOCALIZED_SETTINGS_PANEL_DIR := "res://assets/language/normalized/%s/settings_panels/"
 const LOCALIZED_SETTINGS_BUTTON_DIR := "res://assets/language/normalized/%s/settings_buttons/"
 const LOCALIZED_CONFIRM_PANEL_DIR := "res://assets/language/normalized/%s/confirm_panels/"
 const LOCALIZED_CONFIRM_BUTTON_DIR := "res://assets/language/normalized/%s/confirm_buttons/"
-const LOCALIZED_SUPPORT_BUTTON_DIR := "res://assets/language/normalized/%s/support_buttons/"
 
 
 static func apply_settings_popup(panel: Panel) -> void:
@@ -86,14 +79,11 @@ static func apply_support_popup(panel: Panel) -> void:
 		var title: Label = panel.get_node("VBox/SupportTitle")
 		title.add_theme_font_size_override("font_size", 26)
 	if panel.has_node("VBox/BtnSupportBuy"):
-		var buy_path := _localized_support_button_path("popup_btn_support_buy.webp", BTN_SUPPORT_BUY_GENERATED)
-		apply_generated_text_button(panel.get_node("VBox/BtnSupportBuy"), buy_path, buy_path)
+		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportBuy"), "gold", Vector2(284.0, 58.0))
 	if panel.has_node("VBox/BtnSupportRestore"):
-		var restore_path := _localized_support_button_path("popup_btn_support_restore.webp", BTN_SUPPORT_RESTORE_GENERATED)
-		apply_generated_text_button(panel.get_node("VBox/BtnSupportRestore"), restore_path, restore_path)
+		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportRestore"), "green", Vector2(284.0, 52.0))
 	if panel.has_node("VBox/BtnSupportClose"):
-		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_SUPPORT_CLOSE_GENERATED)
-		apply_generated_text_button(panel.get_node("VBox/BtnSupportClose"), close_path, close_path)
+		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportClose"), "blue", Vector2(220.0, 48.0))
 
 
 static func apply_credit_popup(panel: Panel) -> void:
@@ -224,6 +214,18 @@ static func apply_button(button: Button, kind: String = "blue") -> void:
 	button.add_theme_color_override("font_disabled_color", Color(1.0, 1.0, 1.0, 0.45))
 	button.add_theme_color_override("font_outline_color", Color(0.02, 0.04, 0.14, 1.0))
 	button.add_theme_constant_override("outline_size", 5)
+
+
+static func _apply_dynamic_support_button(button: Button, kind: String, minimum_size: Vector2) -> void:
+	if button == null or not is_instance_valid(button):
+		return
+	# Support labels include the price returned by Google Play. Keep the visual
+	# background text-free so stale, hard-coded prices can never overlap it.
+	apply_button(button, kind)
+	button.custom_minimum_size = minimum_size
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 
 
 static func _set_label_text(parent: Node, node_name: String, value: String) -> void:
@@ -462,14 +464,6 @@ static func _localized_confirm_panel_path(file_name: String, fallback_path: Stri
 	return fallback_path
 
 
-static func _localized_support_button_path(file_name: String, fallback_path: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
-	var localized_path := (LOCALIZED_SUPPORT_BUTTON_DIR % locale) + file_name
-	if ResourceLoader.exists(localized_path):
-		return localized_path
-	return fallback_path
-
-
 static func _generated_button_min_size(texture_path: String) -> Vector2:
 	var target_height := _generated_button_height(texture_path)
 	if ResourceLoader.exists(texture_path):
@@ -486,20 +480,12 @@ static func _generated_button_height(texture_path: String) -> float:
 		return 48.0
 	if texture_path.ends_with("/settings_buttons/popup_btn_close.webp"):
 		return 92.0
-	if texture_path.ends_with("/support_buttons/popup_btn_support_buy.webp") or texture_path.ends_with("/support_buttons/popup_btn_support_restore.webp"):
-		return 58.0
 	if texture_path == BTN_CLOSE_V2:
 		return 58.0
 	if texture_path == BTN_YES_V2 or texture_path == BTN_NO_V2:
 		return 48.0
 	if texture_path == BTN_BACK_V2:
 		return 50.0
-	if texture_path == BTN_SUPPORT_BUY_GENERATED or texture_path == BTN_SUPPORT_BUY_GENERATED_PRESSED:
-		return 76.0
-	if texture_path == BTN_SUPPORT_RESTORE_GENERATED or texture_path == BTN_SUPPORT_RESTORE_GENERATED_PRESSED:
-		return 76.0
-	if texture_path == BTN_SUPPORT_CLOSE_GENERATED or texture_path == BTN_SUPPORT_CLOSE_GENERATED_PRESSED:
-		return 58.0
 	if texture_path == BTN_YES_GENERATED or texture_path == BTN_YES_GENERATED_PRESSED:
 		return 44.0
 	if texture_path == BTN_NO_GENERATED or texture_path == BTN_NO_GENERATED_PRESSED:
