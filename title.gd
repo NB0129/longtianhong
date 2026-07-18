@@ -12,6 +12,8 @@ const PATH_RANKING := "res://assets/ui/title_btn_ranking.webp"
 const PATH_HIGHSCORE := "res://assets/ui/haisukoa.webp"
 const PATH_ICON_SETTINGS := "res://assets/bg/music_icon_settings_ui.webp"
 const PATH_CREDIT_BUTTON := "res://assets/ui/title_btn_credit.webp"
+const PATH_IPA_LICENSE := "res://assets/font/IPA_Font_License_Agreement_v1.0.txt"
+const PATH_ANDROID_OSS_NOTICES := "res://assets/legal/android_oss_notices.txt"
 
 const LANGUAGE_OPTIONS: Array[Dictionary] = [
 	{"code": "ja", "label": "日本語"},
@@ -83,6 +85,8 @@ var _credit_scroll: ScrollContainer = null
 var _language_buttons: Dictionary = {}
 var _credit_dragging: bool = false
 var _credit_last_drag_y: float = 0.0
+var _credit_text_loaded: bool = false
+var _legal_notice_cache: String = ""
 var _settings_dragging: bool = false
 var _settings_last_drag_y: float = 0.0
 
@@ -208,7 +212,7 @@ func _apply_text_language() -> void:
 				_set_button_text(grid, button_name, "")
 	if _credit_popup != null and _credit_popup.has_node("VBox/CreditScroll/CreditBody"):
 		var body := _credit_popup.get_node("VBox/CreditScroll/CreditBody") as Label
-		body.text = _make_credit_text()
+		body.text = _make_credit_text() if _credit_text_loaded else _text_value("credit")
 
 
 func _set_label_text(node_name: String, value: String) -> void:
@@ -564,7 +568,7 @@ func _setup_credit_popup() -> void:
 		vbox.add_child(scroll)
 		var body := Label.new()
 		body.name = "CreditBody"
-		body.text = _make_credit_text()
+		body.text = _text_value("credit")
 		body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		scroll.add_child(body)
 		var close_button := Button.new()
@@ -661,8 +665,64 @@ func _layout_credit_button(size: float, vp: Vector2) -> void:
 
 
 func _make_credit_text() -> String:
-	var godot_license := Engine.get_license_text()
-	return _text_value("credit") + godot_license
+	return _text_value("credit") + "\n" + _make_legal_notices()
+
+
+func _make_legal_notices() -> String:
+	if not _legal_notice_cache.is_empty():
+		return _legal_notice_cache
+	var sections := PackedStringArray()
+	sections.append("IPA Font License Agreement v1.0")
+	sections.append(_read_legal_text(PATH_IPA_LICENSE))
+	if OS.has_feature("android"):
+		sections.append("\nAndroid open-source software notices")
+		sections.append(_read_legal_text(PATH_ANDROID_OSS_NOTICES))
+	sections.append("\n" + _make_godot_third_party_notice())
+	_legal_notice_cache = "\n\n".join(sections)
+	return _legal_notice_cache
+
+
+func _read_legal_text(path: String) -> String:
+	if not FileAccess.file_exists(path):
+		return "[Bundled legal text unavailable: %s]" % path
+	var text := FileAccess.get_file_as_string(path).strip_edges()
+	if text.is_empty():
+		return "[Bundled legal text is empty: %s]" % path
+	return text
+
+
+func _make_godot_third_party_notice() -> String:
+	var lines := PackedStringArray()
+	lines.append("Godot Engine license")
+	lines.append(Engine.get_license_text().strip_edges())
+	lines.append("\nGodot Engine third-party components")
+	for component: Dictionary in Engine.get_copyright_info():
+		var component_name := str(component.get("name", "")).strip_edges()
+		if component_name.is_empty():
+			continue
+		lines.append("\n" + component_name)
+		var parts_value: Variant = component.get("parts", [])
+		if not parts_value is Array:
+			continue
+		for part_value: Variant in parts_value:
+			if not part_value is Dictionary:
+				continue
+			var part: Dictionary = part_value
+			var copyright_value: Variant = part.get("copyright", [])
+			if copyright_value is Array:
+				for owner: Variant in copyright_value:
+					lines.append("Copyright (c) " + str(owner))
+			var license_id := str(part.get("license", "")).strip_edges()
+			if not license_id.is_empty():
+				lines.append("License: " + license_id)
+	lines.append("\nGodot Engine third-party license texts")
+	var license_info := Engine.get_license_info()
+	var license_names: Array = license_info.keys()
+	license_names.sort()
+	for license_name_value: Variant in license_names:
+		lines.append("\n--- " + str(license_name_value) + " ---")
+		lines.append(str(license_info[license_name_value]).strip_edges())
+	return "\n".join(lines)
 
 
 func _on_btn_story_pressed() -> void:
@@ -701,6 +761,7 @@ func _on_btn_settings_close_pressed() -> void:
 
 
 func _on_btn_credit_pressed() -> void:
+	_credit_text_loaded = true
 	_apply_text_language()
 	_credit_overlay.visible = true
 	_credit_popup.visible = true

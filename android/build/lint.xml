@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Godot 4.6.2's upstream splash theme deliberately references the
+         Android 12 platform attribute while using AndroidX SplashScreen for
+         older devices. Limit the suppression to that generated template. -->
+    <issue id="NewApi">
+        <ignore path="res/values/themes.xml" />
+    </issue>
+
+    <!-- The expansion-downloader class is packaged by the Godot Android
+         template but is unreachable when this app uses only an install-time
+         Play Asset Delivery pack. Do not request a runtime permission for an
+         unused notification path. -->
+    <issue id="NotificationPermission">
+        <ignore path="src/main/AndroidManifest.xml" />
+    </issue>
+
+    <!-- local.properties is a machine-local, non-packaged SDK locator written
+         by the export tooling. It is ignored by Git and not an app resource. -->
+    <issue id="PropertyEscape">
+        <ignore path="local.properties" />
+    </issue>
+</lint>

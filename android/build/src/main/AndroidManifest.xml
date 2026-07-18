@@ -20,12 +20,15 @@
     <application
         android:label="@string/godot_project_name_string"
         android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/icon"
         android:appCategory="game"
         android:isGame="true"
         android:hasFragileUserData="false"
         android:requestLegacyExternalStorage="false"
-        tools:ignore="GoogleAppIndexingWarning" >
+        tools:ignore="GoogleAppIndexingWarning"
+        tools:targetApi="31" >
         <meta-data
             android:name="org.godotengine.plugin.v2.GodotPlayGamesServices"
             android:value="com.nb0129.machiate.GodotPlayGamesServices" />

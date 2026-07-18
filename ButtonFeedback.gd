@@ -3,6 +3,7 @@ extends RefCounted
 const META_INSTALLED := "button_feedback_installed"
 const META_SKIP := "button_feedback_skip"
 const META_TWEEN := "button_feedback_tween"
+const META_TWEEN_TOKEN := "button_feedback_tween_token"
 const META_TARGET := "button_feedback_target"
 const META_REST_MODULATE := "button_feedback_rest_modulate"
 const META_PRESS_MODULATE := "button_feedback_press_modulate"
@@ -90,21 +91,29 @@ static func _play_feedback(button: BaseButton, target_scale: Vector2, target_mod
 		return
 	_update_pivot(target)
 	var tween := target.create_tween()
+	var tween_token := int(button.get_meta(META_TWEEN_TOKEN)) + 1 if button.has_meta(META_TWEEN_TOKEN) else 1
+	button.set_meta(META_TWEEN_TOKEN, tween_token)
 	button.set_meta(META_TWEEN, tween)
 	tween.set_parallel(true)
 	tween.tween_property(target, "scale", target_scale, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if _use_modulate(button):
 		tween.tween_property(target, "modulate", target_modulate, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.finished.connect(func() -> void:
-		if button != null and is_instance_valid(button) and button.get_meta(META_TWEEN, null) == tween:
-			button.remove_meta(META_TWEEN)
-	)
+	tween.finished.connect(_on_tween_finished.bind(button, tween_token), CONNECT_ONE_SHOT)
+
+
+static func _on_tween_finished(button: BaseButton, tween_token: int) -> void:
+	if button == null or not is_instance_valid(button) or not button.has_meta(META_TWEEN_TOKEN):
+		return
+	if int(button.get_meta(META_TWEEN_TOKEN)) == tween_token and button.has_meta(META_TWEEN):
+		button.remove_meta(META_TWEEN)
 
 
 static func _feedback_target(button: BaseButton) -> Control:
 	if button == null or not is_instance_valid(button):
 		return null
-	var target := button.get_meta(META_TARGET, null) as Control
+	var target: Control = null
+	if button.has_meta(META_TARGET):
+		target = button.get_meta(META_TARGET) as Control
 	if target != null and is_instance_valid(target):
 		return target
 	return button as Control
