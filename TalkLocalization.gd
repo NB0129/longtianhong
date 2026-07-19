@@ -141,7 +141,7 @@ const TALK_TEXT := {
 			"Intruder...",
 			"Ah, the kind big sister!\nIt is Pyokotan! I came to play again!",
 			"Human...\nMust eliminate...",
-			"Something seems strange about you...",
+			"Something's not right with her...?",
 		],
 		"ex_stage2_intro": [
 			"This is creepy...\nEverything feels completely different from last time.",
