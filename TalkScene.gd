@@ -7,6 +7,26 @@ const ButtonFeedback := preload("res://ButtonFeedback.gd")
 const TalkLocalization := preload("res://TalkLocalization.gd")
 
 const FONT_PATH := "res://assets/font/font_1_kokumr_1.00_rls.ttf"
+const SYSTEM_LOCALE_FONT_NAMES := {
+	"ko": [
+		"Noto Sans CJK KR",
+		"Noto Sans KR",
+		"Malgun Gothic",
+		"Noto Sans CJK SC",
+		"Microsoft YaHei",
+		"sans-serif",
+	],
+	"zh_CN": [
+		"Noto Sans CJK SC",
+		"Noto Sans SC",
+		"Microsoft YaHei",
+		"Microsoft JhengHei",
+		"Noto Sans CJK KR",
+		"sans-serif",
+	],
+}
+const BODY_FONT_SIZE := 25
+const BODY_MIN_FONT_SIZE := 20
 const BG_TUTORIAL := "res://assets/bg/bg_sentaku_generated_screen.webp"
 const BG_STAGE1 := "res://assets/bg/bg_yume.webp"
 const BG_STAGE2 := "res://assets/bg/bg_ututu.webp"
@@ -515,6 +535,7 @@ const NIGHTMARE_CLEAR_LINES: Array[Dictionary] = [
 var _lines: Array[Dictionary] = []
 var _line_index: int = 0
 var _font: FontFile = null
+var _system_locale_fonts: Dictionary = {}
 var _bg: TextureRect = null
 var _shade: ColorRect = null
 var _pyoko: TextureRect = null
@@ -553,6 +574,12 @@ func _ready() -> void:
 		return
 	_play_talk_bgm()
 	_font = load(FONT_PATH) as FontFile
+	_system_locale_fonts.clear()
+	for locale in SYSTEM_LOCALE_FONT_NAMES:
+		var locale_font := SystemFont.new()
+		locale_font.font_names = PackedStringArray(SYSTEM_LOCALE_FONT_NAMES[locale])
+		locale_font.allow_system_fallback = true
+		_system_locale_fonts[locale] = locale_font
 	_build_ui()
 	_layout_ui()
 	_apply_text_language()
@@ -565,6 +592,7 @@ func _notification(what: int) -> void:
 		if _bg == null or _pyoko == null or _maboroshi == null or _side_yume == null or _talk_panel == null:
 			return
 		_layout_ui()
+		_fit_body_text_to_bounds()
 		_apply_speaker_focus(_get_current_speaker(), false)
 
 
@@ -743,12 +771,13 @@ func _build_ui() -> void:
 	_body_label = Label.new()
 	_body_label.name = "BodyLabel"
 	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_body_label.clip_text = true
 	_body_label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	_body_label.add_theme_color_override("font_color", Color(1.0, 0.96, 0.88))
 	_body_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 	_body_label.add_theme_constant_override("shadow_offset_x", 2)
 	_body_label.add_theme_constant_override("shadow_offset_y", 2)
-	_apply_label_font(_body_label, 25)
+	_apply_label_font(_body_label, BODY_FONT_SIZE)
 	_talk_panel.add_child(_body_label)
 
 	_next_mark = Label.new()
@@ -1037,6 +1066,15 @@ func _apply_label_font(label: Label, font_size: int) -> void:
 	if _font != null:
 		label.add_theme_font_override("font", _font)
 	label.add_theme_font_size_override("font_size", font_size)
+
+
+func _apply_dialogue_locale_font(label: Label, locale: String) -> void:
+	var selected_font: Font = _font
+	if _system_locale_fonts.has(locale):
+		selected_font = _system_locale_fonts[locale] as Font
+	if selected_font != null:
+		label.add_theme_font_override("font", selected_font)
+	label.language = locale.replace("_", "-")
 
 
 func _layout_ui() -> void:
@@ -1499,8 +1537,23 @@ func _refresh_current_line_text() -> void:
 	var line: Dictionary = _lines[_line_index]
 	var display_speaker := str(line.get("display_speaker", line.get("speaker", SPEAKER_PYOKO)))
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	_apply_dialogue_locale_font(_name_label, locale)
+	_apply_dialogue_locale_font(_body_label, locale)
 	_name_label.text = TalkLocalization.speaker_name(locale, display_speaker, str(line.get("name", "")))
 	_body_label.text = TalkLocalization.talk_text(locale, GameState.talk_scene_id, _line_index, str(line.get("text", "")))
+	_fit_body_text_to_bounds()
+
+
+func _fit_body_text_to_bounds() -> void:
+	if _body_label == null or not _body_label.is_inside_tree():
+		return
+	if _body_label.size.x <= 0.0 or _body_label.size.y <= 0.0:
+		return
+	for font_size in range(BODY_FONT_SIZE, BODY_MIN_FONT_SIZE - 1, -1):
+		_body_label.add_theme_font_size_override("font_size", font_size)
+		if _body_label.get_visible_line_count() >= _body_label.get_line_count():
+			return
+	push_warning("Dialogue text exceeds body bounds at minimum font size")
 
 
 func _is_ui_point(point: Vector2) -> bool:
