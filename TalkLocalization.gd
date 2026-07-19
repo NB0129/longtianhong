@@ -133,7 +133,7 @@ const TALK_TEXT := {
 			"He is the boy everyone at my preschool is talking about.",
 			"If memory serves, he spent his parents' money without permission\nand got banned from their home...\nPyokotan!",
 			"H-how do you know my secret?",
-			"Well, never mind.\nI came to play today.\nMaboroshi, challenge me at mahjong!",
+			"Oh well!\nI came to play today.\nMaboroshi, let's have a mahjong match!",
 		],
 		"ex_stage1_intro": [
 			"I came again.\nI am going to play mahjong with Maboroshi!",
@@ -219,7 +219,7 @@ const TALK_TEXT := {
 			"他就是我们幼儿园里传闻中的那个男孩。",
 			"我记得，那个擅自花了父母的钱，\n结果连家门都不准进的小子是……\n皮约可炭！",
 			"为、为什么你知道我的秘密！",
-			"算了。\n今天我是来玩的。\n幻胧，和我用麻将决胜负吧！",
+			"算啦。\n我今天是来玩的。\n幻胧，来跟我打麻将一决胜负吧！",
 		],
 		"ex_stage1_intro": [
 			"我又来了。\n要和幻胧一起打麻将！",
@@ -305,7 +305,7 @@ const TALK_TEXT := {
 			"他就是我們幼兒園裡傳聞中的那個男孩。",
 			"我記得，那個擅自花了父母的錢，\n結果連家門都不准進的小子是……\n皮約可炭！",
 			"為、為什麼妳知道我的祕密！",
-			"算了。\n今天我是來玩的。\n幻朧，和我用麻將決勝負吧！",
+			"算啦。\n我今天是來玩的。\n幻朧，來跟我打麻將一決勝負吧！",
 		],
 		"ex_stage1_intro": [
 			"我又來了。\n要和幻朧一起打麻將！",
@@ -391,7 +391,7 @@ const TALK_TEXT := {
 			"내가 다니는 유치원에서 소문난 남자다.",
 			"분명 부모님 돈을 멋대로 써 버리고\n부모님 집 출입을 금지당한 남자...\n표코탄!",
 			"어, 어째서 내 비밀을 알고 있는 거야!",
-			"뭐, 괜찮은 거야.\n오늘은 놀러 온 거야.\n마보로시, 나와 마작으로 승부인 거야!",
+			"뭐, 괜찮은 거야.\n오늘은 놀러 온 거야.\n마보로시, 나랑 마작으로 승부하는 거야!",
 		],
 		"ex_stage1_intro": [
 			"또 와 버린 거야.\n마보로시랑 마작으로 놀 거야!",
