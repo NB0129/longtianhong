@@ -165,7 +165,7 @@ const TALK_TEXT := {
 			"Oh. Okay.",
 			"At this rate, I may play mahjong with you again.\nCome whenever you like.",
 			"Yay! I will come play again!",
-			"However, avoid nights with a full moon.\nI may be fine, but my daughters are still immature as werewolves. The welcome could become rough.",
+			"But don't come on full-moon nights.\nI can control my werewolf instincts; my daughters cannot yet. They might give you a rough welcome.",
 			"?\nGot it!",
 		],
 		"nightmare_clear": [
@@ -251,7 +251,7 @@ const TALK_TEXT := {
 			"啊，是吗。",
 			"这样的话，以后再陪你打麻将也可以。\n想来的时候就来吧。",
 			"太好了！我还会再来玩的！",
-			"不过，满月的日子就别来了。\n我倒还好，女儿们作为人狼还不成熟，可能会粗暴地欢迎你。",
+			"不过，满月那天就别来了。\n我倒还能克制住狼人的本能，可女儿们还做不到。恐怕会用太粗暴的方式“招待”你。",
 			"？\n知道了！",
 		],
 		"nightmare_clear": [
@@ -337,7 +337,7 @@ const TALK_TEXT := {
 			"啊，是嗎。",
 			"這樣的話，以後再陪你打麻將也可以。\n想來的時候就來吧。",
 			"太好了！我還會再來玩的！",
-			"不過，滿月的日子就別來了。\n我倒還好，女兒們作為人狼還不成熟，可能會粗暴地歡迎你。",
+			"不過，滿月那天就別來了。\n我倒還能克制住狼人的本能，可女兒們還做不到。恐怕會用太粗暴的方式「招待」你。",
 			"？\n知道了！",
 		],
 		"nightmare_clear": [
@@ -423,7 +423,7 @@ const TALK_TEXT := {
 			"아, 그래.",
 			"이 정도라면 또 마작 상대를 해 줘도 되겠군.\n좋아할 때 놀러 와라.",
 			"해냈다! 또 놀러 올 거야!",
-			"다만 보름달이 뜬 날은 그만둬라.\n나는 몰라도 딸들은 아직 늑대인간으로 미숙한 몸. 거친 환영이 될지도 모른다.",
+			"단, 보름달 뜬 밤엔 오지 마라.\n나는 늑대인간의 본능을 다스린다. 딸들은 아직 못 하니 환영이 거칠 수 있다.",
 			"?\n알겠는 거야!",
 		],
 		"nightmare_clear": [
