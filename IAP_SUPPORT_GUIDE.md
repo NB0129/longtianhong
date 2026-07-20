@@ -15,7 +15,7 @@
 
 これは非消費型デジタル商品で、固定特典はゲーム内 Music Room の解放である。寄付・投資・将来作品への対価として販売せず、購入画面でもデジタル特典を正面に表示する。
 
-`SaveData.is_supporter` は端末キャッシュであり、最終的な正は App Store の購入履歴である。
+`SaveData.is_supporter` は端末キャッシュであり、最終的な正は App Store の購入履歴である。release build で購入 backend がない場合は、キャッシュが `true` でも Music Room の行を表示せず、直接呼び出しによる入室も拒否する。
 
 ## 購入 backend
 
@@ -23,7 +23,7 @@
 
 1. 既存 Android billing bridge（singleton 名と contract は互換性のためコード内で維持）
 2. Godot iOS plugin singleton: `InAppStore`
-3. backend がない release build: fail closed。購入権を付与しない
+3. backend がない release build: fail closed。購入 UI / Music Room を非表示にし、キャッシュ値にかかわらず購入権を付与しない
 
 Android bridge の既存メソッド、signal、状態機械は変更しない。iOS は独自 bridge を新設せず、Godot の documented `InAppStore` API に合わせる。
 
@@ -72,12 +72,13 @@ Godot SDK Integrations の [godot-storekit2](https://github.com/godot-sdk-integr
 
 - [Godot 4.6: Plugins for iOS](https://docs.godotengine.org/en/4.6/tutorials/platform/ios/plugins_for_ios.html)
 - [godot-ios-plugins: InAppStore README (raw)](https://raw.githubusercontent.com/godotengine/godot-ios-plugins/master/plugins/inappstore/README.md)
+- [godot-ios-plugins releases](https://github.com/godot-sdk-integrations/godot-ios-plugins/releases)
 - [Apple: Restoring purchased products](https://developer.apple.com/documentation/storekit/restoring-purchased-products)
 - [Apple: SKPaymentQueue.restoreCompletedTransactions()](https://developer.apple.com/documentation/storekit/skpaymentqueue/restorecompletedtransactions())
 - [Apple: AppStore.sync()](https://developer.apple.com/documentation/storekit/appstore/sync())
 - [Godot SDK Integrations: godot-storekit2](https://github.com/godot-sdk-integrations/godot-storekit2)
 
-Godot 4.6 のページには内容が当該版向けに未更新の可能性があるという注意がある。実際に採用する plugin binary の互換性は Mac export で確認する。
+Godot 4.6 のページには内容が当該版向けに未更新の可能性があるという注意がある。legacy repository の公開済み prebuilt release は Godot 3.5 までしか互換性を証明しないため、その binary を 4.6 へ流用しない。exact Godot 4.6.x tag に合わせた source build または別の StoreKit 2 adapter を選び、Mac export と実機で互換性を確認する。
 
 ## 検証境界
 
@@ -90,6 +91,8 @@ workspace の headless mock test では以下を検証する。
 - 進行中 restore より新しい purchase が true を維持すること
 - 起動・復帰時の entitlement refresh が restore request を発生させないこと
 - auto-finish の設定
+- backend なし release 相当では、cached supporter が `true` でも Music Room を表示・許可しないこと
+- 全5言語の購入本文が Music Room 全21曲の解放を先頭に示し、価格 placeholder が一意であること
 
 次は未完了で、release gate のまま残す。
 

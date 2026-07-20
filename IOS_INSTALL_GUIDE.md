@@ -9,9 +9,9 @@
 - Godot 4.6 と対応する Export Templates
 - Apple ID / Apple Developer Team
 - iPhone と接続用ケーブル
-- Godot iOS plugins の `InAppStore` plugin binary
+- 使用する Godot 4.6.x の exact tag と互換性を実証した `InAppStore` plugin binary、または検証済み StoreKit 2 adapter
 
-このリポジトリには `InAppStore` plugin binary を同梱しない。取得、バージョン適合確認、導入は Mac 上で別途行う。
+このリポジトリには iOS 課金 plugin binary を同梱しない。取得、build、バージョン適合確認、導入は Mac 上で別途行う。
 
 ## 1. Mac にプロジェクトを移す
 
@@ -27,8 +27,9 @@ Godot の公式 iOS plugin 手順に従い、Mac 上で `InAppStore` plugin を�
 
 - Godot 4.6: [Plugins for iOS](https://docs.godotengine.org/en/4.6/tutorials/platform/ios/plugins_for_ios.html)
 - 公式 plugin repository: [InAppStore README (raw)](https://raw.githubusercontent.com/godotengine/godot-ios-plugins/master/plugins/inappstore/README.md)
+- legacy prebuilt の公開状況: [godot-ios-plugins releases](https://github.com/godot-sdk-integrations/godot-ios-plugins/releases)
 
-Godot 4.6 の上記ドキュメントには「この版向けに未更新の可能性がある」という注意書きがある。plugin binary と Godot 4.6 の適合は、Mac で実際に export して確認する。
+Godot 4.6 の上記ドキュメントには「この版向けに未更新の可能性がある」という注意書きがある。legacy repository の公開済み prebuilt release は Godot 3.5 までしか互換性を証明しないため、その binary を Godot 4.6 へ流用しない。採用する場合は使用中の exact Godot 4.6.x tag に合わせて source build するか、別の StoreKit 2 adapter を選び、Mac export・singleton load・sandbox 実機試験で互換性を実証する。
 
 ## 4. iOS Export Preset を確認する
 
@@ -40,14 +41,16 @@ Godot 4.6 の上記ドキュメントには「この版向けに未更新の可�
 - Export path: `ios_export/machiate.zip`
 - Base icon: `res://assets/app_icon/machiate_launcher_432.png`
 
-Base icon は既存の 432×432 RGB / 不透明 PNG を指定している。Godot exporter が生成する App Store 用 1024×1024 icon の輪郭、余白、色、アルファは Mac / Xcode の asset catalog で目視確認する。dark / tinted icon は未指定のままにする。
+Version / Build は Android と揃えているが、App Store Connect に同じ build 番号が存在しないことを組織化完了後に確認する。
+
+Base icon は既存の 432×432 RGB / 不透明 PNG を指定している。可能なら native 1024×1024 master を用意する。現素材を使う場合は、Godot exporter が生成する App Store 用 1024×1024 icon の輪郭、余白、色、アルファを Mac / Xcode の asset catalog で目視確認する。dark / tinted icon は未指定のままにする。
 
 次の値は環境固有または別機能なので、この準備パッチでは変更していない。
 
 - App Store Team ID
 - code-sign identity
 - provisioning profile
-- Game Center entitlement
+- Game Center entitlement（v1 は `false` を維持。専用 adapter / iOS ID / 実機検証なしに有効化しない）
 
 ## 5. Xcode プロジェクトとして書き出す
 
