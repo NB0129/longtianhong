@@ -129,7 +129,7 @@ const TALK_TEXT := {
 			"What is it, Ututsu? You are being loud.",
 			"Ah, Maboroshi!\nI finally found you!",
 			"You are...",
-			"Huh, Mother.\nDo you know him?",
+			"Wait, Mom.\nDo you know this kid?",
 			"He is the boy everyone at my preschool is talking about.",
 			"If memory serves, he spent his parents' money without permission\nand got banned from their home...\nPyokotan!",
 			"H-how do you know my secret?",
