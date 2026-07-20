@@ -21,9 +21,8 @@ const LEADERBOARD_NAMES: Dictionary = {
 	KEY_ENDLESS: "endless / instant",
 }
 
-# Replace these placeholder values with the real Google Play Games /
-# Game Center leaderboard IDs after they are created in each console.
-const LEADERBOARD_IDS: Dictionary = {
+# Google Play Games IDs. These values must never be sent to Game Center.
+const ANDROID_LEADERBOARD_IDS: Dictionary = {
 	KEY_EASY: "CgkI6s38m_cNEAIQAQ",
 	KEY_NORMAL: "CgkI6s38m_cNEAIQAg",
 	KEY_HARD_MIRAGE: "CgkI6s38m_cNEAIQAw",
@@ -32,6 +31,10 @@ const LEADERBOARD_IDS: Dictionary = {
 	KEY_VERY_HARD_NIGHTMARE: "CgkI6s38m_cNEAIQBg",
 	KEY_ENDLESS: "CgkI6s38m_cNEAIQBw",
 }
+
+# Intentionally empty for v1. Populate only with leaderboard IDs created in
+# App Store Connect when the native Game Center bridge is implemented.
+const IOS_LEADERBOARD_IDS: Dictionary = {}
 
 const ANDROID_SINGLETON_CANDIDATES: Array[String] = [
 	"GodotPlayGamesServices",
@@ -55,8 +58,21 @@ func _ready() -> void:
 	_detect_native_singleton()
 
 
-func is_available() -> bool:
-	return _native_singleton != null
+func is_available(stage_key: String = "") -> bool:
+	_detect_native_singleton()
+	if _native_singleton == null:
+		return false
+	if OS.get_name() != "iOS":
+		return true
+	return _has_ios_leaderboard_configuration(stage_key)
+
+
+static func should_expose_ranking_ui(platform_name: String, service_available: bool) -> bool:
+	return platform_name != "iOS" or service_available
+
+
+func should_show_ranking_ui(stage_key: String = "") -> bool:
+	return should_expose_ranking_ui(OS.get_name(), is_available(stage_key))
 
 
 func is_logged_in() -> bool:
@@ -82,6 +98,9 @@ func submit_score(stage_key: String, score: int) -> bool:
 	if not _is_known_stage_key(stage_key):
 		print("[RankingManager] submit skipped. unknown stage_key=", stage_key, " score=", score)
 		return false
+	if OS.get_name() == "iOS" and not is_available(stage_key):
+		print("[RankingManager] submit skipped. Game Center unavailable for stage_key=", stage_key)
+		return false
 	var safe_score: int = maxi(0, score)
 	SaveData.record_ranking_score(stage_key, safe_score)
 	var submit_started := _submit_score_online(stage_key, safe_score)
@@ -103,6 +122,9 @@ func flush_pending_scores() -> void:
 func show_leaderboard(stage_key: String = "") -> bool:
 	if stage_key != "" and not _is_known_stage_key(stage_key):
 		print("[RankingManager] show skipped. unknown stage_key=", stage_key)
+		return false
+	if OS.get_name() == "iOS" and not is_available(stage_key):
+		print("[RankingManager] show skipped. Game Center unavailable for stage_key=", stage_key)
 		return false
 	if not login_if_needed():
 		_print_local_leaderboard(stage_key)
@@ -196,8 +218,9 @@ func _connect_native_signals() -> void:
 
 func _rebuild_leaderboard_id_lookup() -> void:
 	_leaderboard_id_to_stage_key.clear()
-	for key in LEADERBOARD_IDS.keys():
-		var leaderboard_id := str(LEADERBOARD_IDS[key])
+	var platform_ids := _get_leaderboard_ids_for_platform(OS.get_name())
+	for key in platform_ids.keys():
+		var leaderboard_id := str(platform_ids[key])
 		if leaderboard_id != "":
 			_leaderboard_id_to_stage_key[leaderboard_id] = str(key)
 
@@ -242,9 +265,29 @@ func _call_known_android_plugin_method(target: Object, method_names: Array[Strin
 
 
 func _get_leaderboard_id(stage_key: String) -> String:
+	return get_leaderboard_id_for_platform(stage_key, OS.get_name())
+
+
+static func get_leaderboard_id_for_platform(stage_key: String, platform_name: String) -> String:
 	if stage_key == "":
 		return ""
-	return str(LEADERBOARD_IDS.get(stage_key, ""))
+	var platform_ids := _get_leaderboard_ids_for_platform(platform_name)
+	return str(platform_ids.get(stage_key, ""))
+
+
+static func _get_leaderboard_ids_for_platform(platform_name: String) -> Dictionary:
+	if platform_name == "iOS":
+		return IOS_LEADERBOARD_IDS
+	return ANDROID_LEADERBOARD_IDS
+
+
+func _has_ios_leaderboard_configuration(stage_key: String = "") -> bool:
+	if stage_key != "":
+		return get_leaderboard_id_for_platform(stage_key, "iOS") != ""
+	for leaderboard_id in IOS_LEADERBOARD_IDS.values():
+		if str(leaderboard_id) != "":
+			return true
+	return false
 
 
 func _is_known_stage_key(stage_key: String) -> bool:

@@ -1971,7 +1971,10 @@ func _move_clear_buttons_to_result_layer() -> void:
 		_apply_result_image_button_style(btn_home, _localized_result_button_path("result_btn_home.webp", RESULT_BTN_HOME))
 	_apply_result_image_button_style(btn_ranking, _localized_result_button_path("result_btn_ranking.webp", RESULT_BTN_RANKING))
 	_apply_result_image_button_style(btn_answer, _localized_result_button_path("result_btn_answer.webp", RESULT_BTN_ANSWER))
-	btn_ranking.visible = _get_ranking_stage_key() != ""
+	var ranking_stage_key := _get_ranking_stage_key()
+	var ranking_ui_available := ranking_stage_key != "" and RankingManager.should_show_ranking_ui(ranking_stage_key)
+	btn_ranking.visible = ranking_ui_available
+	btn_ranking.disabled = not ranking_ui_available
 	btn_answer.visible = true
 	buttons.visible = true
 	buttons.move_to_front()
@@ -2006,6 +2009,9 @@ func _ensure_result_answer_buttons() -> void:
 
 func _on_btn_submit_ranking_pressed() -> void:
 	var stage_key := _get_ranking_stage_key()
+	if stage_key == "" or not RankingManager.should_show_ranking_ui(stage_key):
+		print("[Game] ranking press ignored because Game Center is unavailable stage_key=", stage_key)
+		return
 	var final_score := _get_final_score()
 	print("[Game] submit ranking pressed stage_key=", stage_key, " score=", final_score)
 	if RankingManager.submit_score(stage_key, final_score):

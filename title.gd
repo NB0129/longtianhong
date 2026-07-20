@@ -276,6 +276,17 @@ func _setup_ranking_button() -> void:
 	var ranking_img: TextureRect = _ranking_frame.get_node("RankingImg")
 	var ranking_btn: Button = _ranking_frame.get_node("BtnRanking")
 	_setup_image_button(_ranking_frame, ranking_img, ranking_btn, PATH_RANKING)
+	var ranking_ui_available := RankingManager.should_show_ranking_ui()
+	_ranking_frame.visible = ranking_ui_available
+	ranking_btn.disabled = not ranking_ui_available
+
+
+static func get_title_button_stack_metrics(ranking_visible: bool, button_h: float, button_gap: float) -> Dictionary:
+	var button_count := 3 if ranking_visible else 2
+	return {
+		"button_count": button_count,
+		"total_height": button_h * float(button_count) + button_gap * float(button_count - 1),
+	}
 
 
 func _setup_instant_high_score_display() -> void:
@@ -626,14 +637,17 @@ func _layout_title() -> void:
 	var button_w: float = safe_w
 	var button_h: float = minf(button_w * 0.32, 104.0)
 	var button_gap: float = maxf(vp.y * 0.015, 12.0)
-	var buttons_total_h: float = button_h * 3.0 + button_gap * 2.0
+	var button_stack := get_title_button_stack_metrics(_ranking_frame.visible, button_h, button_gap)
+	var button_count := int(button_stack["button_count"])
+	var buttons_total_h := float(button_stack["total_height"])
 	var button_top: float = vp.y * 0.47
 	if button_top + buttons_total_h > vp.y * 0.75:
 		button_top = vp.y * 0.75 - buttons_total_h
 
 	_layout_button_frame($StoryFrame, center_x, button_top, button_w, button_h)
 	_layout_button_frame($InstantFrame, center_x, button_top + button_h + button_gap, button_w, button_h)
-	_layout_button_frame(_ranking_frame, center_x, button_top + (button_h + button_gap) * 2.0, button_w, button_h)
+	if _ranking_frame.visible:
+		_layout_button_frame(_ranking_frame, center_x, button_top + (button_h + button_gap) * float(button_count - 1), button_w, button_h)
 
 	var score_panel_w: float = minf(vp.x * 0.72, 330.0)
 	var score_panel_h: float = 76.0
@@ -765,6 +779,9 @@ func _on_btn_instant_pressed() -> void:
 
 
 func _on_btn_ranking_pressed() -> void:
+	if not RankingManager.should_show_ranking_ui():
+		print("[Title] ranking press ignored because Game Center is unavailable")
+		return
 	RankingManager.show_leaderboard()
 
 
