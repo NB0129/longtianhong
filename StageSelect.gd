@@ -250,6 +250,8 @@ func _build_ex_buttons() -> void:
 	_ex_rows.clear()
 	for i in range(EX_STAGES.size()):
 		var stage: String = EX_STAGES[i]
+		if stage == "music_room" and not SupportPurchase.is_supporter() and not SupportPurchase.can_offer_support_purchase():
+			continue
 		var y: float = i * (EX_ROW_H + ROW_GAP)
 		var image_path: String = _get_ex_name_image(i)
 		var row_data: Dictionary = _create_stage_row(ex_stage_area, EX_BUTTON_X, y, image_path, true, false)
@@ -631,17 +633,17 @@ func _support_ui_text(key: String) -> String:
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
 	var texts := {
 		"ja": {
-			"body": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援をご検討ください。\n支援の特典として、Musicroom（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
-			"body_with_price": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援（{price}）をご検討ください。\n支援の特典として、Musicroom（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"body": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援をご検討ください。\n支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"body_with_price": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援（{price}）をご検討ください。\n支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
 			"buy": "購入する",
 			"buy_with_price": "{price}で購入する",
 			"restore": "購入を復元",
 			"close": "閉じる",
 			"purchase_start": "購入処理を開始しています...",
 			"restore_start": "購入情報を確認しています...",
-			"supported": "開発支援済みです。Musicroomを利用できます。",
+			"supported": "開発支援済みです。Music Roomを利用できます。",
 			"busy": "処理中です...",
-			"product_loading": "Google Playから価格を確認しています...",
+			"product_loading": "ストアから価格を確認しています...",
 			"product_unavailable": "現在、購入情報を取得できません。購入済みの場合は「購入を復元」をお試しください。",
 		},
 		"en": {
@@ -655,7 +657,7 @@ func _support_ui_text(key: String) -> String:
 			"restore_start": "Checking purchase information...",
 			"supported": "Development support confirmed. Music Room is available.",
 			"busy": "Processing...",
-			"product_loading": "Checking the price on Google Play...",
+			"product_loading": "Checking the current price in the store...",
 			"product_unavailable": "Purchase information is currently unavailable. If you already purchased, try Restore purchase.",
 		},
 		"zh_CN": {
@@ -669,7 +671,7 @@ func _support_ui_text(key: String) -> String:
 			"restore_start": "正在确认购买信息...",
 			"supported": "已完成开发支援。可以使用 Music Room。",
 			"busy": "处理中...",
-			"product_loading": "正在从 Google Play 确认价格...",
+			"product_loading": "正在从商店获取价格...",
 			"product_unavailable": "目前无法获取购买信息。如果已经购买，请尝试“恢复购买”。",
 		},
 		"zh_TW": {
@@ -683,7 +685,7 @@ func _support_ui_text(key: String) -> String:
 			"restore_start": "正在確認購買資訊...",
 			"supported": "已完成開發支援。可以使用 Music Room。",
 			"busy": "處理中...",
-			"product_loading": "正在從 Google Play 確認價格...",
+			"product_loading": "正在從商店取得價格...",
 			"product_unavailable": "目前無法取得購買資訊。如果已經購買，請嘗試「復原購買」。",
 		},
 		"ko": {
@@ -697,7 +699,7 @@ func _support_ui_text(key: String) -> String:
 			"restore_start": "구매 정보를 확인하고 있습니다...",
 			"supported": "개발 지원이 완료되었습니다. Music Room을 이용할 수 있습니다.",
 			"busy": "처리 중입니다...",
-			"product_loading": "Google Play에서 가격을 확인하고 있습니다...",
+			"product_loading": "스토어에서 가격 정보를 확인하고 있습니다...",
 			"product_unavailable": "현재 구매 정보를 가져올 수 없습니다. 이미 구매했다면 '구매 복원'을 시도해 주세요.",
 		},
 	}

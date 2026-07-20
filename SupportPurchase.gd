@@ -8,6 +8,8 @@ const SUPPORT_PRODUCT_ID := "support_pack"
 const OPERATION_NONE := ""
 const OPERATION_PURCHASE := "purchase"
 const OPERATION_RESTORE := "restore"
+const IOS_IN_APP_STORE_SINGLETON := "InAppStore"
+const IOS_EVENT_DRAIN_LIMIT := 128
 const NATIVE_BRIDGE_SINGLETON_CANDIDATES: Array[String] = [
 	"LongtianhongStoreKit",
 	"LongtianhongBilling",
@@ -18,7 +20,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_success": "開発支援を有効にしました。",
 		"purchase_unavailable": "購入機能は現在準備中です。",
 		"purchase_canceled": "購入をキャンセルしました。",
-		"purchase_pending": "購入が保留中です。Google Play の処理完了後にもう一度確認してください。",
+		"purchase_pending": "購入が保留中です。ストアの処理完了後にもう一度確認してください。",
 		"purchase_missing": "購入情報を確認できませんでした。時間をおいて再度お試しください。",
 		"purchase_price_updated": "価格情報が更新されました。表示価格を確認して、もう一度購入してください。",
 		"purchase_failed": "購入処理に失敗しました。時間をおいて再度お試しください。",
@@ -32,7 +34,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_success": "Development support has been enabled.",
 		"purchase_unavailable": "Purchases are currently being prepared.",
 		"purchase_canceled": "Purchase canceled.",
-		"purchase_pending": "Purchase is pending. Please check again after Google Play finishes processing it.",
+		"purchase_pending": "Purchase is pending. Please check again after the store finishes processing it.",
 		"purchase_missing": "Purchase information could not be confirmed. Please try again later.",
 		"purchase_price_updated": "The price was updated. Check the displayed price, then tap purchase again.",
 		"purchase_failed": "Purchase failed. Please try again later.",
@@ -46,7 +48,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_success": "已启用开发支援。",
 		"purchase_unavailable": "购买功能目前正在准备中。",
 		"purchase_canceled": "已取消购买。",
-		"purchase_pending": "购买正在处理中。请在 Google Play 处理完成后再次确认。",
+		"purchase_pending": "购买正在处理中。请在商店处理完成后再次确认。",
 		"purchase_missing": "无法确认购买信息。请稍后重试。",
 		"purchase_price_updated": "价格信息已更新。请确认显示的价格后再次购买。",
 		"purchase_failed": "购买失败。请稍后重试。",
@@ -60,7 +62,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_success": "已啟用開發支援。",
 		"purchase_unavailable": "購買功能目前正在準備中。",
 		"purchase_canceled": "已取消購買。",
-		"purchase_pending": "購買正在處理中。請在 Google Play 處理完成後再次確認。",
+		"purchase_pending": "購買正在處理中。請在商店處理完成後再次確認。",
 		"purchase_missing": "無法確認購買資訊。請稍後再試。",
 		"purchase_price_updated": "價格資訊已更新。請確認顯示的價格後再次購買。",
 		"purchase_failed": "購買失敗。請稍後再試。",
@@ -74,7 +76,7 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"purchase_success": "개발 지원이 활성화되었습니다.",
 		"purchase_unavailable": "구매 기능은 현재 준비 중입니다.",
 		"purchase_canceled": "구매를 취소했습니다.",
-		"purchase_pending": "구매가 처리 중입니다. Google Play 처리가 끝난 뒤 다시 확인해 주세요.",
+		"purchase_pending": "구매가 처리 중입니다. 스토어 처리가 끝난 뒤 다시 확인해 주세요.",
 		"purchase_missing": "구매 정보를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.",
 		"purchase_price_updated": "가격 정보가 업데이트되었습니다. 표시된 가격을 확인한 뒤 다시 구매해 주세요.",
 		"purchase_failed": "구매에 실패했습니다. 잠시 후 다시 시도해 주세요.",
@@ -93,6 +95,9 @@ var product_available: bool = false
 var formatted_price: String = ""
 var product_info_message: String = ""
 var _native_bridge: Object = null
+var _ios_in_app_store: Object = null
+var _ios_restore_request_in_flight: bool = false
+var _ios_restore_saw_owned_product: bool = false
 var _entitlement_refresh_in_flight: bool = false
 var _entitlement_refresh_pending: bool = false
 var _entitlement_refresh_revision: int = -1
@@ -104,6 +109,13 @@ var _refresh_after_resume_pending: bool = false
 
 func _ready() -> void:
 	_detect_native_bridge()
+	if _native_bridge == null:
+		_detect_ios_in_app_store()
+	set_process(_ios_in_app_store != null)
+
+
+func _process(_delta: float) -> void:
+	_drain_ios_events()
 
 
 func _notification(what: int) -> void:
@@ -112,7 +124,7 @@ func _notification(what: int) -> void:
 
 
 func _refresh_after_resume() -> void:
-	if not _has_native_bridge():
+	if not _has_purchase_backend():
 		return
 	if is_busy:
 		_refresh_after_resume_pending = true
@@ -126,17 +138,26 @@ func is_supporter() -> bool:
 	return SaveData.is_supporter
 
 
+func can_offer_support_purchase() -> bool:
+	return _can_offer_support_purchase(OS.is_debug_build())
+
+
+func _can_offer_support_purchase(is_debug_build: bool) -> bool:
+	return is_debug_build or _has_purchase_backend()
+
+
 func refresh_product_info() -> void:
 	if product_info_loading:
 		return
 	if _has_native_bridge():
-		product_info_loading = true
-		product_info_loaded = false
-		product_available = false
-		formatted_price = ""
-		product_info_message = ""
-		state_changed.emit()
+		_begin_product_info_refresh()
 		_call_native_bridge("query_product_info", [SUPPORT_PRODUCT_ID])
+		return
+	if _has_ios_in_app_store():
+		_begin_product_info_refresh()
+		var request := {"product_ids": [SUPPORT_PRODUCT_ID]}
+		if not _call_ios_in_app_store("request_product_info", [request]):
+			_finish_ios_product_info_failure("purchase_init_failed")
 		return
 	product_info_loading = false
 	product_info_loaded = true
@@ -148,7 +169,7 @@ func refresh_product_info() -> void:
 
 func refresh_entitlements() -> void:
 	if _entitlement_refresh_in_flight or is_busy:
-		if _has_native_bridge():
+		if _has_purchase_backend():
 			_entitlement_refresh_pending = true
 		return
 	if _has_native_bridge():
@@ -156,6 +177,13 @@ func refresh_entitlements() -> void:
 		_entitlement_refresh_in_flight = true
 		_entitlement_refresh_revision = _ownership_revision
 		_call_native_bridge("refresh_entitlements", [SUPPORT_PRODUCT_ID])
+		return
+	if _has_ios_in_app_store():
+		_entitlement_refresh_pending = false
+		# Apple recommends restore only after an explicit user action because it can
+		# prompt for App Store credentials. The documented InAppStore plugin does not
+		# expose StoreKit 2 currentEntitlements, so automatic refresh keeps the cache.
+		state_changed.emit()
 		return
 	state_changed.emit()
 
@@ -170,6 +198,11 @@ func purchase_support() -> void:
 	if _has_native_bridge():
 		_call_native_bridge("purchase_support", [SUPPORT_PRODUCT_ID])
 		return
+	if _has_ios_in_app_store():
+		var request := {"product_id": SUPPORT_PRODUCT_ID}
+		if not _call_ios_in_app_store("purchase", [request]):
+			_finish_purchase(false, _support_message("purchase_init_failed"))
+		return
 	if OS.is_debug_build():
 		_apply_verified_ownership(true)
 		_finish_purchase(true, _support_message("purchase_success"))
@@ -183,6 +216,12 @@ func restore_support() -> void:
 	_begin_operation(OPERATION_RESTORE)
 	if _has_native_bridge():
 		_call_native_bridge("restore_support", [SUPPORT_PRODUCT_ID])
+		return
+	if _has_ios_in_app_store():
+		if _ios_restore_request_in_flight:
+			_finish_restore(false, _support_message("restore_init_failed"))
+			return
+		_start_ios_restore_query()
 		return
 	if SaveData.is_supporter:
 		_finish_restore(true, _support_message("restore_success"))
@@ -213,7 +252,7 @@ func complete_native_purchase(success: bool, message: String, owns_product: bool
 func complete_native_restore(query_succeeded: bool, message: String, owns_product: bool) -> void:
 	if _active_operation != OPERATION_RESTORE:
 		return
-	var resolved_ownership := SaveData.is_supporter
+	var resolved_ownership: bool = bool(SaveData.is_supporter)
 	if query_succeeded and _active_operation_revision == _ownership_revision:
 		_apply_verified_ownership(owns_product)
 		resolved_ownership = owns_product
@@ -250,6 +289,167 @@ func complete_native_product_info(
 	formatted_price = price if product_available else ""
 	product_info_message = message
 	state_changed.emit()
+
+
+func _begin_product_info_refresh() -> void:
+	product_info_loading = true
+	product_info_loaded = false
+	product_available = false
+	formatted_price = ""
+	product_info_message = ""
+	state_changed.emit()
+
+
+func _finish_ios_product_info_failure(message: String) -> void:
+	complete_native_product_info(false, SUPPORT_PRODUCT_ID, false, "", message)
+
+
+func _start_ios_restore_query() -> void:
+	if _ios_restore_request_in_flight:
+		return
+	_ios_restore_request_in_flight = true
+	_ios_restore_saw_owned_product = false
+	if not _call_ios_in_app_store("restore_purchases", []):
+		_finish_ios_restore_query(false, "billing_ios_restore_start_failed")
+
+
+func _finish_ios_restore_query(query_succeeded: bool, message: String) -> void:
+	if not _ios_restore_request_in_flight:
+		return
+	var owns_product := _ios_restore_saw_owned_product
+	_ios_restore_request_in_flight = false
+	_ios_restore_saw_owned_product = false
+	complete_native_restore(query_succeeded, message, owns_product)
+
+
+func _drain_ios_events() -> void:
+	if _ios_in_app_store == null:
+		return
+	var drained := 0
+	while drained < IOS_EVENT_DRAIN_LIMIT:
+		var pending_count: Variant = _ios_in_app_store.call("get_pending_event_count")
+		if not (pending_count is int) or int(pending_count) <= 0:
+			return
+		var event: Variant = _ios_in_app_store.call("pop_pending_event")
+		drained += 1
+		if event is Dictionary:
+			_handle_ios_event(event)
+
+
+func _handle_ios_event(event: Dictionary) -> void:
+	var event_type := str(event.get("type", "")).to_lower()
+	var result := str(event.get("result", "")).to_lower()
+	match event_type:
+		"product_info":
+			_handle_ios_product_info_event(event, result)
+		"purchase":
+			_handle_ios_purchase_event(event, result)
+		"restore":
+			_handle_ios_restore_event(event, result)
+		"completed":
+			_handle_ios_restore_completed_event(event, result)
+		"error":
+			_handle_ios_generic_error_event(event)
+
+
+func _handle_ios_product_info_event(event: Dictionary, result: String) -> void:
+	if not product_info_loading:
+		return
+	if result == "progress":
+		return
+	if result != "ok":
+		_finish_ios_product_info_failure(_ios_error_message("product_info", event))
+		return
+	var product_index := _ios_find_index(event.get("ids", []), SUPPORT_PRODUCT_ID)
+	if product_index < 0:
+		complete_native_product_info(true, SUPPORT_PRODUCT_ID, false, "", "product_not_found")
+		return
+	var price := _ios_indexed_string(event.get("localized_prices", []), product_index)
+	if price.is_empty():
+		price = _ios_indexed_string(event.get("prices", []), product_index)
+	complete_native_product_info(true, SUPPORT_PRODUCT_ID, not price.is_empty(), price, "product_info")
+
+
+func _handle_ios_purchase_event(event: Dictionary, result: String) -> void:
+	if result == "progress":
+		return
+	if result == "ok":
+		var product_id := str(event.get("product_id", ""))
+		if product_id == SUPPORT_PRODUCT_ID:
+			complete_native_purchase(true, "purchase_completed", true)
+		elif _active_operation == OPERATION_PURCHASE:
+			complete_native_purchase(false, "product_mismatch", false)
+		return
+	complete_native_purchase(false, _ios_error_message("purchase", event), false)
+
+
+func _handle_ios_restore_event(event: Dictionary, result: String) -> void:
+	if not _ios_restore_request_in_flight:
+		return
+	if result == "progress":
+		return
+	if result == "completed":
+		_finish_ios_restore_query(true, _ios_restore_completion_message())
+		return
+	if result != "ok":
+		_finish_ios_restore_query(false, _ios_error_message("restore", event))
+		return
+	if str(event.get("product_id", "")) != SUPPORT_PRODUCT_ID:
+		return
+	_ios_restore_saw_owned_product = true
+	_apply_verified_ownership(true)
+	state_changed.emit()
+
+
+func _handle_ios_restore_completed_event(event: Dictionary, result: String) -> void:
+	if not _ios_restore_request_in_flight:
+		return
+	if result == "error" or result == "unhandled":
+		_finish_ios_restore_query(false, _ios_error_message("restore", event))
+		return
+	_finish_ios_restore_query(true, _ios_restore_completion_message())
+
+
+func _handle_ios_generic_error_event(event: Dictionary) -> void:
+	var operation := str(event.get("operation", event.get("request", ""))).to_lower()
+	if operation == "product_info":
+		_finish_ios_product_info_failure(_ios_error_message("product_info", event))
+	elif operation == "purchase":
+		complete_native_purchase(false, _ios_error_message("purchase", event), false)
+	elif operation == "restore" or _ios_restore_request_in_flight:
+		_finish_ios_restore_query(false, _ios_error_message("restore", event))
+	elif _active_operation == OPERATION_PURCHASE:
+		complete_native_purchase(false, _ios_error_message("purchase", event), false)
+	elif product_info_loading:
+		_finish_ios_product_info_failure(_ios_error_message("product_info", event))
+
+
+func _ios_restore_completion_message() -> String:
+	return "restore_completed" if _ios_restore_saw_owned_product else "not_owned"
+
+
+func _ios_error_message(operation: String, event: Dictionary) -> String:
+	var details := str(event.get("error_description", event.get("message", event.get("error", "")))).to_lower()
+	if operation == "purchase" and details.contains("cancel"):
+		return "purchase_canceled"
+	return "billing_ios_%s_error" % operation
+
+
+func _ios_find_index(values: Variant, expected: String) -> int:
+	if values is Array or values is PackedStringArray:
+		for index in range(values.size()):
+			if str(values[index]) == expected:
+				return index
+	return -1
+
+
+func _ios_indexed_string(values: Variant, index: int) -> String:
+	if index < 0:
+		return ""
+	if values is Array or values is PackedStringArray or values is PackedFloat32Array or values is PackedFloat64Array:
+		if index < values.size():
+			return str(values[index])
+	return ""
 
 
 func _invalidate_entitlement_queries() -> void:
@@ -304,9 +504,35 @@ func _flush_pending_entitlement_refresh() -> void:
 		call_deferred("refresh_entitlements")
 
 
+func _has_purchase_backend() -> bool:
+	return _has_native_bridge() or _has_ios_in_app_store()
+
+
 func _has_native_bridge() -> bool:
 	_detect_native_bridge()
 	return _native_bridge != null
+
+
+func _has_ios_in_app_store() -> bool:
+	if _has_native_bridge():
+		return false
+	_detect_ios_in_app_store()
+	return _ios_in_app_store != null
+
+
+func _call_ios_in_app_store(method_name: String, args: Array) -> bool:
+	if not _has_ios_in_app_store() or not _ios_in_app_store.has_method(method_name):
+		return false
+	var accepted: Variant = _ios_in_app_store.callv(method_name, args)
+	return accepted is int and int(accepted) == OK
+
+
+func set_ios_in_app_store_for_test(store: Object) -> bool:
+	if not OS.is_debug_build():
+		return false
+	_native_bridge = null
+	_ios_in_app_store = null
+	return _configure_ios_in_app_store(store, false)
 
 
 func _call_native_bridge(method_name: String, args: Array) -> void:
@@ -393,6 +619,38 @@ func _detect_native_bridge() -> void:
 			_connect_native_bridge_signals()
 			print("[SupportPurchase] native bridge detected: ", singleton_name)
 			return
+
+
+func _detect_ios_in_app_store() -> void:
+	if _native_bridge != null or _ios_in_app_store != null:
+		return
+	if not Engine.has_singleton(IOS_IN_APP_STORE_SINGLETON):
+		return
+	var store: Object = Engine.get_singleton(IOS_IN_APP_STORE_SINGLETON)
+	if _configure_ios_in_app_store(store, true):
+		print("[SupportPurchase] iOS InAppStore detected")
+
+
+func _configure_ios_in_app_store(store: Object, report_error: bool) -> bool:
+	if store == null:
+		return false
+	var required_methods: Array[String] = [
+		"request_product_info",
+		"purchase",
+		"restore_purchases",
+		"set_auto_finish_transaction",
+		"get_pending_event_count",
+		"pop_pending_event",
+	]
+	for method_name in required_methods:
+		if not store.has_method(method_name):
+			if report_error:
+				push_error("[SupportPurchase] InAppStore is missing method: %s" % method_name)
+			return false
+	_ios_in_app_store = store
+	_ios_in_app_store.call("set_auto_finish_transaction", true)
+	set_process(true)
+	return true
 
 
 func _connect_native_bridge_signals() -> void:
