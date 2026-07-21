@@ -108,7 +108,7 @@ const TALK_TEXT := {
 			"Really? That is strange.\nOnly Mother should have come here...",
 			"Did I miss her somehow?\nWhat should I do? My big sister is going to be angry...",
 			"Do not worry, big sister!\nI will take responsibility and look for her!",
-			"Thank you, Pyokotan.\nBut I am worried. Do you know mahjong?",
+			"Thank you, Pyokotan.\nBut I'm still worried. Do you know how to play mahjong?",
 			"Mahjong! I know it!",
 			"But I only know a little.",
 			"I see. My big sister is farther ahead too,\nand it is dangerous, so I will teach you a few tips.",
