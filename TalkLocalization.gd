@@ -101,7 +101,7 @@ const TALK_TEXT := {
 		"stage1_intro": [
 			"Huh, I lost sight of Maboroshi.\nIt looked like she walked this way...",
 			"Hey there.\nIt's private property up ahead, so you can't go in.",
-			"Hello, big sister.\nMy name is Pyokotan!",
+			"Hello there!\nMy name is Pyokotan!",
 			"Hello, Pyokotan.\nGood job saying hello. I am Yume.",
 			"This mountain is our family's home.\nIt is dangerous, so do not come in without permission.",
 			"But I saw my friend go this way!",
