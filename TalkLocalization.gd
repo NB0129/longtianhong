@@ -100,7 +100,7 @@ const TALK_TEXT := {
 		],
 		"stage1_intro": [
 			"Huh, I lost sight of Maboroshi.\nIt looked like she walked this way...",
-			"Hey, you.\nThis is private property beyond here, so you must not enter.",
+			"Hey there.\nIt's private property up ahead, so you can't go in.",
 			"Hello, big sister.\nMy name is Pyokotan!",
 			"Hello, Pyokotan.\nGood job saying hello. I am Yume.",
 			"This mountain is our family's home.\nIt is dangerous, so do not come in without permission.",
@@ -186,7 +186,7 @@ const TALK_TEXT := {
 		],
 		"stage1_intro": [
 			"咦，我跟丢幻胧了。\n看起来她好像往这边走了……",
-			"喂，你。\n前面是私人土地，不能进去哦。",
+			"哎，小朋友。\n前面是私人土地，不能进去哦。",
 			"姐姐你好。\n我的名字是皮约可炭！",
 			"你好，皮约可炭。\n会打招呼真乖。我是梦幽。",
 			"这座山是我们一族的家。\n很危险，不可以擅自进去哦。",
@@ -272,7 +272,7 @@ const TALK_TEXT := {
 		],
 		"stage1_intro": [
 			"咦，我跟丟幻朧了。\n看起來她好像往這邊走了……",
-			"喂，你。\n前面是私人土地，不能進去喔。",
+			"欸，小朋友。\n前面是私人土地，不能進去喔。",
 			"姐姐妳好。\n我的名字是皮約可炭！",
 			"你好，皮約可炭。\n會打招呼真乖。我是夢幽。",
 			"這座山是我們一族的家。\n很危險，不可以擅自進去喔。",
@@ -358,7 +358,7 @@ const TALK_TEXT := {
 		],
 		"stage1_intro": [
 			"어라, 마보로시를 놓쳐 버린 거야.\n이쪽으로 걸어간 것처럼 보였는데...",
-			"저기, 너.\n이 앞은 사유지니까 들어가면 안 돼.",
+			"저기, 얘야.\n이 앞은 사유지라서 들어가면 안 돼.",
 			"안녕하세요, 누나.\n내 이름은 표코탄인 거야!",
 			"안녕, 표코탄.\n인사도 잘하네. 나는 유메야.",
 			"이 산은 우리 일족의 집이야.\n위험하니까 마음대로 들어가면 안 돼.",
