@@ -118,7 +118,7 @@ Run the reproducible iOS Game Center contract suite from the repository root on 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\ios_gamecenter\run_contract_tests.ps1 -GodotExe 'E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe'
 ```
 
-The expected result is `PASS: 108 deterministic iOS Game Center assertions`. This verifies the GDScript/native contract state machine only; it does not close the macOS, Apple signing, App Store Connect, device, or TestFlight gates.
+The expected results include `PASS: native authentication payload excludes alias/displayName` and `PASS: 108 deterministic iOS Game Center assertions`. The payload gate verifies that Game Center display names are not exposed to GDScript; the game uses only the game-scoped identifier for pending-score ownership. These checks verify the GDScript/native contract only; they do not close the macOS, Apple signing, App Store Connect component-review, device, or TestFlight gates.
 
 ## Next Suggested Work
 

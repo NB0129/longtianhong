@@ -42,7 +42,7 @@ Godot 4.6 の上記ドキュメントには「この版向けに未更新の可�
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\ios_gamecenter\run_contract_tests.ps1 -GodotExe 'E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe'
 ```
 
-期待値は `PASS: 108 deterministic iOS Game Center assertions`。これはGDScriptとnative plugin間のAPI/state machineを検証するもので、iPhone上でApple Game Centerが動くことの証明ではない。
+期待値は `PASS: native authentication payload excludes alias/displayName` と `PASS: 108 deterministic iOS Game Center assertions`。前者は認証eventがアプリに必要なゲーム単位IDだけを返し、Game Centerの表示名をGDScriptへ渡さないことを検査する。これはGDScriptとnative plugin間のAPI/state machineを検証するもので、iPhone上でApple Game Centerが動くことの証明ではない。
 
 次にMacで `tools/ios_gamecenter/build_gamecenter_plugin.sh` を実行し、生成されたdebug/release XCFramework、`.gdip`、provenance、hashを確認する。GodotのiOS export presetで`GameCenter` pluginが検出・有効化でき、App Store Connectの7 IDとの対応まで検証できるまでは、`entitlements/game_center=false`を維持する。
 
@@ -79,7 +79,8 @@ Xcode で `Signing & Capabilities` を開く。
 - `Team` に対象の Apple Developer Team を選ぶ
 - Bundle Identifier が `com.nb0129.machiate` であることを確認する
 - IAP 採用決定後に限り、App Store Connect 側の商品 `support_pack` とアプリの契約・税務・銀行情報を確認する
-- Game Center pluginとApp Store Connectの7 leaderboard設定を検証した後、v1 targetにGame Center capabilityを追加し、provisioning profileとentitlementへ正しく反映されたことを確認する
+- Game Center pluginとApp Store Connectの7 leaderboard設定を検証した後、v1 targetにGame Center capabilityを追加し、provisioning profileとentitlementへ正しく反映されたことを確認する。署名済みappのcode-sign entitlementsで Boolean `com.apple.developer.game-center = true` を確認する
+- 初回iOS app versionでGame Centerを有効にし、7 leaderboard componentsをすべて関連付け、**Add for Review**でapp versionと同じdraft submissionへ追加する
 
 Team ID、sign identity、profile は所有者の環境で決める。空欄をこの手順だけで推測して埋めない。
 
@@ -99,7 +100,7 @@ iPhone を Mac に接続し、Xcode の実行先に選んで build / install す
 - 個別ランキングと全体ランキングの表示・閉じる操作
 - 2アカウントで未送信scoreが別アカウントへ送信・消去されないこと
 - signed archiveのGame Center entitlementとplugin/framework linkage
-- physical iPhoneとTestFlightで同じ一連の動作
+- physical iPhoneとTestFlightで同じ一連の動作。公開用・個人用アカウントは使わず、フレンド関係のない2つ以上の専用Game Centerテストアカウントを使う。試験完了後かつ審査前にDelete Test Dataを実行する
 
 Apple は restore をユーザーの明示操作に対応させるよう案内しているため、起動・復帰時に `restore_purchases()` を呼ばない。現行 adapter はその場合に端末キャッシュを維持する。relaunch、返金、revocation を本番品質で再検証するには、StoreKit 2 `currentEntitlements` または server-side verification を追加することが P0 release gate である。
 

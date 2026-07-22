@@ -48,7 +48,7 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
  
  	GKLocalPlayer *player = [GKLocalPlayer localPlayer];
  	ERR_FAIL_COND_V(![player respondsToSelector:@selector(authenticateHandler)], ERR_UNAVAILABLE);
-@@ -95,38 +100,59 @@ Error GameCenter::authenticate() {
+@@ -95,38 +100,57 @@ Error GameCenter::authenticate() {
  	// after the view is cancelled or the user logs in.  Or if the user's already logged in, it's
  	// called just once to confirm they're authenticated.  This is why no result needs to be specified
  	// in the presentViewController phase. In this case, more calls to this function will follow.
@@ -109,8 +109,6 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
 -				}
 -
 -				GameCenter::get_singleton()->authenticated = true;
-+				ret["alias"] = strong_player.alias == nil ? "" : [strong_player.alias UTF8String];
-+				ret["displayName"] = strong_player.displayName == nil ? "" : [strong_player.displayName UTF8String];
 +				ret["game_player_id"] = usable_id ? [game_player_id UTF8String] : "";
 +				ret["player_id"] = usable_id ? [game_player_id UTF8String] : "";
 +				ret["player_id_persistent"] = persistent && usable_id;
@@ -133,7 +131,7 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
  	});
  
  	return OK;
-@@ -136,31 +162,67 @@ bool GameCenter::is_authenticated() {
+@@ -136,31 +160,67 @@ bool GameCenter::is_authenticated() {
  	return authenticated;
  };
  
@@ -222,7 +220,7 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
  
  	return OK;
  };
-@@ -300,6 +362,10 @@ void GameCenter::reset_achievements() {
+@@ -300,6 +360,10 @@ void GameCenter::reset_achievements() {
  
  Error GameCenter::show_game_center(Dictionary p_params) {
  	ERR_FAIL_COND_V(!NSProtocolFromString(@"GKGameCenterControllerDelegate"), FAILED);
@@ -233,7 +231,7 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
  
  	GKGameCenterViewControllerState view_state = GKGameCenterViewControllerStateDefault;
  	if (p_params.has("view")) {
-@@ -322,6 +388,8 @@ Error GameCenter::show_game_center(Dictionary p_params) {
+@@ -322,6 +386,8 @@ Error GameCenter::show_game_center(Dictionary p_params) {
  
  	UIViewController *root_controller = [[UIApplication sharedApplication] delegate].window.rootViewController;
  	ERR_FAIL_COND_V(!root_controller, FAILED);
@@ -242,7 +240,7 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
  
  	controller.gameCenterDelegate = gameCenterDelegate;
  	controller.viewState = view_state;
-@@ -334,6 +402,7 @@ Error GameCenter::show_game_center(Dictionary p_params) {
+@@ -334,6 +400,7 @@ Error GameCenter::show_game_center(Dictionary p_params) {
  		}
  	}
  
@@ -250,7 +248,7 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
  	[root_controller presentViewController:controller animated:YES completion:nil];
  
  	return OK;
-@@ -376,9 +445,14 @@ Error GameCenter::request_identity_verification_signature() {
+@@ -376,9 +443,14 @@ Error GameCenter::request_identity_verification_signature() {
  };
  
  void GameCenter::game_center_closed() {
@@ -265,7 +263,7 @@ diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.
  	pending_events.push_back(ret);
  }
  
-@@ -401,11 +475,20 @@ GameCenter::GameCenter() {
+@@ -401,11 +473,20 @@ GameCenter::GameCenter() {
  	ERR_FAIL_COND(instance != NULL);
  	instance = this;
  	authenticated = false;

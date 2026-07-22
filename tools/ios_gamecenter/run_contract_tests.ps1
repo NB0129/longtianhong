@@ -6,6 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
 $fixtureRoot = Join-Path $PSScriptRoot "tests\fixture"
+$nativePatchPath = Join-Path $PSScriptRoot "0001-modern-score-api.patch"
 $runtimeRoot = Join-Path ([System.IO.Path]::GetTempPath()) ("machiate-gamecenter-contract-" + [System.Guid]::NewGuid().ToString("N"))
 $harnessRoot = Join-Path $runtimeRoot "harness"
 $logPath = Join-Path $runtimeRoot "test.log"
@@ -16,6 +17,16 @@ if (-not (Test-Path -LiteralPath $GodotExe -PathType Leaf)) {
 }
 if (-not (Test-Path -LiteralPath $fixtureRoot -PathType Container)) {
     throw "Test fixture not found: $fixtureRoot"
+}
+if (-not (Test-Path -LiteralPath $nativePatchPath -PathType Leaf)) {
+    throw "Native patch not found: $nativePatchPath"
+}
+$nativePatchText = Get-Content -LiteralPath $nativePatchPath -Raw
+if ($nativePatchText -match '(?m)^\+\s*ret\["(?:alias|displayName)"\]') {
+    throw "Native authentication payload must not expose Game Center alias or displayName"
+}
+if ($nativePatchText -notmatch '(?m)^\+\s*ret\["game_player_id"\]') {
+    throw "Native authentication payload is missing game_player_id"
 }
 
 try {
@@ -39,6 +50,7 @@ try {
         Write-Output $logText
         throw "iOS Game Center contract tests did not report PASS"
     }
+    Write-Output "PASS: native authentication payload excludes alias/displayName"
     Write-Output $passLine.Line
 }
 finally {

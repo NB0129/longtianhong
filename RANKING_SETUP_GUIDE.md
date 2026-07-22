@@ -23,7 +23,7 @@ Run the contract suite from the repository root on Windows:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\ios_gamecenter\run_contract_tests.ps1 -GodotExe 'E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe'
 ```
 
-Expected output: `PASS: 108 deterministic iOS Game Center assertions`. This validates the local API/state-machine contract, not Apple's runtime, signing, or service configuration.
+Expected output includes `PASS: native authentication payload excludes alias/displayName` and `PASS: 108 deterministic iOS Game Center assertions`. The first gate ensures that the native authentication event returns only the game-scoped identifier needed by the app, not the player's Game Center display names. These checks validate the local API/state-machine contract, not Apple's runtime, signing, or service configuration.
 
 ## Files to update after Google Play Console setup
 
@@ -53,11 +53,11 @@ On a Mac, run `tools/ios_gamecenter/build_gamecenter_plugin.sh`. It builds the p
 
 1. Enable the detected `GameCenter` plugin in the iOS export preset.
 2. After plugin load and App Store Connect mapping are confirmed, enable the Game Center capability for the explicit App ID, provisioning profile, Xcode target, and Godot export preset.
-3. Confirm the signed archive contains the Game Center entitlement and the expected plugin/framework linkage.
-4. Test authentication success, cancellation, restrictions, all seven score submissions, failed/offline retention, resume/relaunch retry, individual and aggregate leaderboard display, a second account/device, and TestFlight.
+3. Confirm the signed app's code-sign entitlements contain Boolean `com.apple.developer.game-center = true`, and verify the expected plugin/framework linkage.
+4. Test authentication success, cancellation, restrictions, all seven score submissions, failed/offline retention, resume/relaunch retry, individual and aggregate leaderboard display, a second account/device, and TestFlight. Use at least two dedicated Game Center test accounts with no friend relationships; pre-release tests use the production Game Center server environment, so personal or public accounts can expose unreleased activity or scores to friends.
 5. In the two-account test, create an unsent score under player A, switch to player B, and prove that A's score is never submitted or cleared while B is active. Switch back to A and confirm only A's bucket is retried.
 6. Confirm that scores earned without a persistent player identity remain local/unowned and are not uploaded automatically after any account signs in.
-7. Remove leaderboard test data before submitting the app and its Game Center components for review together.
+7. Remove leaderboard test data before review. Enable Game Center on the first iOS app version, associate all seven leaderboard components, and use **Add for Review** so all seven components enter the same draft submission as the app version. Verify that no component is missing or remains Rejected / Developer Rejected.
 
 Until the XCFrameworks, Apple configuration, signed archive, physical-device tests, and TestFlight all pass, iOS ranking remains a release blocker even though the GDScript/native contract and 108 deterministic Windows assertions are implemented. Do not release without the seven iOS leaderboards, and do not treat v1.1 as a fallback deferral.
 

@@ -25,7 +25,7 @@ From the repository root, run:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\ios_gamecenter\run_contract_tests.ps1 -GodotExe 'E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe'
 ```
 
-The expected result is `PASS: 108 deterministic iOS Game Center assertions`. These tests cover the GDScript/native API and state-machine contract; they do not compile the Objective-C++ plugin or validate Apple services. Keep `entitlements/game_center=false` until the plugin build/load, seven App Store Connect IDs, signing configuration, and archive contents have been validated. A physical iPhone and TestFlight pass are still mandatory before release.
+The expected results are `PASS: native authentication payload excludes alias/displayName` and `PASS: 108 deterministic iOS Game Center assertions`. The static payload gate prevents the authentication event from exposing Game Center display names to GDScript; only the game-scoped player identifier needed for score ownership is returned. The remaining assertions cover the GDScript/native API and state-machine contract. They do not compile the Objective-C++ plugin or validate Apple services. Keep `entitlements/game_center=false` until the plugin build/load, seven App Store Connect IDs, signing configuration, and archive contents have been validated. A physical iPhone and TestFlight pass are still mandatory before release.
 
 Pinned inputs:
 
