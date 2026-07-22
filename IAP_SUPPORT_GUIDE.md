@@ -98,7 +98,8 @@ workspace の headless mock test では以下を検証する。
 
 - Mac / Xcode export
 - Godot 4.6 と採用 plugin binary の適合・singleton load
-- App Store Connect の商品状態、契約、価格
+- 個人Account HolderによるPaid Apps Agreement `Active`、必要なbanking / tax情報の完了、App Store Connectの商品状態・価格・税区分。これらをsandbox検証前に確認する
+- 初回IAP `support_pack`をv1 app versionと同じsubmissionへ追加し、審査承認済み・公開可能なstatusになるまでreleaseしない
 - StoreKit Configuration / Apple sandbox / TestFlight
 - StoreKit 2 current entitlements または server-side verification
 - signing、provisioning、実機、返金・revocation

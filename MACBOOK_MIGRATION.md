@@ -21,7 +21,8 @@ git status
 ## iPhone版の作業を始める時
 
 - XcodeをApp Storeからインストールする。
-- Apple Developer Programへのログイン、署名、証明書はMac側で設定する。
+- v1公開に使う個人Apple Developer Program membershipへログインし、Team ID、署名、証明書、provisioning profileをMac側で設定する。
+- App Store Connectで表示される個人の法的seller/developer名を確認する。`IOS_INSTALL_GUIDE.md`記載のEU 27か国をv1 availabilityからすべて除外し、保存後の一覧を証跡化する。
 - Mac固有の署名ファイルや設定はGitへ入れない。
 
 ## Gitへ入れないもの
