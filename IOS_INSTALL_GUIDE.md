@@ -6,7 +6,7 @@
 
 > Apple公開アカウント方針（2026-07-22決定）: 組織化失敗を受け、v1は個人Apple Developer Program membershipから公開する。組織化の再試行・変換をv1の待ち条件にしない。Apple公式上、個人会員では個人の法的氏名がApp Storeのsellerおよびdeveloper nameとして表示される。developer nameは、このaccountで最初のapp recordを作る時に固定されるため、既存app recordがある場合は既に固定済みの実表示を記録する。提出前にApp Store Connect上の実表示、EU DSA trader判定と公開連絡先、Team ID、契約・税務・銀行情報を個人account基準で確認する。
 
-> 公開情報と地域の所有者承認: 個人の法的氏名が公開されることは許容済み。契約済みバーチャルオフィス住所と取得済み独自domain emailは公開連絡先の候補として準備済みだが、住所はAppleの必要書類確認を通るまで利用可能と確定しない。AppleのEU DSA trader連絡先としてphone numberを商品ページに表示しないため、v1ではEU加盟国を配信対象から除外する。選択する非EU storefrontとSupport URLについても、提出時の公開previewと現地要件を確認する。GoogleもEUをv1の対象外にするが、Google organization accountのdeveloper phone公開要件はEU availabilityとは無関係に残るため、別の未解決gateとして扱う。EU追加は将来の別scope・別承認とする。
+> 公開情報と地域の所有者承認: 個人の法的氏名が公開されることは許容済み。契約済みバーチャルオフィス住所と取得済み独自domain emailは公開連絡先の候補として準備済みだが、住所はAppleの必要書類確認を通るまで利用可能と確定しない。AppleのEU DSA trader連絡先としてphone numberを商品ページに表示しないため、v1ではEU加盟国を配信対象から除外する。選択する非EU storefrontとSupport URLについても、提出時の公開previewと現地要件を確認する。GoogleもEUをv1の対象外にするが、Google organization accountのdeveloper phone公開要件はEU availabilityとは無関係に残る。2026-07-23に既存のpublic developer phoneが設定・認証済みであることは確認したが、その番号を公開する所有者承認または差し替えを別gateとして扱う。EU追加は将来の別scope・別承認とする。
 
 ## 必要なもの
 

@@ -30,9 +30,9 @@ $apkPath = 'C:\Users\langt\Documents\Codex\2026-07-15\rotenko-games-coo-chief-of
 - Google公式の12 testers / 14 consecutive days要件は、2023-11-13より後に作成されたpersonal developer accountが対象である。このため、本アプリではmandatory release gateにしない。
 - ただし、実機・internal test・通常の新規アプリ審査、Data safety、content declarations、Play Games Services設定は省略しない。
 - Play Consoleでaccount typeがOrganizationであることとProductionメニューが利用可能であることを、本アプリの提出前にも再確認する。
-- Organization accountでは、verified developer phone numberとdeveloper emailがGoogle Playの公開developer profile / listingに表示される。これはEU availabilityに限定された要件ではない。継続して連絡可能な公開用business phoneを用意し、Play Console上の実表示を確認するまではGoogle releaseを不可とする。所有者のprivate mobile numberを明示承認なく使用しない。
-- Organization name / addressはlinked Google Payments profileおよびD-U-N-S情報と一致する必要がある。契約済みvirtual officeは候補であり、現在のPayments / D-U-N-S情報との一致と公開previewを確認するまで採用済みと扱わない。
-- 初回公開日の前後を問わず、2026-09-30までにdeveloper identity verificationと`com.nb0129.machiate`のpackage registrationを完了し、証跡を残す。期限後に初回公開する場合は提出前gateとする。
+- Organization accountでは、verified developer phone numberとdeveloper emailがGoogle Playの公開developer profile / listingに表示される。これはEU availabilityに限定された要件ではない。2026-07-23のPlay Console read-only確認で、Google-only contact phoneとは別のpublic developer phoneとdeveloper emailが設定・認証済みであることを確認した。実値はrelease証跡へ記録しない。現在のpublic developer phoneをそのまま公開する所有者承認、または明示承認された継続利用可能なbusiness phoneへの差し替えが完了するまではGoogle releaseを不可とする。
+- Organization name / addressはlinked Google Payments profileおよびD-U-N-S情報と一致する必要がある。同じread-only確認でlegal organization name / addressとverified websiteの設定を確認したが、公開previewの所有者確認は残す。
+- `com.nb0129.machiate`は2026-07-23のAndroid developer verification画面で`登録済み`（画面上の最終更新2026-07-05）を確認した。package registration gateは完了済みとし、2026-09-30 rolloutに向けたdeveloper identity / legal informationの正確性と継続維持を別gateとして残す。
 - v1はEU 27か国（`AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE`）を配信対象から除外する。保存後・提出直前に除外国一覧を証跡化し、提出時点のGoogle Playの国一覧に変更があればその公式一覧を優先する。ただし、この地域除外によってorganization accountのdeveloper phone公開は回避できない。EU追加は各platformのcomplianceを再確認する将来の別scopeとする。
 
 Google公式確認先:
