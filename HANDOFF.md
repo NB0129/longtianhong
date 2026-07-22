@@ -6,8 +6,8 @@ This file is the short entry point for future Codex threads. Read this before op
 
 ## Project
 
-- Project path: `C:\Users\hskst\work\longtianhong`
-- Engine: Godot 4.6.2 console binary at `C:\Users\hskst\work\Godot_v4.6.2-stable_win64_console.exe`
+- Project path: `C:\Users\langt\Documents\Codex\2026-07-15\rotenko-games-coo-chief-of-staff\work\machiate-clean-baseline`
+- Engine: Godot 4.6.2 console binary at `E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe`
 - Main game code is mostly in `game.gd`, `StageSelect.gd`, `title.gd`, `TalkScene.gd`, `SaveData.gd`, `AudioManager.gd`, and `RankingManager.gd`.
 - Fixed operating rules live in `CODEX_NOTES.md`.
 - Asset acceptance/rejection notes live in `ASSET_ADOPTION_STATUS.md`.
@@ -23,21 +23,14 @@ This file is the short entry point for future Codex threads. Read this before op
 
 ## Current Working State
 
-The worktree is not clean. Recent work includes asset/WebP conversion passes plus a tile-suit behavior change.
+The worktree was clean immediately before this handoff correction. Always verify the live state with `git status --short --branch`; local `main` contains unpublished commits and must not be pushed without explicit owner authorization.
 
 The founder decided on 2026-07-22 that all seven iOS Game Center leaderboards are mandatory for v1. There is no v1.1 deferral. The GDScript integration and pinned native plugin patch are implemented, and the Windows contract harness currently passes 108 deterministic assertions. This does not complete the Apple platform gates: the plugin still has to be built and loaded on macOS, all seven leaderboards have to be configured in App Store Connect, and the signed archive, physical iPhone, and TestFlight flows all have to pass. Keep `entitlements/game_center=false` until the plugin and Apple configuration have been validated; iOS ranking remains a release blocker until every gate passes.
 
-- `game.gd` now references many `assets/kao/*.webp` files instead of old PNG face assets.
-- Matching old `assets/kao/*.png` and `.png.import` files are deleted.
-- New `assets/kao/*.webp` and `.webp.import` files are present but untracked.
-- `TalkScene.gd` now references `assets/chara/*.webp` for the remaining talk character PNGs.
-- Matching old talk character PNGs and `.png.import` files are deleted.
-- New `assets/chara/*.webp` and `.webp.import` files are present but untracked.
-- `CODEX_NOTES.md` has recent additions about WebP conversion and shutdown command behavior.
-- `TileSuitSelector.gd` has logic to disable `manzu2` when the current stage sorts the hand.
-- `TalkScene.gd` sets `disable_manzu2_when_sorted_stage` for the settings tile selector.
-
-Before committing or continuing, inspect the actual diff and verify the intended grouping. Do not revert these changes casually.
+- The prior PNG-to-WebP and tile-suit work is historical, not an outstanding dirty-worktree bundle.
+- The current release chain includes all approved dialogue localization, hardened iOS support-purchase lifecycle handling, mandatory iOS Game Center integration, and the minimized Game Center authentication payload.
+- The release implementation baseline is `bdcbffbd4f6fbec49df738a543390fa2d8980090`; later documentation-only commits do not replace the need to build and test that implementation on Apple hardware.
+- Do not publish, push, upload, submit, or change App Store Connect values without the normal explicit authorization gates.
 
 Useful commands:
 
@@ -57,7 +50,7 @@ git diff -- game.gd TileSuitSelector.gd TalkScene.gd CODEX_NOTES.md
 - After adding or converting assets, run Godot editor headless to generate imports:
 
 ```powershell
-& 'C:\Users\hskst\work\Godot_v4.6.2-stable_win64_console.exe' --headless --editor --path 'C:\Users\hskst\work\longtianhong' --quit
+& 'E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe' --headless --editor --path 'C:\Users\langt\Documents\Codex\2026-07-15\rotenko-games-coo-chief-of-staff\work\machiate-clean-baseline' --quit
 ```
 
 ## Stage Intro Assets
@@ -85,7 +78,7 @@ Current likely intent:
 
 ## Gameplay / Feature Notes
 
-- `RankingManager.gd` exists as a local/print-style placeholder for leaderboard flow.
+- `RankingManager.gd` is the implemented cross-platform ranking coordinator. Its iOS path uses the exact seven Game Center leaderboard IDs, player-scoped pending scores, request correlation, retry/timeout handling, and native leaderboard presentation.
 - `SupportPurchase.gd` and `MusicRoom.gd` exist for development-support and music-room related flow.
 - `StageSelect.gd` handles normal/EX stage selection and the stage select UI.
 - Tile suit selection now tries to prevent `manzu2` on sorted-hand stages.
@@ -107,7 +100,7 @@ Current likely intent:
 After code or asset changes:
 
 ```powershell
-& 'C:\Users\hskst\work\Godot_v4.6.2-stable_win64_console.exe' --headless --path 'C:\Users\hskst\work\longtianhong' --quit
+& 'E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe' --headless --path 'C:\Users\langt\Documents\Codex\2026-07-15\rotenko-games-coo-chief-of-staff\work\machiate-clean-baseline' --quit
 ```
 
 For import-sensitive asset work, use the editor import command from the Asset Rules section first.
@@ -122,7 +115,8 @@ The expected results include `PASS: native authentication payload excludes alias
 
 ## Next Suggested Work
 
-- Verify the current WebP face asset conversion in Godot.
-- Confirm there are no stale `res://*.png` references after WebP conversion.
-- Decide whether the WebP conversion and tile-suit restriction should be separate commits.
-- Continue stage intro runtime implementation only after checking `ASSET_ADOPTION_STATUS.md`.
+- Build the pinned Game Center native plugin on macOS/Xcode against Godot `4.6.2-stable @ 001aa128b1cd80dc4e47e823c360bccf45ed6bad` and confirm the built authentication payload excludes `alias` and `displayName`.
+- Create all seven leaderboard components in App Store Connect, associate all 7/7 with the first iOS app version, and add every component to the same draft submission with **Add for Review**.
+- Confirm the signed app has Boolean `com.apple.developer.game-center = true` and that the embedded provisioning profile matches.
+- Test all seven rankings on physical iPhones/TestFlight with at least two dedicated non-friend Game Center accounts, then use **Delete Test Data** before review submission.
+- Keep App Privacy **UNRESOLVED / DO NOT SAVE** until Apple gives written confirmation for Route A or the conservative Route B disclosure is finalized against the submitted archive.
