@@ -1,6 +1,6 @@
 # Handoff
 
-Last updated: 2026-06-29
+Last updated: 2026-07-22
 
 This file is the short entry point for future Codex threads. Read this before opening older threads. Older image-generation threads can contain huge inline image payloads and may overflow the context window.
 
@@ -24,6 +24,8 @@ This file is the short entry point for future Codex threads. Read this before op
 ## Current Working State
 
 The worktree is not clean. Recent work includes asset/WebP conversion passes plus a tile-suit behavior change.
+
+The founder decided on 2026-07-22 that all seven iOS Game Center leaderboards are mandatory for v1. There is no v1.1 deferral. The GDScript integration and pinned native plugin patch are implemented, and the Windows contract harness currently passes 108 deterministic assertions. This does not complete the Apple platform gates: the plugin still has to be built and loaded on macOS, all seven leaderboards have to be configured in App Store Connect, and the signed archive, physical iPhone, and TestFlight flows all have to pass. Keep `entitlements/game_center=false` until the plugin and Apple configuration have been validated; iOS ranking remains a release blocker until every gate passes.
 
 - `game.gd` now references many `assets/kao/*.webp` files instead of old PNG face assets.
 - Matching old `assets/kao/*.png` and `.png.import` files are deleted.
@@ -88,9 +90,9 @@ Current likely intent:
 - `StageSelect.gd` handles normal/EX stage selection and the stage select UI.
 - Tile suit selection now tries to prevent `manzu2` on sorted-hand stages.
 - Tutorial gameplay is intentionally special-cased in `game.gd`: 3 fixed questions, 4 displayed tiles, no face portraits, and a guided mask/message overlay that only enables the highlighted answer/submit button. Replace `TUTORIAL_QUESTIONS` when final tutorial hands are decided.
-- Android uses Google Play Games Services leaderboards. iOS v1 currently fails closed with Game Center disabled until a native adapter and iOS-specific leaderboard IDs are implemented and tested; achievements/cloud save remain later work.
+- Android uses Google Play Games Services leaderboards. iOS v1 must ship with all seven Game Center leaderboards; achievements/cloud save remain later work.
 - Google Play Games Level Up may be worth revisiting after release for lower service fees, but do not block the initial release on it. Current plan is normal Google Play Billing for purchases and no external billing.
-- `RankingManager.gd` records local best scores and pending online submissions through `SaveData.gd`. Android IDs are isolated in `ANDROID_LEADERBOARD_IDS`. `IOS_LEADERBOARD_IDS` is intentionally empty, `entitlements/game_center=false`, and title/result ranking UI is hidden on iOS. Do not enable it by configuration alone: Godot's Game Center dictionary API needs a real adapter, App Store Connect IDs, signing, and device/TestFlight validation. No local fallback ranking popup should be shown in release UI.
+- `RankingManager.gd` records local best scores and pending online submissions through `SaveData.gd`. Android IDs are isolated in `ANDROID_LEADERBOARD_IDS`; `IOS_LEADERBOARD_IDS` contains the exact seven App Store Connect IDs. `IOSGameCenterAdapter.gd` and the pinned native plugin patch implement authenticated, player-scoped submission and leaderboard presentation. The Windows contract harness passes 108 deterministic assertions, but that is not a substitute for a macOS/Xcode build, App Store Connect configuration, signed-archive inspection, physical-iPhone testing, or TestFlight. Keep `entitlements/game_center=false` until the plugin/configuration checks pass, and do not ship while any iOS ranking gate remains open. No local fallback ranking popup should be shown in release UI.
 - Android ranking bridge work has started: `GodotPlayGamesServices` is registered as a Godot Android plugin singleton, uses `play-services-games-v2:21.0.0`, and supports sign-in, score submit, and leaderboard UI. Replace `android/build/src/main/res/values/play_games_services.xml` project ID and `RankingManager.gd` leaderboard IDs after Google Play Console setup. See `RANKING_SETUP_GUIDE.md`.
 - The release package/bundle ID has been changed from the early placeholder `com.nb0129.longtianhong` to `com.nb0129.machiate` before creating the Google Play app.
 - Planned localization targets are Japanese, English, Simplified Chinese, Traditional Chinese, and Korean. Use locale codes `ja`, `en`, `zh_CN`, `zh_TW`, and `ko`. Start localization by extracting code/text strings into translation keys before replacing generated text-in-image assets; image localization can come later.
@@ -109,6 +111,14 @@ After code or asset changes:
 ```
 
 For import-sensitive asset work, use the editor import command from the Asset Rules section first.
+
+Run the reproducible iOS Game Center contract suite from the repository root on Windows:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\ios_gamecenter\run_contract_tests.ps1 -GodotExe 'E:\FileHistory\狼天紅\work\Godot_v4.6.2-stable_win64_console.exe'
+```
+
+The expected result is `PASS: 108 deterministic iOS Game Center assertions`. This verifies the GDScript/native contract state machine only; it does not close the macOS, Apple signing, App Store Connect, device, or TestFlight gates.
 
 ## Next Suggested Work
 

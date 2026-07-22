@@ -2,6 +2,7 @@ extends Control
 
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const RankingNoticeScript := preload("res://RankingNotice.gd")
 
 const PATH_BG := "res://assets/ui/bg_top_generated.webp"
 const PATH_LOGO := "res://assets/ui/matiate.webp"
@@ -96,6 +97,8 @@ var _legal_notice_cache: String = ""
 var _settings_dragging: bool = false
 var _settings_last_drag_y: float = 0.0
 var _shell_open_override: Callable = Callable()
+var _ranking_notice: RankingNotice = null
+var _ranking_request_active := false
 
 
 func _ready() -> void:
@@ -105,6 +108,7 @@ func _ready() -> void:
 	_setup_image_button($StoryFrame, $StoryFrame/StoryImg, $StoryFrame/BtnStory, PATH_STORY)
 	_setup_image_button($InstantFrame, $InstantFrame/InstantImg, $InstantFrame/BtnInstant, PATH_IKINARI)
 	_setup_ranking_button()
+	_setup_ranking_notice()
 	_setup_instant_high_score_display()
 	_setup_settings_button()
 	_setup_settings_popup()
@@ -115,6 +119,11 @@ func _ready() -> void:
 	_layout_title()
 	_sync_settings_sliders()
 	ButtonFeedback.install(self)
+
+
+func _exit_tree() -> void:
+	_ranking_request_active = false
+	RankingManager.cancel_pending_leaderboard()
 
 
 func _notification(what: int) -> void:
@@ -134,6 +143,13 @@ func _setup_background() -> void:
 		$BG.texture = load(PATH_BG)
 	$BG.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	$BG.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+
+
+func _setup_ranking_notice() -> void:
+	_ranking_notice = RankingNoticeScript.new()
+	add_child(_ranking_notice)
+	if not RankingManager.leaderboard_show_finished.is_connected(_on_leaderboard_show_finished):
+		RankingManager.leaderboard_show_finished.connect(_on_leaderboard_show_finished)
 
 
 func _ensure_title_nodes() -> void:
@@ -782,7 +798,31 @@ func _on_btn_ranking_pressed() -> void:
 	if not RankingManager.should_show_ranking_ui():
 		print("[Title] ranking press ignored because Game Center is unavailable")
 		return
-	RankingManager.show_leaderboard()
+	if OS.get_name() == "iOS":
+		_ranking_request_active = true
+		_set_ranking_button_disabled(true)
+	if not RankingManager.show_leaderboard():
+		_ranking_request_active = false
+		_set_ranking_button_disabled(false)
+		if _ranking_notice != null:
+			_ranking_notice.show_reason("show_failed")
+
+
+func _on_leaderboard_show_finished(_stage_key: String, success: bool, reason: String) -> void:
+	if not _ranking_request_active:
+		return
+	_ranking_request_active = false
+	_set_ranking_button_disabled(false)
+	if not success and _ranking_notice != null:
+		_ranking_notice.show_reason(reason)
+
+
+func _set_ranking_button_disabled(disabled: bool) -> void:
+	if _ranking_frame == null:
+		return
+	var ranking_button := _ranking_frame.get_node_or_null("BtnRanking") as Button
+	if ranking_button != null:
+		ranking_button.disabled = disabled
 
 
 func _on_btn_settings_pressed() -> void:

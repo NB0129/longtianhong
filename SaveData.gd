@@ -2,6 +2,16 @@ extends Node
 # セーブデータ管理（AutoLoad名：SaveData）
 
 const SAVE_PATH = "user://save.cfg"
+const IOS_RANKING_SCHEMA_VERSION := 1
+const IOS_RANKING_STAGE_KEYS: Array[String] = [
+	"easy",
+	"normal",
+	"hard_mirage",
+	"too_easy",
+	"abnormal",
+	"very_hard_nightmare",
+	"endless",
+]
 
 # 各ステージの初回クリアフラグ
 var stage1_cleared: bool = false
@@ -39,6 +49,9 @@ var is_supporter: bool = false
 var high_scores: Dictionary = {}
 var ranking_best_scores: Dictionary = {}
 var ranking_pending_scores: Dictionary = {}
+var ios_ranking_schema_version: int = IOS_RANKING_SCHEMA_VERSION
+var ios_ranking_pending_scores_by_player: Dictionary = {}
+var ios_ranking_unowned_scores: Dictionary = {}
 var language_code: String = "ja"
 
 
@@ -74,6 +87,9 @@ func save():
 	config.set_value("score", "high_scores", high_scores)
 	config.set_value("ranking", "best_scores", ranking_best_scores)
 	config.set_value("ranking", "pending_scores", ranking_pending_scores)
+	config.set_value("ranking_ios", "schema_version", ios_ranking_schema_version)
+	config.set_value("ranking_ios", "pending_by_player", ios_ranking_pending_scores_by_player)
+	config.set_value("ranking_ios", "unowned_scores", ios_ranking_unowned_scores)
 	config.set_value("localization", "language_code", language_code)
 	config.save(SAVE_PATH)
 
@@ -114,14 +130,35 @@ func load_data():
 	high_scores          = config.get_value("score", "high_scores", {})
 	ranking_best_scores  = config.get_value("ranking", "best_scores", {})
 	ranking_pending_scores = config.get_value("ranking", "pending_scores", {})
+	ios_ranking_schema_version = int(config.get_value("ranking_ios", "schema_version", 0))
+	var loaded_ios_pending: Variant = config.get_value("ranking_ios", "pending_by_player", {})
+	ios_ranking_pending_scores_by_player = _sanitize_ios_ranking_pending_by_player(loaded_ios_pending)
+	var loaded_ios_unowned: Variant = config.get_value("ranking_ios", "unowned_scores", {})
+	ios_ranking_unowned_scores = _sanitize_ios_ranking_score_bucket(loaded_ios_unowned)
 	language_code        = normalize_language_code(str(config.get_value("localization", "language_code", "ja")))
+	var migrated_ios_ranking: bool = (
+		not (loaded_ios_pending is Dictionary)
+		or not (loaded_ios_unowned is Dictionary)
+		or ios_ranking_pending_scores_by_player != loaded_ios_pending
+		or ios_ranking_unowned_scores != loaded_ios_unowned
+	)
+	if ios_ranking_schema_version < IOS_RANKING_SCHEMA_VERSION:
+		for stage_key in ranking_pending_scores.keys():
+			if str(stage_key) not in IOS_RANKING_STAGE_KEYS:
+				continue
+			var pending_score := int(ranking_pending_scores.get(stage_key, 0))
+			if pending_score > int(ios_ranking_unowned_scores.get(stage_key, 0)):
+				ios_ranking_unowned_scores[stage_key] = pending_score
+		ios_ranking_unowned_scores = _sanitize_ios_ranking_score_bucket(ios_ranking_unowned_scores)
+		ios_ranking_schema_version = IOS_RANKING_SCHEMA_VERSION
+		migrated_ios_ranking = true
 	var instant_score: int = int(high_scores.get("instant", 0))
 	var endless_score: int = int(high_scores.get("endless", 0))
 	if high_scores.has("instant"):
 		high_scores["endless"] = maxi(instant_score, endless_score)
 		high_scores.erase("instant")
 		save()
-	elif removed_deprecated_bgm:
+	elif removed_deprecated_bgm or migrated_ios_ranking:
 		save()
 
 
@@ -152,6 +189,9 @@ func reset():
 	high_scores = {}
 	ranking_best_scores = {}
 	ranking_pending_scores = {}
+	ios_ranking_schema_version = IOS_RANKING_SCHEMA_VERSION
+	ios_ranking_pending_scores_by_player = {}
+	ios_ranking_unowned_scores = {}
 	language_code = "ja"
 	save()
 
@@ -160,6 +200,37 @@ func normalize_language_code(value: String) -> String:
 	if value in ["ja", "en", "zh_CN", "zh_TW", "ko"]:
 		return value
 	return "ja"
+
+
+func _sanitize_ios_ranking_pending_by_player(value: Variant) -> Dictionary:
+	var sanitized: Dictionary = {}
+	if not (value is Dictionary):
+		return sanitized
+	for raw_player_id in value.keys():
+		var player_id := str(raw_player_id).strip_edges()
+		if player_id == "" or player_id == "GKPlayerIDNoLongerAvailable":
+			continue
+		var bucket := _sanitize_ios_ranking_score_bucket(value[raw_player_id])
+		if not bucket.is_empty():
+			sanitized[player_id] = bucket
+	return sanitized
+
+
+func _sanitize_ios_ranking_score_bucket(value: Variant) -> Dictionary:
+	var sanitized: Dictionary = {}
+	if not (value is Dictionary):
+		return sanitized
+	for raw_stage_key in value.keys():
+		var stage_key := str(raw_stage_key)
+		if stage_key not in IOS_RANKING_STAGE_KEYS:
+			continue
+		var raw_score: Variant = value[raw_stage_key]
+		if not (raw_score is int):
+			continue
+		var score := maxi(0, int(raw_score))
+		if score > 0:
+			sanitized[stage_key] = score
+	return sanitized
 
 
 func set_language_code(value: String) -> void:
@@ -215,6 +286,66 @@ func clear_pending_ranking_score(stage_key: String, score: int = -1) -> void:
 	if score >= 0 and int(ranking_pending_scores.get(stage_key, 0)) > score:
 		return
 	ranking_pending_scores.erase(stage_key)
+	save()
+
+
+func record_ios_ranking_score(player_id: String, stage_key: String, score: int) -> bool:
+	if stage_key not in IOS_RANKING_STAGE_KEYS:
+		return false
+	var safe_score := maxi(0, score)
+	var changed := false
+	if safe_score > get_ranking_best_score(stage_key):
+		ranking_best_scores[stage_key] = safe_score
+		changed = true
+	var normalized_player_id := player_id.strip_edges()
+	if normalized_player_id == "" or normalized_player_id == "GKPlayerIDNoLongerAvailable":
+		ios_ranking_unowned_scores = _sanitize_ios_ranking_score_bucket(ios_ranking_unowned_scores)
+		if safe_score > int(ios_ranking_unowned_scores.get(stage_key, 0)):
+			ios_ranking_unowned_scores[stage_key] = safe_score
+			changed = true
+	elif safe_score > 0:
+		var player_bucket_value: Variant = ios_ranking_pending_scores_by_player.get(normalized_player_id, {})
+		var player_bucket := _sanitize_ios_ranking_score_bucket(player_bucket_value)
+		if safe_score > int(player_bucket.get(stage_key, 0)):
+			player_bucket[stage_key] = safe_score
+			ios_ranking_pending_scores_by_player[normalized_player_id] = player_bucket
+			changed = true
+	if changed:
+		save()
+	return changed
+
+
+func get_ios_pending_ranking_scores(player_id: String) -> Dictionary:
+	var normalized_player_id := player_id.strip_edges()
+	if normalized_player_id == "":
+		return {}
+	var player_bucket: Variant = ios_ranking_pending_scores_by_player.get(normalized_player_id, {})
+	return _sanitize_ios_ranking_score_bucket(player_bucket)
+
+
+func get_ios_unowned_ranking_scores() -> Dictionary:
+	return _sanitize_ios_ranking_score_bucket(ios_ranking_unowned_scores)
+
+
+func clear_ios_pending_ranking_score(player_id: String, stage_key: String, score: int = -1) -> void:
+	var normalized_player_id := player_id.strip_edges()
+	if normalized_player_id == "" or not ios_ranking_pending_scores_by_player.has(normalized_player_id):
+		return
+	var player_bucket_value: Variant = ios_ranking_pending_scores_by_player[normalized_player_id]
+	if not (player_bucket_value is Dictionary):
+		ios_ranking_pending_scores_by_player.erase(normalized_player_id)
+		save()
+		return
+	var player_bucket := _sanitize_ios_ranking_score_bucket(player_bucket_value)
+	if not player_bucket.has(stage_key):
+		return
+	if score >= 0 and int(player_bucket.get(stage_key, 0)) > score:
+		return
+	player_bucket.erase(stage_key)
+	if player_bucket.is_empty():
+		ios_ranking_pending_scores_by_player.erase(normalized_player_id)
+	else:
+		ios_ranking_pending_scores_by_player[normalized_player_id] = player_bucket
 	save()
 
 

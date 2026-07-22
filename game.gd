@@ -2,6 +2,7 @@ extends Control
 
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const RankingNoticeScript := preload("res://RankingNotice.gd")
 
 const TUTORIAL_TEXT := {
 	"ja": {
@@ -441,6 +442,9 @@ var tutorial_page_index: int = 0
 var tutorial_feedback_text: String = ""
 var tutorial_feedback_key: String = ""
 var tutorial_advance_block_until_msec: int = 0
+var _ranking_notice: RankingNotice = null
+var _ranking_request_active := false
+var _ranking_score_submit_failed := false
 
 # ============================================================
 # 初期化
@@ -556,6 +560,7 @@ func _ready() -> void:
 	PopupSkin.apply_home_confirm_popup($HomeConfirmPopup)
 	_setup_home_confirm_feedback_targets()
 	ButtonFeedback.install(self)
+	_setup_ranking_notice()
 
 	setup_timer_display()
 
@@ -567,6 +572,19 @@ func _ready() -> void:
 
 	if timer_enabled:
 		start_timer()
+
+
+func _exit_tree() -> void:
+	RankingManager.cancel_pending_leaderboard()
+
+
+func _setup_ranking_notice() -> void:
+	_ranking_notice = RankingNoticeScript.new()
+	add_child(_ranking_notice)
+	if not RankingManager.leaderboard_show_finished.is_connected(_on_leaderboard_show_finished):
+		RankingManager.leaderboard_show_finished.connect(_on_leaderboard_show_finished)
+	if not RankingManager.score_submit_finished.is_connected(_on_ranking_score_submit_finished):
+		RankingManager.score_submit_finished.connect(_on_ranking_score_submit_finished)
 
 func _load_tile_textures() -> void:
 	tile_textures.clear()
@@ -2014,8 +2032,41 @@ func _on_btn_submit_ranking_pressed() -> void:
 		return
 	var final_score := _get_final_score()
 	print("[Game] submit ranking pressed stage_key=", stage_key, " score=", final_score)
-	if RankingManager.submit_score(stage_key, final_score):
-		RankingManager.show_leaderboard(stage_key)
+	if OS.get_name() == "iOS":
+		_ranking_request_active = true
+		_ranking_score_submit_failed = false
+		_set_result_ranking_button_disabled(true)
+	if not RankingManager.submit_score(stage_key, final_score):
+		_on_leaderboard_show_finished(stage_key, false, "show_failed")
+		return
+	if not RankingManager.show_leaderboard(stage_key):
+		_on_leaderboard_show_finished(stage_key, false, "show_failed")
+
+
+func _on_ranking_score_submit_finished(stage_key: String, _score: int, submitted_online: bool) -> void:
+	if not _ranking_request_active or stage_key != _get_ranking_stage_key():
+		return
+	if not submitted_online:
+		_ranking_score_submit_failed = true
+
+
+func _on_leaderboard_show_finished(stage_key: String, success: bool, reason: String) -> void:
+	if not _ranking_request_active or (stage_key != "" and stage_key != _get_ranking_stage_key()):
+		return
+	_ranking_request_active = false
+	_set_result_ranking_button_disabled(false)
+	if not success:
+		if _ranking_notice != null:
+			_ranking_notice.show_reason(reason)
+		return
+	if _ranking_score_submit_failed and _ranking_notice != null:
+		_ranking_notice.show_reason("score_saved")
+
+
+func _set_result_ranking_button_disabled(disabled: bool) -> void:
+	var ranking_button := get_node_or_null("PopupResult/ResultButtons/BtnSubmitRanking") as Button
+	if ranking_button != null:
+		ranking_button.disabled = disabled
 
 func _on_btn_show_answer_pressed() -> void:
 	_show_answer_view_from_result()

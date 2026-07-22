@@ -1,0 +1,309 @@
+diff --git a/plugins/gamecenter/game_center.h b/plugins/gamecenter/game_center.h
+--- a/plugins/gamecenter/game_center.h
++++ b/plugins/gamecenter/game_center.h
+@@ -49,12 +49,14 @@ class GameCenter : public Object {
+ 	List<Variant> pending_events;
+ 
+ 	bool authenticated;
++	String active_game_center_request_id;
+ 
+ 	void return_connect_error(const char *p_error_description);
+ 
+ public:
+-	Error authenticate();
++	Error authenticate(Dictionary p_params);
+ 	bool is_authenticated();
++	Dictionary get_player_identity();
+ 
+ 	Error post_score(Dictionary p_score);
+ 	Error award_achievement(Dictionary p_params);
+diff --git a/plugins/gamecenter/game_center.mm b/plugins/gamecenter/game_center.mm
+--- a/plugins/gamecenter/game_center.mm
++++ b/plugins/gamecenter/game_center.mm
+@@ -64,8 +64,9 @@ GameCenter *GameCenter::instance = NULL;
+ GodotGameCenterDelegate *gameCenterDelegate = nil;
+ 
+ void GameCenter::_bind_methods() {
+-	ClassDB::bind_method(D_METHOD("authenticate"), &GameCenter::authenticate);
++	ClassDB::bind_method(D_METHOD("authenticate", "params"), &GameCenter::authenticate);
+ 	ClassDB::bind_method(D_METHOD("is_authenticated"), &GameCenter::is_authenticated);
++	ClassDB::bind_method(D_METHOD("get_player_identity"), &GameCenter::get_player_identity);
+ 
+ 	ClassDB::bind_method(D_METHOD("post_score"), &GameCenter::post_score);
+ 	ClassDB::bind_method(D_METHOD("award_achievement", "achievement"), &GameCenter::award_achievement);
+@@ -79,11 +80,15 @@ void GameCenter::_bind_methods() {
+ 	ClassDB::bind_method(D_METHOD("pop_pending_event"), &GameCenter::pop_pending_event);
+ };
+ 
+-Error GameCenter::authenticate() {
++Error GameCenter::authenticate(Dictionary p_params) {
+ 	//if this class isn't available, game center isn't implemented
+ 	if ((NSClassFromString(@"GKLocalPlayer")) == nil) {
+ 		return ERR_UNAVAILABLE;
+ 	}
++	ERR_FAIL_COND_V(!p_params.has("request_id"), ERR_INVALID_PARAMETER);
++	String request_id = p_params["request_id"];
++	ERR_FAIL_COND_V(request_id.is_empty(), ERR_INVALID_PARAMETER);
++	NSString *request_id_str = [[NSString alloc] initWithUTF8String:request_id.utf8().get_data()];
+ 
+ 	GKLocalPlayer *player = [GKLocalPlayer localPlayer];
+ 	ERR_FAIL_COND_V(![player respondsToSelector:@selector(authenticateHandler)], ERR_UNAVAILABLE);
+@@ -95,38 +100,59 @@ Error GameCenter::authenticate() {
+ 	// after the view is cancelled or the user logs in.  Or if the user's already logged in, it's
+ 	// called just once to confirm they're authenticated.  This is why no result needs to be specified
+ 	// in the presentViewController phase. In this case, more calls to this function will follow.
+-	_weakify(root_controller);
+-	_weakify(player);
++	__weak UIViewController *weak_root_controller = root_controller;
++	__weak GKLocalPlayer *weak_player = player;
+ 	player.authenticateHandler = (^(UIViewController *controller, NSError *error) {
+-		_strongify(root_controller);
+-		_strongify(player);
++		dispatch_async(dispatch_get_main_queue(), ^{
++			UIViewController *strong_root_controller = weak_root_controller;
++			GKLocalPlayer *strong_player = weak_player;
++			GameCenter *singleton = GameCenter::get_singleton();
++			if (singleton == nullptr || strong_player == nil) {
++				return;
++			}
++			if (controller != nil) {
++				bool can_present = (
++					strong_root_controller != nil &&
++					[UIApplication sharedApplication].applicationState == UIApplicationStateActive &&
++					strong_root_controller.viewIfLoaded.window != nil &&
++					strong_root_controller.presentedViewController == nil
++				);
++				if (can_present) {
++					[strong_root_controller presentViewController:controller animated:YES completion:nil];
++				} else {
++					Dictionary ret;
++					ret["type"] = "authentication";
++					ret["request_id"] = String::utf8([request_id_str UTF8String]);
++					ret["result"] = "error";
++					ret["error_code"] = (int64_t)ERR_BUSY;
++					ret["error_description"] = "native_ui_busy";
++					singleton->pending_events.push_back(ret);
++				}
++				return;
++			}
+ 
+-		if (controller) {
+-			[root_controller presentViewController:controller animated:YES completion:nil];
+-		} else {
+ 			Dictionary ret;
+ 			ret["type"] = "authentication";
+-			if (player.isAuthenticated) {
++			ret["request_id"] = String::utf8([request_id_str UTF8String]);
++			if (strong_player.isAuthenticated) {
++				bool persistent = [strong_player scopedIDsArePersistent] == YES;
++				NSString *game_player_id = persistent ? strong_player.gamePlayerID : nil;
++				bool usable_id = game_player_id != nil && ![game_player_id isEqualToString:GKPlayerIDNoLongerAvailable];
+ 				ret["result"] = "ok";
+-				ret["alias"] = [player.alias UTF8String];
+-				ret["displayName"] = [player.displayName UTF8String];
+-
+-				if (@available(iOS 13, *)) {
+-					ret["player_id"] = [player.teamPlayerID UTF8String];
+-				} else {
+-					ret["player_id"] = [player.playerID UTF8String];
+-				}
+-
+-				GameCenter::get_singleton()->authenticated = true;
++				ret["alias"] = strong_player.alias == nil ? "" : [strong_player.alias UTF8String];
++				ret["displayName"] = strong_player.displayName == nil ? "" : [strong_player.displayName UTF8String];
++				ret["game_player_id"] = usable_id ? [game_player_id UTF8String] : "";
++				ret["player_id"] = usable_id ? [game_player_id UTF8String] : "";
++				ret["player_id_persistent"] = persistent && usable_id;
++				singleton->authenticated = true;
+ 			} else {
+ 				ret["result"] = "error";
+-				ret["error_code"] = (int64_t)error.code;
+-				ret["error_description"] = [error.localizedDescription UTF8String];
+-				GameCenter::get_singleton()->authenticated = false;
+-			};
+-
+-			pending_events.push_back(ret);
+-		};
++				ret["error_code"] = error == nil ? 0 : (int64_t)error.code;
++				ret["error_description"] = error == nil || error.localizedDescription == nil ? "" : [error.localizedDescription UTF8String];
++				singleton->authenticated = false;
++			}
++			singleton->pending_events.push_back(ret);
++		});
+ 	});
+ 
+ 	return OK;
+@@ -136,31 +162,67 @@ bool GameCenter::is_authenticated() {
+ 	return authenticated;
+ };
+ 
++Dictionary GameCenter::get_player_identity() {
++	Dictionary ret;
++	GKLocalPlayer *player = [GKLocalPlayer localPlayer];
++	bool player_authenticated = player != nil && player.isAuthenticated;
++	bool persistent = player_authenticated && [player scopedIDsArePersistent] == YES;
++	NSString *game_player_id = persistent ? player.gamePlayerID : nil;
++	bool usable_id = game_player_id != nil && ![game_player_id isEqualToString:GKPlayerIDNoLongerAvailable];
++	ret["authenticated"] = player_authenticated;
++	ret["persistent"] = persistent && usable_id;
++	ret["game_player_id"] = usable_id ? [game_player_id UTF8String] : "";
++	return ret;
++};
++
+ Error GameCenter::post_score(Dictionary p_score) {
+-	ERR_FAIL_COND_V(!p_score.has("score") || !p_score.has("category"), ERR_INVALID_PARAMETER);
+-	float score = p_score["score"];
++	ERR_FAIL_COND_V(!p_score.has("score") || !p_score.has("category") || !p_score.has("expected_game_player_id") || !p_score.has("request_id"), ERR_INVALID_PARAMETER);
++	int64_t score = p_score["score"];
+ 	String category = p_score["category"];
++	String expected_game_player_id = p_score["expected_game_player_id"];
++	String request_id = p_score["request_id"];
+ 
+ 	NSString *cat_str = [[NSString alloc] initWithUTF8String:category.utf8().get_data()];
+-	GKScore *reporter = [[GKScore alloc] initWithLeaderboardIdentifier:cat_str];
+-	reporter.value = score;
+-
+-	ERR_FAIL_COND_V([GKScore respondsToSelector:@selector(reportScores)], ERR_UNAVAILABLE);
+-
+-	[GKScore reportScores:@[ reporter ]
+-			withCompletionHandler:^(NSError *error) {
+-				Dictionary ret;
+-				ret["type"] = "post_score";
+-				if (error == nil) {
+-					ret["result"] = "ok";
+-				} else {
+-					ret["result"] = "error";
+-					ret["error_code"] = (int64_t)error.code;
+-					ret["error_description"] = [error.localizedDescription UTF8String];
+-				};
+-
+-				pending_events.push_back(ret);
+-			}];
++	NSString *expected_player_id_str = [[NSString alloc] initWithUTF8String:expected_game_player_id.utf8().get_data()];
++	NSString *request_id_str = [[NSString alloc] initWithUTF8String:request_id.utf8().get_data()];
++	GKLocalPlayer *player = [GKLocalPlayer localPlayer];
++	ERR_FAIL_COND_V(player == nil || !player.isAuthenticated, ERR_UNAUTHORIZED);
++	ERR_FAIL_COND_V([player scopedIDsArePersistent] != YES, ERR_UNAUTHORIZED);
++	NSString *verified_player_id = player.gamePlayerID;
++	ERR_FAIL_COND_V(verified_player_id == nil || [verified_player_id isEqualToString:GKPlayerIDNoLongerAvailable], ERR_UNAUTHORIZED);
++	ERR_FAIL_COND_V(![verified_player_id isEqualToString:expected_player_id_str], ERR_UNAUTHORIZED);
++	ERR_FAIL_COND_V(![GKLeaderboard respondsToSelector:@selector(submitScore:context:player:leaderboardIDs:completionHandler:)], ERR_UNAVAILABLE);
++
++	if (@available(iOS 14.0, *)) {
++		[GKLeaderboard submitScore:(NSInteger)score
++				context:0
++				player:player
++				leaderboardIDs:@[ cat_str ]
++				completionHandler:^(NSError *error) {
++					dispatch_async(dispatch_get_main_queue(), ^{
++						GameCenter *singleton = GameCenter::get_singleton();
++						if (singleton == nullptr) {
++							return;
++						}
++						Dictionary ret;
++						ret["type"] = "post_score";
++						ret["category"] = String::utf8([cat_str UTF8String]);
++						ret["score"] = score;
++						ret["game_player_id"] = String::utf8([verified_player_id UTF8String]);
++						ret["request_id"] = String::utf8([request_id_str UTF8String]);
++						if (error == nil) {
++							ret["result"] = "ok";
++						} else {
++							ret["result"] = "error";
++							ret["error_code"] = (int64_t)error.code;
++							ret["error_description"] = [error.localizedDescription UTF8String];
++						}
++						singleton->pending_events.push_back(ret);
++					});
++				}];
++	} else {
++		return ERR_UNAVAILABLE;
++	}
+ 
+ 	return OK;
+ };
+@@ -300,6 +362,10 @@ void GameCenter::reset_achievements() {
+ 
+ Error GameCenter::show_game_center(Dictionary p_params) {
+ 	ERR_FAIL_COND_V(!NSProtocolFromString(@"GKGameCenterControllerDelegate"), FAILED);
++	ERR_FAIL_COND_V(!p_params.has("request_id"), ERR_INVALID_PARAMETER);
++	String request_id = p_params["request_id"];
++	ERR_FAIL_COND_V(request_id.is_empty(), ERR_INVALID_PARAMETER);
++	ERR_FAIL_COND_V(!active_game_center_request_id.is_empty(), ERR_BUSY);
+ 
+ 	GKGameCenterViewControllerState view_state = GKGameCenterViewControllerStateDefault;
+ 	if (p_params.has("view")) {
+@@ -322,6 +388,8 @@ Error GameCenter::show_game_center(Dictionary p_params) {
+ 
+ 	UIViewController *root_controller = [[UIApplication sharedApplication] delegate].window.rootViewController;
+ 	ERR_FAIL_COND_V(!root_controller, FAILED);
++	ERR_FAIL_COND_V([UIApplication sharedApplication].applicationState != UIApplicationStateActive, ERR_BUSY);
++	ERR_FAIL_COND_V(root_controller.presentedViewController != nil, ERR_BUSY);
+ 
+ 	controller.gameCenterDelegate = gameCenterDelegate;
+ 	controller.viewState = view_state;
+@@ -334,6 +402,7 @@ Error GameCenter::show_game_center(Dictionary p_params) {
+ 		}
+ 	}
+ 
++	active_game_center_request_id = request_id;
+ 	[root_controller presentViewController:controller animated:YES completion:nil];
+ 
+ 	return OK;
+@@ -376,9 +445,14 @@ Error GameCenter::request_identity_verification_signature() {
+ };
+ 
+ void GameCenter::game_center_closed() {
++	if (active_game_center_request_id.is_empty()) {
++		return;
++	}
+ 	Dictionary ret;
+ 	ret["type"] = "show_game_center";
+ 	ret["result"] = "ok";
++	ret["request_id"] = active_game_center_request_id;
++	active_game_center_request_id = "";
+ 	pending_events.push_back(ret);
+ }
+ 
+@@ -401,11 +475,20 @@ GameCenter::GameCenter() {
+ 	ERR_FAIL_COND(instance != NULL);
+ 	instance = this;
+ 	authenticated = false;
++	active_game_center_request_id = "";
+ 
+ 	gameCenterDelegate = [[GodotGameCenterDelegate alloc] init];
+ };
+ 
+ GameCenter::~GameCenter() {
++	GKLocalPlayer *player = [GKLocalPlayer localPlayer];
++	if (player != nil) {
++		player.authenticateHandler = nil;
++	}
++	active_game_center_request_id = "";
++	if (instance == this) {
++		instance = nullptr;
++	}
+ 	if (gameCenterDelegate) {
+ 		gameCenterDelegate = nil;
+ 	}
+diff --git a/plugins/gamecenter/game_center_delegate.mm b/plugins/gamecenter/game_center_delegate.mm
+--- a/plugins/gamecenter/game_center_delegate.mm
++++ b/plugins/gamecenter/game_center_delegate.mm
+@@ -35,11 +35,12 @@
+ @implementation GodotGameCenterDelegate
+ 
+ - (void)gameCenterViewControllerDidFinish:(GKGameCenterViewController *)gameCenterViewController {
+-	//[gameCenterViewController dismissViewControllerAnimated:YES completion:^{GameCenter::get_singleton()->game_center_closed();}];//version for signaling when overlay is completely gone
+-	if (GameCenter::get_singleton()) {
+-		GameCenter::get_singleton()->game_center_closed();
+-	}
+-	[gameCenterViewController dismissViewControllerAnimated:YES completion:nil];
++	[gameCenterViewController dismissViewControllerAnimated:YES completion:^{
++		GameCenter *singleton = GameCenter::get_singleton();
++		if (singleton != nullptr) {
++			singleton->game_center_closed();
++		}
++	}];
+ }
+ 
+ @end

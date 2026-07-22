@@ -1,0 +1,14 @@
+config_version=5
+
+[application]
+
+config/name="Machiate iOS Game Center Tests"
+run/main_scene="res://TestRunner.tscn"
+
+[autoload]
+
+SaveData="*res://SaveDataStub.gd"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
