@@ -88,10 +88,12 @@ const STAGE_TALK_SCENE_IDS: Dictionary = {
 var _surface_rows: Dictionary = {}
 var _ex_rows: Dictionary = {}
 var _is_sliding: bool = false
+var _support_input_blocker: Control = null
 var _support_popup: Panel = null
 var _support_message_label: Label = null
 var _support_buy_button: Button = null
 var _support_restore_button: Button = null
+var _support_close_button: Button = null
 var _showing_ex: bool = false
 var _swipe_tracking: bool = false
 var _swipe_start: Vector2 = Vector2.ZERO
@@ -461,6 +463,14 @@ func _make_high_score_digits(stage_key: String) -> Control:
 func _create_support_popup() -> void:
 	if _support_popup != null and is_instance_valid(_support_popup):
 		return
+	var input_blocker := Control.new()
+	input_blocker.name = "SupportPopupInputBlocker"
+	input_blocker.visible = false
+	input_blocker.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	input_blocker.mouse_filter = Control.MOUSE_FILTER_STOP
+	input_blocker.z_index = 49
+	add_child(input_blocker)
+
 	var panel: Panel = Panel.new()
 	panel.name = "SupportPopup"
 	panel.visible = false
@@ -534,10 +544,12 @@ func _create_support_popup() -> void:
 	close_button.add_theme_font_size_override("font_size", 20)
 	close_button.pressed.connect(_on_support_close_pressed)
 	vbox.add_child(close_button)
+	_support_input_blocker = input_blocker
 	_support_popup = panel
 	_support_message_label = message_label
 	_support_buy_button = buy_button
 	_support_restore_button = restore_button
+	_support_close_button = close_button
 	PopupSkin.apply_support_popup(panel)
 	_refresh_support_popup_texts()
 	_update_support_popup_state()
@@ -558,7 +570,7 @@ func _show_support_popup() -> void:
 	PopupSkin.apply_support_popup(_support_popup)
 	_refresh_support_popup_texts()
 	_update_support_popup_state()
-	_support_popup.visible = true
+	_set_support_popup_visible(true)
 	_support_popup.move_to_front()
 
 func _on_support_purchase_pressed() -> void:
@@ -572,9 +584,10 @@ func _on_support_restore_pressed() -> void:
 	SupportPurchase.restore_support()
 
 func _on_support_close_pressed() -> void:
+	if _support_operation_blocks_navigation():
+		return
 	AudioManager.play_se("se_btntap")
-	if _support_popup != null and is_instance_valid(_support_popup):
-		_support_popup.visible = false
+	_set_support_popup_visible(false)
 
 func _on_support_state_changed() -> void:
 	_refresh_support_popup_texts()
@@ -593,28 +606,54 @@ func _on_support_restore_finished(_success: bool, message: String) -> void:
 		_close_support_popup_after_support()
 
 func _close_support_popup_after_support() -> void:
-	if _support_popup != null and is_instance_valid(_support_popup):
-		_support_popup.visible = false
+	_set_support_popup_visible(false)
 	_build_ex_buttons()
 	_update_lock_display()
 
 func _update_support_popup_state() -> void:
 	var busy: bool = SupportPurchase.is_busy
 	if _support_buy_button != null and is_instance_valid(_support_buy_button):
-		_support_buy_button.disabled = busy or SupportPurchase.is_supporter() or not SupportPurchase.product_available
+		_support_buy_button.disabled = busy or SupportPurchase.is_purchase_retry_blocked() or SupportPurchase.is_supporter() or not SupportPurchase.product_available
 	if _support_restore_button != null and is_instance_valid(_support_restore_button):
-		_support_restore_button.disabled = busy
+		_support_restore_button.disabled = busy or SupportPurchase.is_restore_retry_blocked()
+	if _support_close_button != null and is_instance_valid(_support_close_button):
+		_support_close_button.disabled = busy
+	$BtnHome.disabled = busy
+	$BtnSettings.disabled = busy
+	$BtnSideChange.disabled = busy
+	_sync_support_modal_state()
 
 	if SupportPurchase.is_supporter():
 		_set_support_message(_support_ui_text("supported"))
 	elif busy:
 		_set_support_message(_support_ui_text("busy"))
+	elif SupportPurchase.is_purchase_retry_blocked() or SupportPurchase.is_restore_retry_blocked():
+		_set_support_message(SupportPurchase.get_retry_block_message())
 	elif SupportPurchase.product_info_loading or not SupportPurchase.product_info_loaded:
 		_set_support_message(_support_ui_text("product_loading"))
 	elif not SupportPurchase.product_available:
 		_set_support_message(_support_ui_text("product_unavailable"))
 	else:
 		_set_support_message("")
+
+func _set_support_popup_visible(value: bool) -> void:
+	if _support_popup != null and is_instance_valid(_support_popup):
+		_support_popup.visible = value
+	_sync_support_modal_state()
+
+func _sync_support_modal_state() -> void:
+	if _support_popup == null or not is_instance_valid(_support_popup):
+		return
+	if SupportPurchase.is_busy:
+		_support_popup.visible = true
+	if _support_input_blocker != null and is_instance_valid(_support_input_blocker):
+		_support_input_blocker.visible = _support_popup.visible
+		if _support_input_blocker.visible:
+			_support_input_blocker.move_to_front()
+			_support_popup.move_to_front()
+
+func _support_operation_blocks_navigation() -> bool:
+	return SupportPurchase.is_busy
 
 func _set_support_message(message: String) -> void:
 	if _support_message_label != null and is_instance_valid(_support_message_label):
@@ -726,14 +765,15 @@ func _support_ui_text(key: String) -> String:
 # ステージ表示状態の更新
 # ============================================================
 func _update_lock_display() -> void:
+	var navigation_locked := _support_operation_blocks_navigation()
 	for stage in SURFACE_STAGES:
 		if not _surface_rows.has(stage):
 			continue
 		var row_data: Dictionary = _surface_rows[stage]
 		row_data["mask"].visible       = false
-		row_data["story_btn"].disabled = false
+		row_data["story_btn"].disabled = navigation_locked
 		if row_data["game_btn"] != null and row_data["game_btn"].is_inside_tree():
-			row_data["game_btn"].disabled = false
+			row_data["game_btn"].disabled = navigation_locked
 
 	side_change_button.visible = true
 
@@ -742,14 +782,17 @@ func _update_lock_display() -> void:
 			continue
 		var row_data: Dictionary = _ex_rows[stage]
 		row_data["mask"].visible       = false
-		row_data["story_btn"].disabled = false
+		row_data["story_btn"].disabled = navigation_locked
 		if row_data["game_btn"] != null and row_data["game_btn"].is_inside_tree():
-			row_data["game_btn"].disabled = false
+			row_data["game_btn"].disabled = navigation_locked
 
 # ============================================================
 # デバッグ
 # ============================================================
 func _input(event: InputEvent) -> void:
+	if _support_operation_blocks_navigation():
+		_swipe_tracking = false
+		return
 	_handle_page_swipe(event)
 
 	if OS.is_debug_build() and event is InputEventKey and event.pressed and event.keycode == KEY_F3:
@@ -762,7 +805,7 @@ func _input(event: InputEvent) -> void:
 # スライド演出
 # ============================================================
 func _handle_page_swipe(event: InputEvent) -> void:
-	if _is_sliding or $SettingsPopup.visible or (_support_popup != null and _support_popup.visible):
+	if _support_operation_blocks_navigation() or _is_sliding or $SettingsPopup.visible or (_support_popup != null and _support_popup.visible):
 		return
 
 	if event is InputEventScreenTouch:
@@ -789,7 +832,7 @@ func _handle_page_swipe(event: InputEvent) -> void:
 			_slide_to_surface()
 
 func _slide_to_ex() -> void:
-	if _is_sliding:
+	if _support_operation_blocks_navigation() or _is_sliding:
 		return
 	SaveData.last_mode = "ex"
 	SaveData.save()
@@ -804,7 +847,7 @@ func _slide_to_ex() -> void:
 	_update_side_change_icon()
 
 func _slide_to_surface() -> void:
-	if _is_sliding:
+	if _support_operation_blocks_navigation() or _is_sliding:
 		return
 	SaveData.last_mode = "surface"
 	SaveData.save()
@@ -822,18 +865,24 @@ func _slide_to_surface() -> void:
 # ボタン処理
 # ============================================================
 func _on_story_btn_pressed(stage: String) -> void:
+	if _support_operation_blocks_navigation():
+		return
 	if _get_stage_talk_scene_id(stage) != "":
 		_start_stage_story(stage)
 		return
 	_start_stage(stage)
 
 func _on_game_btn_pressed(stage: String) -> void:
+	if _support_operation_blocks_navigation():
+		return
 	_start_stage(stage)
 
 func _get_stage_talk_scene_id(stage: String) -> String:
 	return str(STAGE_TALK_SCENE_IDS.get(stage, ""))
 
 func _start_stage_story(stage: String) -> void:
+	if _support_operation_blocks_navigation():
+		return
 	SaveData.last_mode = "surface"
 	if stage not in SURFACE_STAGES:
 		SaveData.last_mode = "ex"
@@ -847,6 +896,8 @@ func _start_stage_story(stage: String) -> void:
 	get_tree().change_scene_to_file("res://TalkScene.tscn")
 
 func _start_stage(stage: String) -> void:
+	if _support_operation_blocks_navigation():
+		return
 	print("【デバッグ】_start_stage called: ", stage)
 	if stage == "music_room":
 		var support_flow_available := SupportPurchase.can_offer_support_purchase()
@@ -897,12 +948,16 @@ func _start_stage(stage: String) -> void:
 			get_tree().change_scene_to_file("res://MusicRoom.tscn")
 
 func _on_btn_side_change_pressed() -> void:
+	if _support_operation_blocks_navigation():
+		return
 	if _showing_ex:
 		_slide_to_surface()
 	else:
 		_slide_to_ex()
 
 func _on_btn_settings_pressed() -> void:
+	if _support_operation_blocks_navigation():
+		return
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)
@@ -911,6 +966,8 @@ func _on_btn_settings_pressed() -> void:
 	$SettingsPopup.visible = true
 
 func _on_btn_settings_close_pressed() -> void:
+	if _support_operation_blocks_navigation():
+		return
 	$SettingsPopup.visible = false
 
 func _on_bgm_slider_changed(value: float) -> void:
@@ -938,4 +995,6 @@ func _on_language_button_pressed(code: String) -> void:
 	AudioManager.play_se("se_btntap")
 
 func _on_btn_home_pressed() -> void:
+	if _support_operation_blocks_navigation():
+		return
 	get_tree().change_scene_to_file("res://Title.tscn")

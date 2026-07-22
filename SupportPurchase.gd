@@ -10,6 +10,8 @@ const OPERATION_PURCHASE := "purchase"
 const OPERATION_RESTORE := "restore"
 const IOS_IN_APP_STORE_SINGLETON := "InAppStore"
 const IOS_EVENT_DRAIN_LIMIT := 128
+const OPERATION_TIMEOUT_SECONDS := 300.0
+const OPERATION_RESUME_RECOVERY_SECONDS := 15.0
 const NATIVE_BRIDGE_SINGLETON_CANDIDATES: Array[String] = [
 	"LongtianhongStoreKit",
 	"LongtianhongBilling",
@@ -29,6 +31,8 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"restore_unavailable": "購入の復元機能は現在準備中です。",
 		"purchase_init_failed": "購入機能の初期化に失敗しました。",
 		"restore_init_failed": "購入情報の確認に失敗しました。",
+		"purchase_timeout": "購入結果を確認できませんでした。購入状況を確認し、アプリを再起動してからもう一度お試しください。",
+		"restore_timeout": "購入情報の確認に時間がかかっています。アプリを再起動してからもう一度お試しください。",
 	},
 	"en": {
 		"purchase_success": "Development support has been enabled.",
@@ -43,6 +47,8 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"restore_unavailable": "Purchase restoration is currently being prepared.",
 		"purchase_init_failed": "Failed to initialize purchases.",
 		"restore_init_failed": "Failed to check purchase information.",
+		"purchase_timeout": "The purchase result could not be confirmed. Check its status, then restart the app before trying again.",
+		"restore_timeout": "Checking purchase information took too long. Restart the app before trying again.",
 	},
 	"zh_CN": {
 		"purchase_success": "已启用开发支援。",
@@ -57,6 +63,8 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"restore_unavailable": "购买恢复功能目前正在准备中。",
 		"purchase_init_failed": "购买功能初始化失败。",
 		"restore_init_failed": "购买信息确认失败。",
+		"purchase_timeout": "无法确认购买结果。请检查购买状态并重启应用后再试。",
+		"restore_timeout": "购买信息确认超时。请重启应用后再试。",
 	},
 	"zh_TW": {
 		"purchase_success": "已啟用開發支援。",
@@ -71,6 +79,8 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"restore_unavailable": "購買復原功能目前正在準備中。",
 		"purchase_init_failed": "購買功能初始化失敗。",
 		"restore_init_failed": "購買資訊確認失敗。",
+		"purchase_timeout": "無法確認購買結果。請檢查購買狀態並重新啟動App後再試。",
+		"restore_timeout": "確認購買資訊逾時。請重新啟動App後再試。",
 	},
 	"ko": {
 		"purchase_success": "개발 지원이 활성화되었습니다.",
@@ -85,6 +95,8 @@ const SUPPORT_MESSAGES: Dictionary = {
 		"restore_unavailable": "구매 복원 기능은 현재 준비 중입니다.",
 		"purchase_init_failed": "구매 기능 초기화에 실패했습니다.",
 		"restore_init_failed": "구매 정보 확인에 실패했습니다.",
+		"purchase_timeout": "구매 결과를 확인할 수 없습니다. 구매 상태를 확인하고 앱을 다시 시작한 뒤 재시도해 주세요.",
+		"restore_timeout": "구매 정보 확인 시간이 초과되었습니다. 앱을 다시 시작한 뒤 재시도해 주세요.",
 	},
 }
 
@@ -105,6 +117,13 @@ var _ownership_revision: int = 0
 var _active_operation: String = OPERATION_NONE
 var _active_operation_revision: int = -1
 var _refresh_after_resume_pending: bool = false
+var _active_operation_elapsed: float = 0.0
+var _resume_recovery_pending: bool = false
+var _resume_recovery_elapsed: float = 0.0
+var _retry_blocked_operations: Dictionary = {
+	OPERATION_PURCHASE: false,
+	OPERATION_RESTORE: false,
+}
 
 
 func _ready() -> void:
@@ -114,13 +133,25 @@ func _ready() -> void:
 	set_process(_ios_in_app_store != null)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_drain_ios_events()
+	_update_operation_watchdog(delta)
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_RESUMED:
-		call_deferred("_refresh_after_resume")
+		call_deferred("_handle_application_resumed")
+
+
+func _handle_application_resumed() -> void:
+	# A queued StoreKit result gets the first chance to finish the operation. If no
+	# callback arrives, release the modal lock after a short grace period instead of
+	# trapping the player indefinitely.
+	_drain_ios_events()
+	if is_busy:
+		_resume_recovery_pending = true
+		_resume_recovery_elapsed = 0.0
+	_refresh_after_resume()
 
 
 func _refresh_after_resume() -> void:
@@ -136,6 +167,22 @@ func _refresh_after_resume() -> void:
 
 func is_supporter() -> bool:
 	return SaveData.is_supporter
+
+
+func is_purchase_retry_blocked() -> bool:
+	return bool(_retry_blocked_operations.get(OPERATION_PURCHASE, false))
+
+
+func is_restore_retry_blocked() -> bool:
+	return bool(_retry_blocked_operations.get(OPERATION_RESTORE, false))
+
+
+func get_retry_block_message() -> String:
+	if is_purchase_retry_blocked():
+		return _support_message("purchase_timeout")
+	if is_restore_retry_blocked():
+		return _support_message("restore_timeout")
+	return ""
 
 
 func can_offer_support_purchase() -> bool:
@@ -191,6 +238,9 @@ func refresh_entitlements() -> void:
 func purchase_support() -> void:
 	if is_busy:
 		return
+	if is_purchase_retry_blocked():
+		purchase_finished.emit(false, _support_message("purchase_timeout"))
+		return
 	if not product_available:
 		purchase_finished.emit(false, _support_message("purchase_unavailable"))
 		return
@@ -212,6 +262,9 @@ func purchase_support() -> void:
 
 func restore_support() -> void:
 	if is_busy:
+		return
+	if is_restore_retry_blocked():
+		restore_finished.emit(false, _support_message("restore_timeout"))
 		return
 	_begin_operation(OPERATION_RESTORE)
 	if _has_native_bridge():
@@ -240,6 +293,7 @@ func debug_reset_supporter() -> void:
 
 
 func complete_native_purchase(success: bool, message: String, owns_product: bool) -> void:
+	_resolve_timed_out_operation(OPERATION_PURCHASE)
 	if owns_product:
 		_apply_verified_ownership(true)
 	if _active_operation != OPERATION_PURCHASE:
@@ -250,7 +304,15 @@ func complete_native_purchase(success: bool, message: String, owns_product: bool
 
 
 func complete_native_restore(query_succeeded: bool, message: String, owns_product: bool) -> void:
+	var resolved_timed_out_request := _resolve_timed_out_operation(OPERATION_RESTORE)
 	if _active_operation != OPERATION_RESTORE:
+		# A verified success may arrive after the watchdog released the UI. Never
+		# discard positive ownership, but do not let a stale negative result revoke it.
+		if query_succeeded and owns_product:
+			_apply_verified_ownership(true)
+			resolved_timed_out_request = true
+		if resolved_timed_out_request:
+			state_changed.emit()
 		return
 	var resolved_ownership: bool = bool(SaveData.is_supporter)
 	if query_succeeded and _active_operation_revision == _ownership_revision:
@@ -385,6 +447,16 @@ func _handle_ios_purchase_event(event: Dictionary, result: String) -> void:
 
 func _handle_ios_restore_event(event: Dictionary, result: String) -> void:
 	if not _ios_restore_request_in_flight:
+		# A restored transaction can arrive after resume recovery released the UI.
+		# Positive ownership is still authoritative even when its request timed out.
+		var state_needs_update := false
+		if result == "ok" and str(event.get("product_id", "")) == SUPPORT_PRODUCT_ID:
+			_apply_verified_ownership(true)
+			state_needs_update = true
+		if result == "completed" or result == "error" or result == "unhandled":
+			state_needs_update = _resolve_timed_out_operation(OPERATION_RESTORE) or state_needs_update
+		if state_needs_update:
+			state_changed.emit()
 		return
 	if result == "progress":
 		return
@@ -403,6 +475,8 @@ func _handle_ios_restore_event(event: Dictionary, result: String) -> void:
 
 func _handle_ios_restore_completed_event(event: Dictionary, result: String) -> void:
 	if not _ios_restore_request_in_flight:
+		if _resolve_timed_out_operation(OPERATION_RESTORE):
+			state_changed.emit()
 		return
 	if result == "error" or result == "unhandled":
 		_finish_ios_restore_query(false, _ios_error_message("restore", event))
@@ -417,7 +491,10 @@ func _handle_ios_generic_error_event(event: Dictionary) -> void:
 	elif operation == "purchase":
 		complete_native_purchase(false, _ios_error_message("purchase", event), false)
 	elif operation == "restore" or _ios_restore_request_in_flight:
-		_finish_ios_restore_query(false, _ios_error_message("restore", event))
+		if _ios_restore_request_in_flight:
+			_finish_ios_restore_query(false, _ios_error_message("restore", event))
+		elif _resolve_timed_out_operation(OPERATION_RESTORE):
+			state_changed.emit()
 	elif _active_operation == OPERATION_PURCHASE:
 		complete_native_purchase(false, _ios_error_message("purchase", event), false)
 	elif product_info_loading:
@@ -461,6 +538,10 @@ func _begin_operation(operation: String) -> void:
 	is_busy = true
 	_active_operation = operation
 	_active_operation_revision = _ownership_revision
+	_active_operation_elapsed = 0.0
+	_resume_recovery_pending = false
+	_resume_recovery_elapsed = 0.0
+	set_process(true)
 	state_changed.emit()
 
 
@@ -476,6 +557,8 @@ func _finish_purchase(success: bool, message: String) -> void:
 	_active_operation = OPERATION_NONE
 	_active_operation_revision = -1
 	is_busy = false
+	_reset_operation_watchdog()
+	set_process(_ios_in_app_store != null)
 	state_changed.emit()
 	purchase_finished.emit(success, message)
 	_flush_pending_resume_refresh()
@@ -488,6 +571,8 @@ func _finish_restore(success: bool, message: String) -> void:
 	_active_operation = OPERATION_NONE
 	_active_operation_revision = -1
 	is_busy = false
+	_reset_operation_watchdog()
+	set_process(_ios_in_app_store != null)
 	state_changed.emit()
 	restore_finished.emit(success, message)
 	_flush_pending_resume_refresh()
@@ -502,6 +587,54 @@ func _flush_pending_resume_refresh() -> void:
 func _flush_pending_entitlement_refresh() -> void:
 	if _entitlement_refresh_pending and not _entitlement_refresh_in_flight and not is_busy:
 		call_deferred("refresh_entitlements")
+
+
+func _update_operation_watchdog(delta: float) -> void:
+	if not is_busy:
+		return
+	var elapsed_delta := maxf(delta, 0.0)
+	_active_operation_elapsed += elapsed_delta
+	if _resume_recovery_pending:
+		_resume_recovery_elapsed += elapsed_delta
+		if _resume_recovery_elapsed >= OPERATION_RESUME_RECOVERY_SECONDS:
+			_finish_timed_out_operation()
+			return
+	if _active_operation_elapsed >= OPERATION_TIMEOUT_SECONDS:
+		_finish_timed_out_operation()
+
+
+func _finish_timed_out_operation() -> void:
+	var timed_out_operation := _active_operation
+	if timed_out_operation == OPERATION_PURCHASE or timed_out_operation == OPERATION_RESTORE:
+		# Current native callbacks have no request ID. Quarantine only this operation
+		# kind so its late result cannot be mistaken for a new request in this session.
+		_retry_blocked_operations[timed_out_operation] = true
+	_ios_restore_request_in_flight = false
+	_ios_restore_saw_owned_product = false
+	if timed_out_operation == OPERATION_PURCHASE:
+		_finish_purchase(false, _support_message("purchase_timeout"))
+	elif timed_out_operation == OPERATION_RESTORE:
+		_finish_restore(false, _support_message("restore_timeout"))
+	else:
+		is_busy = false
+		_active_operation = OPERATION_NONE
+		_active_operation_revision = -1
+		_reset_operation_watchdog()
+		set_process(_ios_in_app_store != null)
+		state_changed.emit()
+
+
+func _reset_operation_watchdog() -> void:
+	_active_operation_elapsed = 0.0
+	_resume_recovery_pending = false
+	_resume_recovery_elapsed = 0.0
+
+
+func _resolve_timed_out_operation(operation: String) -> bool:
+	if not bool(_retry_blocked_operations.get(operation, false)):
+		return false
+	_retry_blocked_operations[operation] = false
+	return true
 
 
 func _has_purchase_backend() -> bool:
