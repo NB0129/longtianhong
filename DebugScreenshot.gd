@@ -1,16 +1,17 @@
 extends Node
 
+const DeveloperFeatures := preload("res://DeveloperFeatures.gd")
 const SCREENSHOT_DIR := "user://screenshots"
 
 var _capturing := false
 
 
 func _ready() -> void:
-	set_process_input(OS.is_debug_build())
+	set_process_input(DeveloperFeatures.developer_shortcuts_enabled())
 
 
 func _input(event: InputEvent) -> void:
-	if not OS.is_debug_build():
+	if not DeveloperFeatures.developer_shortcuts_enabled():
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_F12 or event.physical_keycode == KEY_F12:
@@ -19,7 +20,7 @@ func _input(event: InputEvent) -> void:
 
 
 func capture() -> void:
-	if not OS.is_debug_build():
+	if not DeveloperFeatures.developer_shortcuts_enabled():
 		return
 	if _capturing:
 		return

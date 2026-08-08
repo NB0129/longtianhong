@@ -205,6 +205,15 @@ var _list_drag_total: float = 0.0
 
 # ============================================================
 # 蛻晄悄蛹・# ============================================================
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_WM_GO_BACK_REQUEST or not is_inside_tree():
+		return
+	if $SettingsPopup.visible:
+		_on_btn_settings_close_pressed()
+		return
+	_on_btn_back_pressed()
+
+
 func _ready() -> void:
 	if ResourceLoader.exists(PATH_BG_MUSIC):
 		$BG.texture = load(PATH_BG_MUSIC)

@@ -2,6 +2,7 @@ extends Control
 
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const DeveloperFeatures := preload("res://DeveloperFeatures.gd")
 
 @onready var slide_container: Control        = $SlideContainer
 @onready var chara_pyoko: TextureRect        = $SlideContainer/CharaPyoko
@@ -102,6 +103,20 @@ var _swipe_triggered: bool = false
 # ============================================================
 # 初期化
 # ============================================================
+func _notification(what: int) -> void:
+	if what != NOTIFICATION_WM_GO_BACK_REQUEST or not is_inside_tree():
+		return
+	if _support_operation_blocks_navigation() or _is_sliding:
+		return
+	if _support_popup != null and is_instance_valid(_support_popup) and _support_popup.visible:
+		_on_support_close_pressed()
+		return
+	if $SettingsPopup.visible:
+		_on_btn_settings_close_pressed()
+		return
+	_on_btn_home_pressed()
+
+
 func _ready() -> void:
 	AudioManager.play_bgm("bgm_t_sentaku")
 	_load_backgrounds()
@@ -795,7 +810,7 @@ func _input(event: InputEvent) -> void:
 		return
 	_handle_page_swipe(event)
 
-	if OS.is_debug_build() and event is InputEventKey and event.pressed and event.keycode == KEY_F3:
+	if DeveloperFeatures.developer_shortcuts_enabled() and event is InputEventKey and event.pressed and event.keycode == KEY_F3:
 		SupportPurchase.debug_reset_supporter()
 		_build_ex_buttons()
 		_update_lock_display()

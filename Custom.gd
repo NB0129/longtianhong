@@ -108,6 +108,11 @@ const CUSTOM_TEXT := {
 	},
 }
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_inside_tree():
+		_on_btn_back_pressed()
+
+
 func _ready() -> void:
 	if ResourceLoader.exists(PATH_BG):
 		$BG.texture = load(PATH_BG)

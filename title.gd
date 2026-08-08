@@ -127,8 +127,22 @@ func _exit_tree() -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED and is_inside_tree():
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_handle_system_back()
+	elif what == NOTIFICATION_RESIZED and is_inside_tree():
 		_layout_title()
+
+
+func _handle_system_back() -> void:
+	if not is_inside_tree():
+		return
+	if _credit_popup != null and _credit_popup.visible:
+		_on_btn_credit_close_pressed()
+		return
+	if $SettingsPopup.visible:
+		_on_btn_settings_close_pressed()
+		return
+	get_tree().quit()
 
 
 func _input(event: InputEvent) -> void:
@@ -238,7 +252,8 @@ func _apply_text_language() -> void:
 		body.text = _make_credit_text() if _credit_text_loaded else _text_value("credit")
 	if _credit_popup != null and _credit_popup.has_node("VBox/BtnPrivacyPolicy"):
 		var privacy_button := _credit_popup.get_node("VBox/BtnPrivacyPolicy") as Button
-		privacy_button.text = _text_value("privacy_policy")
+		privacy_button.tooltip_text = _text_value("privacy_policy")
+		PopupSkin.refresh_credit_popup(_credit_popup)
 
 
 func _set_label_text(node_name: String, value: String) -> void:
@@ -626,7 +641,8 @@ func _setup_credit_popup() -> void:
 	if privacy_button.get_index() > close_button.get_index():
 		credit_vbox.move_child(privacy_button, close_button.get_index())
 	_credit_scroll = _credit_popup.get_node("VBox/CreditScroll")
-	privacy_button.text = _text_value("privacy_policy")
+	privacy_button.text = ""
+	privacy_button.tooltip_text = _text_value("privacy_policy")
 	PopupSkin.apply_credit_popup(_credit_popup)
 
 

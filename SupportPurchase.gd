@@ -1,5 +1,7 @@
 extends Node
 
+const DeveloperFeatures := preload("res://DeveloperFeatures.gd")
+
 signal state_changed
 signal purchase_finished(success: bool, message: String)
 signal restore_finished(success: bool, message: String)
@@ -186,7 +188,7 @@ func get_retry_block_message() -> String:
 
 
 func can_offer_support_purchase() -> bool:
-	return _can_offer_support_purchase(OS.is_debug_build())
+	return _can_offer_support_purchase(DeveloperFeatures.mock_purchases_enabled())
 
 
 func _can_offer_support_purchase(is_debug_build: bool) -> bool:
@@ -208,7 +210,7 @@ func refresh_product_info() -> void:
 		return
 	product_info_loading = false
 	product_info_loaded = true
-	product_available = OS.is_debug_build()
+	product_available = DeveloperFeatures.mock_purchases_enabled()
 	formatted_price = ""
 	product_info_message = "debug_product" if product_available else "purchase_unavailable"
 	state_changed.emit()
@@ -253,7 +255,7 @@ func purchase_support() -> void:
 		if not _call_ios_in_app_store("purchase", [request]):
 			_finish_purchase(false, _support_message("purchase_init_failed"))
 		return
-	if OS.is_debug_build():
+	if DeveloperFeatures.mock_purchases_enabled():
 		_apply_verified_ownership(true)
 		_finish_purchase(true, _support_message("purchase_success"))
 	else:
@@ -278,14 +280,14 @@ func restore_support() -> void:
 		return
 	if SaveData.is_supporter:
 		_finish_restore(true, _support_message("restore_success"))
-	elif OS.is_debug_build():
+	elif DeveloperFeatures.mock_purchases_enabled():
 		_finish_restore(false, _support_message("restore_none"))
 	else:
 		_finish_restore(false, _support_message("restore_unavailable"))
 
 
 func debug_reset_supporter() -> void:
-	if not OS.is_debug_build():
+	if not DeveloperFeatures.developer_shortcuts_enabled():
 		return
 	SaveData.set_supporter(false)
 	_ownership_revision += 1

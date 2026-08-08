@@ -3,6 +3,7 @@ extends Control
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
 const RankingNoticeScript := preload("res://RankingNotice.gd")
+const DeveloperFeatures := preload("res://DeveloperFeatures.gd")
 
 const TUTORIAL_TEXT := {
 	"ja": {
@@ -450,9 +451,31 @@ var _ranking_score_submit_failed := false
 # 初期化
 # ============================================================
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED and _is_tutorial_stage():
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_handle_system_back()
+	elif what == NOTIFICATION_RESIZED and _is_tutorial_stage():
 		_layout_tutorial_layer()
 		_update_tutorial_spotlight()
+
+
+func _handle_system_back() -> void:
+	if not is_inside_tree():
+		return
+	if $SettingsPopup.visible:
+		_on_btn_settings_close_pressed()
+		return
+	if $HomeConfirmPopup.visible:
+		_on_btn_confirm_no_pressed()
+		return
+	if is_result_answer_view:
+		_on_btn_back_to_result_pressed()
+		return
+	if popup_state == "clear" and $PopupResult.visible:
+		_on_popup_btn_home_pressed()
+		return
+	if is_animating:
+		return
+	_on_btn_home_pressed()
 
 
 func _ready() -> void:
@@ -640,6 +663,7 @@ func _setup_top_bar_icons() -> void:
 	btn_settings.flat = true
 	btn_home.flat = true
 	btn_layout.visible = _can_use_tall_tiles()
+	btn_settings.visible = not timer_enabled
 
 	if ResourceLoader.exists(ICON_LAYOUT):
 		btn_layout.icon = load(ICON_LAYOUT)
@@ -670,7 +694,7 @@ func _setup_top_bar_icons() -> void:
 		top_bar.move_child(btn_settings, 1)
 
 	top_bar.add_theme_constant_override("separation", int(TOP_BAR_GAP))
-	var visible_count: int = 2
+	var visible_count: int = 1 if timer_enabled else 2
 	var bar_w: float = TOP_BAR_BUTTON_SIZE * visible_count + TOP_BAR_GAP * (visible_count - 1)
 	var vp: Vector2 = get_viewport_rect().size
 	top_bar.position = Vector2(vp.x - bar_w - TOP_BAR_MARGIN, vp.y - TOP_BAR_BUTTON_SIZE - TOP_BAR_MARGIN + TOP_BAR_OFFSET_Y)
@@ -2698,6 +2722,7 @@ func on_time_up() -> void:
 	is_animating = false
 	stop_timer()
 	$HomeConfirmPopup.visible = false
+	$SettingsPopup.visible = false
 	$Keypad/BtnSubmit.disabled = true
 	_show_gameover_result()
 
@@ -2707,7 +2732,7 @@ func on_time_up() -> void:
 func _input(event: InputEvent) -> void:
 	if _is_tutorial_stage() and _handle_tutorial_advance_input(event):
 		return
-	if not OS.is_debug_build():
+	if not DeveloperFeatures.developer_shortcuts_enabled():
 		return
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F1:
 		GameState.debug_mode = not GameState.debug_mode
@@ -2726,7 +2751,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 func update_debug_display() -> void:
-	if not OS.is_debug_build():
+	if not DeveloperFeatures.developer_shortcuts_enabled():
 		GameState.debug_mode = false
 		$DebugLabel.visible = false
 		return
@@ -2926,7 +2951,7 @@ func _remove_exhausted_selected_tiles() -> void:
 	selected_tiles = filtered
 
 func _force_exhausted_tile_question() -> void:
-	if not OS.is_debug_build():
+	if not DeveloperFeatures.developer_shortcuts_enabled():
 		return
 	if is_animating or is_game_over:
 		return
@@ -2940,7 +2965,7 @@ func _force_exhausted_tile_question() -> void:
 	print("縲舌ョ繝舌ャ繧ｰ縲鞫ｯF6 4譫壻ｽｿ縺・・謇狗煙: ", current_hand, " 豁｣隗｣: ", correct_tiles, " 4譫壻ｽｿ縺・・ ", _get_exhausted_tiles())
 
 func _force_clear_current_question() -> void:
-	if not OS.is_debug_build():
+	if not DeveloperFeatures.developer_shortcuts_enabled():
 		return
 	if is_animating or is_game_over:
 		return
@@ -3634,6 +3659,8 @@ func _on_btn_layout_pressed() -> void:
 # 設定ボタン
 # ============================================================
 func _on_btn_settings_pressed() -> void:
+	if timer_enabled:
+		return
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)

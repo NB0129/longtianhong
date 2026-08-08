@@ -35,6 +35,7 @@ const LOCALIZED_SETTINGS_PANEL_DIR := "res://assets/language/normalized/%s/setti
 const LOCALIZED_SETTINGS_BUTTON_DIR := "res://assets/language/normalized/%s/settings_buttons/"
 const LOCALIZED_CONFIRM_PANEL_DIR := "res://assets/language/normalized/%s/confirm_panels/"
 const LOCALIZED_CONFIRM_BUTTON_DIR := "res://assets/language/normalized/%s/confirm_buttons/"
+const LOCALIZED_CREDIT_BUTTON_DIR := "res://assets/language/normalized/%s/credit_buttons/"
 
 
 static func apply_settings_popup(panel: Panel) -> void:
@@ -95,17 +96,23 @@ static func apply_credit_popup(panel: Panel) -> void:
 		body.add_theme_font_size_override("font_size", 16)
 		body.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0))
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if panel.has_node("VBox/BtnPrivacyPolicy"):
-		var privacy_button := panel.get_node("VBox/BtnPrivacyPolicy") as Button
-		apply_button(privacy_button, "gold")
-		privacy_button.custom_minimum_size = Vector2(260.0, 44.0)
-		privacy_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		privacy_button.focus_mode = Control.FOCUS_ALL
-		privacy_button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
-		privacy_button.add_theme_font_size_override("font_size", 18)
+	refresh_credit_popup(panel)
 	if panel.has_node("VBox/BtnCreditClose"):
 		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_CLOSE_V2)
 		apply_generated_text_button(panel.get_node("VBox/BtnCreditClose"), close_path, close_path)
+
+
+static func refresh_credit_popup(panel: Panel) -> void:
+	if panel == null or not panel.has_node("VBox/BtnPrivacyPolicy"):
+		return
+	var privacy_button := panel.get_node("VBox/BtnPrivacyPolicy") as Button
+	var normal_path := _localized_credit_button_path("popup_btn_privacy_policy.webp")
+	var pressed_path := _localized_credit_button_path("popup_btn_privacy_policy_pressed.webp")
+	apply_generated_text_button(privacy_button, normal_path, pressed_path)
+	privacy_button.custom_minimum_size = Vector2(260.0, 80.0)
+	privacy_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	privacy_button.focus_mode = Control.FOCUS_ALL
+	privacy_button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 
 
 static func ensure_settings_language_controls(panel: Panel, pressed_callback: Callable) -> void:
@@ -454,6 +461,14 @@ static func _localized_confirm_button_path(file_name: String, fallback_path: Str
 	if ResourceLoader.exists(localized_path):
 		return localized_path
 	return fallback_path
+
+
+static func _localized_credit_button_path(file_name: String) -> String:
+	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var localized_path := (LOCALIZED_CREDIT_BUTTON_DIR % locale) + file_name
+	if ResourceLoader.exists(localized_path):
+		return localized_path
+	return (LOCALIZED_CREDIT_BUTTON_DIR % "ja") + file_name
 
 
 static func _localized_confirm_panel_path(file_name: String, fallback_path: String) -> String:

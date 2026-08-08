@@ -588,12 +588,28 @@ func _ready() -> void:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED and is_inside_tree():
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_handle_system_back()
+	elif what == NOTIFICATION_RESIZED and is_inside_tree():
 		if _bg == null or _pyoko == null or _maboroshi == null or _side_yume == null or _talk_panel == null:
 			return
 		_layout_ui()
 		_fit_body_text_to_bounds()
 		_apply_speaker_focus(_get_current_speaker(), false)
+
+
+func _handle_system_back() -> void:
+	if not is_inside_tree():
+		return
+	if _settings_popup != null and _settings_popup.visible:
+		_on_settings_close_pressed()
+		return
+	if _home_confirm_popup != null and _home_confirm_popup.visible:
+		_on_home_confirm_no_pressed()
+		return
+	if _is_animating or _is_finishing_scene or _waiting_for_end_logo_input:
+		return
+	_on_home_pressed()
 
 
 func _input(event: InputEvent) -> void:
