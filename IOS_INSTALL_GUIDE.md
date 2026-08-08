@@ -6,7 +6,7 @@
 
 > Apple公開アカウント方針（2026-07-22決定）: 組織化失敗を受け、v1は個人Apple Developer Program membershipから公開する。組織化の再試行・変換をv1の待ち条件にしない。Apple公式上、個人会員では個人の法的氏名がApp Storeのsellerおよびdeveloper nameとして表示される。developer nameは、このaccountで最初のapp recordを作る時に固定されるため、既存app recordがある場合は既に固定済みの実表示を記録する。提出前にApp Store Connect上の実表示、EU DSA trader判定と公開連絡先、Team ID、契約・税務・銀行情報を個人account基準で確認する。
 
-> 公開情報と地域の所有者承認: 個人の法的氏名が公開されることは許容済み。契約済みバーチャルオフィス住所と取得済み独自domain emailは公開連絡先の候補として準備済みだが、住所はAppleの必要書類確認を通るまで利用可能と確定しない。AppleのEU DSA trader連絡先としてphone numberを商品ページに表示しないため、v1ではEU加盟国を配信対象から除外する。選択する非EU storefrontとSupport URLについても、提出時の公開previewと現地要件を確認する。GoogleもEUをv1の対象外にするが、Google organization accountのdeveloper phone公開要件はEU availabilityとは無関係に残る。2026-07-23に既存のpublic developer phoneが設定・認証済みであることは確認したが、その番号を公開する所有者承認または差し替えを別gateとして扱う。EU追加は将来の別scope・別承認とする。
+> 公開情報と地域の所有者承認: 個人の法的氏名が公開されることは許容済み。契約済みバーチャルオフィス住所と取得済み独自domain emailは公開連絡先の候補として準備済みだが、住所はAppleの必要書類確認を通るまで利用可能と確定しない。以前のEU除外方針は2026-07-23に撤回済みであり、v1ではEU加盟国を配信対象から除外しない。AppleのDSA trader statusには実態どおり回答し、公開連絡先、選択するstorefront、Support URLの実表示を提出前に確認する。Google organization accountのdeveloper phone公開要件はEU availabilityとは無関係に残る。2026-07-23に既存のpublic developer phoneが設定・認証済みであることは確認したが、その番号を公開する所有者承認または差し替えを別gateとして扱う。
 
 ## 必要なもの
 
@@ -86,7 +86,7 @@ Xcode で `Signing & Capabilities` を開く。
 - App Store Connectに表示されるseller / developer nameが個人membershipの法的氏名であることを確認する。このaccountに既存app recordがあれば既に固定済みのdeveloper nameを記録し、存在しない場合だけ最初のapp record作成前に実際の綴りを確認する
 - IAP 採用決定後に限り、App Store Connect 側の商品 `support_pack` とアプリの契約・税務・銀行情報を確認する
 - IAP採用時は個人Account HolderがPaid Apps Agreementを`Active`にし、必要なbanking/tax情報を完了してからsandbox検証を行う。初回IAP `support_pack`をv1 app versionと同じsubmissionへ追加し、審査承認済み・公開可能なstatusになるまでreleaseしない
-- App Store ConnectのavailabilityでEU 27か国（`AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT RO SK SI ES SE`）がすべてv1対象外であることを保存後・提出直前に二重確認し、除外国一覧を証跡化する。提出時点のAppleの国一覧に変更があればその公式一覧を優先する。DSA trader statusの画面には実態どおり回答するが、EU storefrontをこのreleaseへ追加しない。EU追加は公開phone等を準備した将来の別scopeとする
+- App Store ConnectのavailabilityでEU加盟国を除外せず、予定配信国・地域が選択されていることを保存後・提出直前に二重確認する。DSA trader statusの画面には実態どおり回答し、公開連絡先とstorefrontの実表示を確認する
 - Game Center pluginとApp Store Connectの7 leaderboard設定を検証した後、v1 targetにGame Center capabilityを追加し、provisioning profileとentitlementへ正しく反映されたことを確認する。署名済みappのcode-sign entitlementsで Boolean `com.apple.developer.game-center = true` を確認する
 - 初回iOS app versionでGame Centerを有効にし、7 leaderboard componentsをすべて関連付け、**Add for Review**でapp versionと同じdraft submissionへ追加する
 
@@ -115,7 +115,7 @@ Apple は restore をユーザーの明示操作に対応させるよう案内�
 - Apple: [Restoring purchased products](https://developer.apple.com/documentation/storekit/restoring-purchased-products)
 - Apple: [AppStore.sync()](https://developer.apple.com/documentation/storekit/appstore/sync())
 
-Windows headless contract suiteの108 assertionsはAPI/state machineだけを検証する。Mac / Xcode export、Game Center plugin binaryのbuild/load、App Store Connectの7 leaderboard、Apple sandbox、StoreKit 2またはserver verification、署名・signed archive、physical iPhone、TestFlight、exported iconの目視確認は未完了のrelease gateである。さらに個人seller/developer名、Team ID、IAP採用時のPaid Apps Agreement・banking・taxと初回IAP同時submission、EU加盟国storefront 0件、選択地域とSupport URLの公開previewを最終提出前に確認する。7種類のiOSランキングはv1必須なので、これらをv1.1へ先送りしてリリースしない。
+Windows headless contract suiteの108 assertionsはAPI/state machineだけを検証する。Mac / Xcode export、Game Center plugin binaryのbuild/load、App Store Connectの7 leaderboard、Apple sandbox、StoreKit 2またはserver verification、署名・signed archive、physical iPhone、TestFlight、exported iconの目視確認は未完了のrelease gateである。さらに個人seller/developer名、Team ID、IAP採用時のPaid Apps Agreement・banking・taxと初回IAP同時submission、EU加盟国を除外しないavailability、選択地域とSupport URLの公開previewを最終提出前に確認する。7種類のiOSランキングはv1必須なので、これらをv1.1へ先送りしてリリースしない。
 
 Apple公式確認先:
 
