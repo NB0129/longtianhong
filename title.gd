@@ -811,12 +811,13 @@ func _on_btn_instant_pressed() -> void:
 
 
 func _on_btn_ranking_pressed() -> void:
+	if _ranking_request_active:
+		return
 	if not RankingManager.should_show_ranking_ui():
 		print("[Title] ranking press ignored because Game Center is unavailable")
 		return
-	if OS.get_name() == "iOS":
-		_ranking_request_active = true
-		_set_ranking_button_disabled(true)
+	_ranking_request_active = true
+	_set_ranking_button_disabled(true)
 	if not RankingManager.show_leaderboard():
 		_ranking_request_active = false
 		_set_ranking_button_disabled(false)

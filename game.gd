@@ -445,7 +445,6 @@ var tutorial_feedback_key: String = ""
 var tutorial_advance_block_until_msec: int = 0
 var _ranking_notice: RankingNotice = null
 var _ranking_request_active := false
-var _ranking_score_submit_failed := false
 
 # ============================================================
 # 初期化
@@ -598,6 +597,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	_ranking_request_active = false
 	RankingManager.cancel_pending_leaderboard()
 
 
@@ -2050,20 +2050,17 @@ func _ensure_result_answer_buttons() -> void:
 	_refresh_back_to_result_button()
 
 func _on_btn_submit_ranking_pressed() -> void:
+	if _ranking_request_active:
+		return
 	var stage_key := _get_ranking_stage_key()
 	if stage_key == "" or not RankingManager.should_show_ranking_ui(stage_key):
 		print("[Game] ranking press ignored because Game Center is unavailable stage_key=", stage_key)
 		return
 	var final_score := _get_final_score()
 	print("[Game] submit ranking pressed stage_key=", stage_key, " score=", final_score)
-	if OS.get_name() == "iOS":
-		_ranking_request_active = true
-		_ranking_score_submit_failed = false
-		_set_result_ranking_button_disabled(true)
+	_ranking_request_active = true
+	_set_result_ranking_button_disabled(true)
 	if not RankingManager.submit_score(stage_key, final_score):
-		_on_leaderboard_show_finished(stage_key, false, "show_failed")
-		return
-	if not RankingManager.show_leaderboard(stage_key):
 		_on_leaderboard_show_finished(stage_key, false, "show_failed")
 
 
@@ -2071,7 +2068,13 @@ func _on_ranking_score_submit_finished(stage_key: String, _score: int, submitted
 	if not _ranking_request_active or stage_key != _get_ranking_stage_key():
 		return
 	if not submitted_online:
-		_ranking_score_submit_failed = true
+		_ranking_request_active = false
+		_set_result_ranking_button_disabled(false)
+		if _ranking_notice != null:
+			_ranking_notice.show_reason("score_saved")
+		return
+	if not RankingManager.show_leaderboard(stage_key):
+		_on_leaderboard_show_finished(stage_key, false, "show_failed")
 
 
 func _on_leaderboard_show_finished(stage_key: String, success: bool, reason: String) -> void:
@@ -2083,8 +2086,6 @@ func _on_leaderboard_show_finished(stage_key: String, success: bool, reason: Str
 		if _ranking_notice != null:
 			_ranking_notice.show_reason(reason)
 		return
-	if _ranking_score_submit_failed and _ranking_notice != null:
-		_ranking_notice.show_reason("score_saved")
 
 
 func _set_result_ranking_button_disabled(disabled: bool) -> void:

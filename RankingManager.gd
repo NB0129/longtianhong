@@ -65,6 +65,7 @@ var _native_singleton: Object = null
 var _native_singleton_name: String = ""
 var _leaderboard_id_to_stage_key: Dictionary = {}
 var _ios_game_center_adapter: RefCounted = null
+var _android_submit_in_flight: Dictionary = {}
 
 
 func _ready() -> void:
@@ -178,7 +179,8 @@ func flush_pending_scores() -> void:
 			if leaderboard_id != "":
 				_ios_game_center_adapter.submit_score(leaderboard_id, int(ios_pending[stage_key]), player_id)
 		return
-	if not login_if_needed():
+	if not is_logged_in():
+		login_if_needed()
 		return
 	var pending: Dictionary = SaveData.get_pending_ranking_scores()
 	for stage_key in pending.keys():
@@ -198,7 +200,8 @@ func show_leaderboard(stage_key: String = "") -> bool:
 		if _ios_game_center_adapter == null:
 			return false
 		return _ios_game_center_adapter.show_leaderboard(leaderboard_id)
-	if not login_if_needed():
+	_detect_native_singleton()
+	if _native_singleton == null:
 		_print_local_leaderboard(stage_key)
 		return false
 	var result: Variant = _call_first_existing(_native_singleton, ["showLeaderboard", "showLeaderboards", "show_leaderboard", "show_leaderboards"], [leaderboard_id])
@@ -265,10 +268,16 @@ func _submit_score_online(stage_key: String, score: int, expected_ios_player_id:
 			and expected_ios_player_id != ""
 			and _ios_game_center_adapter.submit_score(leaderboard_id, score, expected_ios_player_id)
 		)
-	if not login_if_needed():
+	if _android_submit_in_flight.has(stage_key):
+		return true
+	_detect_native_singleton()
+	if _native_singleton == null:
 		return false
 	var result: Variant = _call_first_existing(_native_singleton, ["submitScore", "submit_score", "leaderboard_submit_score", "post_score"], [leaderboard_id, score])
-	return result != null and bool(result)
+	var submit_started := result != null and bool(result)
+	if submit_started:
+		_android_submit_in_flight[stage_key] = score
+	return submit_started
 
 
 func _detect_native_singleton() -> void:
@@ -306,6 +315,8 @@ func _connect_native_signals() -> void:
 		_native_singleton.login_state_changed.connect(_on_native_login_state_changed)
 	if _native_singleton.has_signal("score_submit_finished") and not _native_singleton.score_submit_finished.is_connected(_on_native_score_submit_finished):
 		_native_singleton.score_submit_finished.connect(_on_native_score_submit_finished)
+	if _native_singleton.has_signal("leaderboard_show_finished") and not _native_singleton.leaderboard_show_finished.is_connected(_on_native_leaderboard_show_finished):
+		_native_singleton.leaderboard_show_finished.connect(_on_native_leaderboard_show_finished)
 
 
 func _connect_ios_adapter_signals() -> void:
@@ -379,10 +390,21 @@ func _on_native_score_submit_finished(leaderboard_id: String, score: int, submit
 	if stage_key == "":
 		print("[RankingManager] native submit callback for unknown leaderboard_id=", leaderboard_id, " score=", score, " online=", submitted_online)
 		return
+	_android_submit_in_flight.erase(stage_key)
 	if submitted_online:
 		SaveData.clear_pending_ranking_score(stage_key, score)
 	print("[RankingManager] native submit finished stage_key=", stage_key, " score=", score, " online=", submitted_online)
 	score_submit_finished.emit(stage_key, score, submitted_online)
+
+
+func _on_native_leaderboard_show_finished(leaderboard_id: String, success: bool, message: String = "") -> void:
+	var stage_key := str(_leaderboard_id_to_stage_key.get(leaderboard_id, ""))
+	if leaderboard_id != "" and stage_key == "":
+		print("[RankingManager] native leaderboard callback for unknown leaderboard_id=", leaderboard_id, " success=", success, " message=", message)
+		leaderboard_show_finished.emit("", false, "show_failed")
+		return
+	print("[RankingManager] native leaderboard show finished stage_key=", stage_key, " success=", success, " message=", message)
+	leaderboard_show_finished.emit(stage_key, success, "" if success else "show_failed")
 
 
 func _call_first_existing(target: Object, method_names: Array[String], args: Array) -> Variant:

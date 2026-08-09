@@ -1,21 +1,29 @@
 # 開発支援 IAP 実装メモ
 
-> Conditional readiness: v1 で IAP を採用するか、価格、販売国は所有者判断待ち。このパッチは採用決定ではなく、採用時に必要な安全な接続経路を staging する。
+> Release decision: Android v1 から IAP `support_pack` を正式採用する。Google Playでは日本価格500円・全地域販売で設定済み。署名済みInternal testing版による実課金試験が完了するまで release gate とする。iOSでの採用判断は別途行う。
 
 ## 商品
 
 - 種別: Non-Consumable
 - Product ID: `support_pack`
-- 日本語表示名候補: `開発支援パック`
-- 英語表示名候補: `Support Pack`
-- 日本語説明候補: `Music Roomでゲーム内BGM全21曲を聴けるようになります。`
-- 英語説明候補: `Unlock the Music Room and listen to all 21 in-game BGM tracks.`
-- 価格: 未決定
-- 販売国: 未決定
+- Android purchase option ID: `standard`
+- 日本語表示名: `開発支援パック`
+- 英語表示名: `Support Pack`
+- 中国語（簡体）表示名: `开发支援包`
+- 中国語（繁体）表示名: `開發支援包`
+- 韓国語表示名: `개발 지원 팩`
+- 日本語説明: `Music Roomでゲーム内BGM全21曲を聴けるようになります。`
+- 英語説明: `Unlock the Music Room and listen to all 21 in-game BGM tracks.`
+- 中国語（簡体）説明: `购买开发支援包后，即可解锁 Music Room，随时自由欣赏游戏内全部21首 BGM。`
+- 中国語（繁体）説明: `購買開發支援包後，即可解鎖 Music Room，隨時自由欣賞遊戲內全部21首 BGM。`
+- 韓国語説明: `개발 지원 팩을 구매하면 Music Room이 해금되어 게임 내 BGM 21곡을 언제든 자유롭게 들을 수 있습니다.`
+- 日本価格: JPY 500
+- 販売地域: Google Play対応の173か国 / 地域すべて（全行に価格設定済み・利用可能）
+- Play Console status（2026-08-09確認）: `support_pack` / `standard`とも有効。税区分はデジタルアプリの販売、年齢制限なし、支払い地域制限なし、商品アイコン追加なし
 
 これは非消費型デジタル商品で、固定特典はゲーム内 Music Room の解放である。寄付・投資・将来作品への対価として販売せず、購入画面でもデジタル特典を正面に表示する。
 
-`SaveData.is_supporter` は端末キャッシュであり、最終的な正は App Store の購入履歴である。release build で購入 backend がない場合は、キャッシュが `true` でも Music Room の行を表示せず、直接呼び出しによる入室も拒否する。
+`SaveData.is_supporter` は端末キャッシュであり、最終的な正は Google Play / App Store の購入履歴である。release build で購入 backend がない場合は、キャッシュが `true` でも Music Room の行を表示せず、直接呼び出しによる入室も拒否する。
 
 ## 購入 backend
 

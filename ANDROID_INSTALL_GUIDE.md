@@ -6,6 +6,19 @@
 - release AAB export: `build/machiate-release.aab`
 - ADB: `C:\Users\langt\AppData\Local\Android\Sdk\platform-tools\adb.exe`
 - 過去の`longtianhong`名や古いdebug APKを現行release証拠として使わない。実機試験前に現在のHEADから新しいdebug APKをexportする。
+- Android v1のbuild基準はAGP 8.9.2、Gradle 8.11.1、compile/target SDK 36、Build Tools 36.1.0、Java 17、arm64-v8aである。
+- Godot 4.6.2の従来の戻る通知をAndroid 16でも維持するため、Applicationで`android:enableOnBackInvokedCallback="false"`を明示する。Godot 4.6.3以降のAndroid templateへ移行して戻る操作を再試験するまでは外さない。
+- 提出候補AABごとにBundletool validation、merged Manifestのpackage/version/target SDK、16KB zip alignment、全arm64 native libraryのPT_LOAD alignmentを確認する。
+
+## Android IAP release gate（2026-08-09決定）
+
+- Android v1から、Music Roomとゲーム内BGM全21曲を解放する非消費型商品`support_pack`を正式採用する。
+- Google Playでは「1回限りのアイテム」/ Buy purchase optionとして作成し、Product IDを`support_pack`、purchase option IDを`standard`にする。レンタル、複数数量、割引オファーは使わない。
+- 2026-08-09のPlay Console確認では、既存の`support_pack`に有効な`standard`があり、日本価格JPY 500、Google Play対応の173か国 / 地域すべてが価格設定済み・利用可能。
+- `IAP_SUPPORT_GUIDE.md`記載の5言語の商品名・説明をPlay Consoleへ保存済み。税区分はデジタルアプリの販売、年齢制限なし、支払い地域制限なし、追加の商品アイコンなし。
+- 商品と`standard`の有効化は完了。Payments profile・税務・merchant状態を提出前に別途確認し、署名済みAABをInternal testingへ進める。
+- 実課金試験は、`com.nb0129.machiate`の署名済みAABをInternal testingへ公開し、Google Playからインストールしたライセンステスター端末で行う。別packageのsideload debug APKは実課金試験の証拠にしない。
+- 購入成功、キャンセル、保留、復元、再起動、再インストール、別端末、返金・権利取消後の再照合を確認する。Music Room以外のゲーム本編を購入で制限しない。
 
 ## 実機へ入れる
 
