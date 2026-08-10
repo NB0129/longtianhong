@@ -1,6 +1,7 @@
 extends RefCounted
 
 const TalkLocalization := preload("res://TalkLocalization.gd")
+const ButtonFeedback := preload("res://ButtonFeedback.gd")
 
 const PANEL_SETTINGS := "res://assets/ui/popups/popup_panel_settings.webp"
 const PANEL_CONFIRM := "res://assets/ui/popups/popup_panel_confirm.webp"
@@ -17,6 +18,7 @@ const BTN_PINK := "res://assets/ui/popups/popup_btn_pink.webp"
 const BTN_PINK_PRESSED := "res://assets/ui/popups/popup_btn_pink_pressed.webp"
 const BTN_GOLD := "res://assets/ui/popups/popup_btn_gold.webp"
 const BTN_GOLD_PRESSED := "res://assets/ui/popups/popup_btn_gold_pressed.webp"
+const BTN_SUPPORT_DYNAMIC := "res://assets/ui/popups/popup_btn_support_dynamic.webp"
 const BTN_CLOSE_GENERATED := "res://assets/ui/popups/popup_btn_close_generated.webp"
 const BTN_CLOSE_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_close_generated_pressed.webp"
 const BTN_YES_GENERATED := "res://assets/ui/popups/popup_btn_yes_generated.webp"
@@ -80,11 +82,11 @@ static func apply_support_popup(panel: Panel) -> void:
 		var title: Label = panel.get_node("VBox/SupportTitle")
 		title.add_theme_font_size_override("font_size", 26)
 	if panel.has_node("VBox/BtnSupportBuy"):
-		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportBuy"), "gold", Vector2(284.0, 58.0))
+		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportBuy"), Vector2(284.0, 58.0))
 	if panel.has_node("VBox/BtnSupportRestore"):
-		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportRestore"), "green", Vector2(284.0, 52.0))
+		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportRestore"), Vector2(284.0, 52.0))
 	if panel.has_node("VBox/BtnSupportClose"):
-		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportClose"), "blue", Vector2(220.0, 48.0))
+		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportClose"), Vector2(220.0, 48.0))
 
 
 static func apply_credit_popup(panel: Panel) -> void:
@@ -99,7 +101,9 @@ static func apply_credit_popup(panel: Panel) -> void:
 	refresh_credit_popup(panel)
 	if panel.has_node("VBox/BtnCreditClose"):
 		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_CLOSE_V2)
-		apply_generated_text_button(panel.get_node("VBox/BtnCreditClose"), close_path, close_path)
+		var close_button := panel.get_node("VBox/BtnCreditClose") as Button
+		apply_generated_text_button(close_button, close_path, close_path)
+		close_button.custom_minimum_size = _generated_button_size_at_height(close_path, 70.0)
 
 
 static func refresh_credit_popup(panel: Panel) -> void:
@@ -109,7 +113,7 @@ static func refresh_credit_popup(panel: Panel) -> void:
 	var normal_path := _localized_credit_button_path("popup_btn_privacy_policy.webp")
 	var pressed_path := _localized_credit_button_path("popup_btn_privacy_policy_pressed.webp")
 	apply_generated_text_button(privacy_button, normal_path, pressed_path)
-	privacy_button.custom_minimum_size = Vector2(260.0, 80.0)
+	privacy_button.custom_minimum_size = _generated_button_size_at_height(normal_path, 67.0)
 	privacy_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	privacy_button.focus_mode = Control.FOCUS_ALL
 	privacy_button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
@@ -175,7 +179,7 @@ static func _move_settings_language_controls_before_close_area(vbox: VBoxContain
 static func refresh_settings_language(panel: Panel) -> void:
 	if panel == null or not panel.has_node("VBox"):
 		return
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	var vbox := panel.get_node("VBox")
 	_set_label_text(vbox, "LabelBgm", TalkLocalization.ui_text(locale, "settings_bgm"))
 	_set_label_text(vbox, "LabelSe", TalkLocalization.ui_text(locale, "settings_se"))
@@ -223,12 +227,27 @@ static func apply_button(button: Button, kind: String = "blue") -> void:
 	button.add_theme_constant_override("outline_size", 5)
 
 
-static func _apply_dynamic_support_button(button: Button, kind: String, minimum_size: Vector2) -> void:
+static func _apply_dynamic_support_button(button: Button, minimum_size: Vector2) -> void:
 	if button == null or not is_instance_valid(button):
 		return
-	# Support labels include the price returned by Google Play. Keep the visual
+	# Support labels include the localized price returned by the active store. Keep the visual
 	# background text-free so stale, hard-coded prices can never overlap it.
-	apply_button(button, kind)
+	# The styleboxes below already express pressed/disabled state. Disabling the
+	# global modulate feedback prevents an async price refresh from leaving this
+	# button looking disabled after it becomes available.
+	ButtonFeedback.set_use_modulate(button, false)
+	button.modulate = Color.WHITE
+	button.flat = false
+	button.add_theme_stylebox_override("normal", _make_tinted_style(BTN_SUPPORT_DYNAMIC, Color.WHITE))
+	button.add_theme_stylebox_override("hover", _make_tinted_style(BTN_SUPPORT_DYNAMIC, Color(1.0, 0.96, 0.9, 1.0)))
+	button.add_theme_stylebox_override("pressed", _make_tinted_style(BTN_SUPPORT_DYNAMIC, Color(0.72, 0.66, 0.66, 1.0)))
+	button.add_theme_stylebox_override("disabled", _make_tinted_style(BTN_SUPPORT_DYNAMIC, Color(0.58, 0.56, 0.56, 1.0)))
+	button.add_theme_color_override("font_color", Color(1.0, 0.96, 0.78, 1.0))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.88, 0.68, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.82, 0.78, 0.7, 0.78))
+	button.add_theme_color_override("font_outline_color", Color(0.08, 0.01, 0.02, 1.0))
+	button.add_theme_constant_override("outline_size", 5)
 	button.custom_minimum_size = minimum_size
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.focus_mode = Control.FOCUS_ALL
@@ -330,10 +349,8 @@ static func _layout_support_popup(panel: Panel) -> void:
 	if not panel.has_node("VBox"):
 		return
 	var vbox := panel.get_node("VBox") as VBoxContainer
-	vbox.offset_left = 62.0
-	vbox.offset_top = 84.0
-	vbox.offset_right = -62.0
-	vbox.offset_bottom = -70.0
+	vbox.position = Vector2(62.0, 84.0)
+	vbox.size = Vector2(284.0, 470.0)
 	vbox.add_theme_constant_override("separation", 8)
 	if vbox.has_node("SupportTitle"):
 		var title := vbox.get_node("SupportTitle") as Label
@@ -341,7 +358,7 @@ static func _layout_support_popup(panel: Panel) -> void:
 	if vbox.get_child_count() > 1:
 		var body := vbox.get_child(1) as Label
 		if body != null:
-			body.custom_minimum_size = Vector2(284.0, 200.0)
+			body.custom_minimum_size = Vector2(284.0, 132.0)
 			body.add_theme_font_size_override("font_size", 11)
 	if vbox.get_child_count() > 2:
 		var message := vbox.get_child(2) as Label
@@ -357,6 +374,9 @@ static func _layout_support_popup(panel: Panel) -> void:
 			insert_index = (vbox.get_node("BtnSupportBuy") as Button).get_index()
 		vbox.add_child(spacer)
 		vbox.move_child(spacer, insert_index)
+	if vbox.has_node("SupportButtonSpacer"):
+		var spacer := vbox.get_node("SupportButtonSpacer") as Control
+		spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if vbox.has_node("BtnSupportBuy"):
 		(vbox.get_node("BtnSupportBuy") as Button).size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	if vbox.has_node("BtnSupportRestore"):
@@ -371,11 +391,11 @@ static func _layout_credit_popup(panel: Panel) -> void:
 	if not panel.has_node("VBox"):
 		return
 	var vbox := panel.get_node("VBox") as VBoxContainer
-	vbox.offset_left = 74.0
-	vbox.offset_top = 118.0
-	vbox.offset_right = -74.0
-	vbox.offset_bottom = -122.0
-	vbox.add_theme_constant_override("separation", 10)
+	vbox.offset_left = 62.0
+	vbox.offset_top = 110.0
+	vbox.offset_right = -62.0
+	vbox.offset_bottom = -106.0
+	vbox.add_theme_constant_override("separation", 5)
 	if vbox.has_node("CreditScroll"):
 		var scroll := vbox.get_node("CreditScroll") as ScrollContainer
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -418,6 +438,12 @@ static func _make_style(texture_path: String, margin: float) -> StyleBoxTexture:
 	return style
 
 
+static func _make_tinted_style(texture_path: String, color: Color) -> StyleBoxTexture:
+	var style := _make_style(texture_path, 0.0)
+	style.modulate_color = color
+	return style
+
+
 static func _make_keyboard_focus_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color.TRANSPARENT
@@ -438,7 +464,7 @@ static func _make_keyboard_focus_style() -> StyleBoxFlat:
 
 
 static func _localized_settings_button_path(file_name: String, fallback_path: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	var localized_path := (LOCALIZED_SETTINGS_BUTTON_DIR % locale) + file_name
 	if ResourceLoader.exists(localized_path):
 		return localized_path
@@ -446,7 +472,7 @@ static func _localized_settings_button_path(file_name: String, fallback_path: St
 
 
 static func _localized_settings_panel_path(file_name: String, fallback_path: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	var localized_path := (LOCALIZED_SETTINGS_PANEL_DIR % locale) + file_name
 	if ResourceLoader.exists(localized_path):
 		return localized_path
@@ -454,7 +480,7 @@ static func _localized_settings_panel_path(file_name: String, fallback_path: Str
 
 
 static func _localized_confirm_button_path(file_name: String, fallback_path: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	if locale == "ja":
 		return fallback_path
 	var localized_path := (LOCALIZED_CONFIRM_BUTTON_DIR % locale) + file_name
@@ -464,7 +490,7 @@ static func _localized_confirm_button_path(file_name: String, fallback_path: Str
 
 
 static func _localized_credit_button_path(file_name: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	var localized_path := (LOCALIZED_CREDIT_BUTTON_DIR % locale) + file_name
 	if ResourceLoader.exists(localized_path):
 		return localized_path
@@ -472,7 +498,7 @@ static func _localized_credit_button_path(file_name: String) -> String:
 
 
 static func _localized_confirm_panel_path(file_name: String, fallback_path: String) -> String:
-	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
 	var localized_path := (LOCALIZED_CONFIRM_PANEL_DIR % locale) + file_name
 	if ResourceLoader.exists(localized_path):
 		return localized_path
@@ -481,6 +507,10 @@ static func _localized_confirm_panel_path(file_name: String, fallback_path: Stri
 
 static func _generated_button_min_size(texture_path: String) -> Vector2:
 	var target_height := _generated_button_height(texture_path)
+	return _generated_button_size_at_height(texture_path, target_height)
+
+
+static func _generated_button_size_at_height(texture_path: String, target_height: float) -> Vector2:
 	if ResourceLoader.exists(texture_path):
 		var texture := load(texture_path) as Texture2D
 		if texture != null:

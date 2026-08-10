@@ -98,6 +98,6 @@ func hide_notice() -> void:
 
 
 static func localized_message(reason: String, locale: String) -> String:
-	var normalized_locale := SaveData.normalize_language_code(locale)
+	var normalized_locale: String = SaveData.normalize_language_code(locale)
 	var locale_messages: Dictionary = MESSAGES.get(normalized_locale, MESSAGES["ja"])
 	return str(locale_messages.get(reason, MESSAGES["ja"].get(reason, "")))

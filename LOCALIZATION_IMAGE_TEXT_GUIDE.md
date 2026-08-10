@@ -110,12 +110,14 @@ Generated localized high score labels currently live at `assets/language/normali
 | `assets/ui/popups/popup_btn_support_restore_generated_pressed.webp` | 旧・購入を復元 | Legacy | Legacy | Legacy | Legacy | Do not use |
 | `assets/ui/popups/popup_btn_support_close_generated.webp` | 旧・閉じる | Legacy | Legacy | Legacy | Legacy | Do not use |
 | `assets/ui/popups/popup_btn_support_close_generated_pressed.webp` | 旧・閉じる | Legacy | Legacy | Legacy | Legacy | Do not use |
+| `assets/ui/popups/popup_btn_support_dynamic.webp` | 文字なし共通支援ボタン背景 | Shared text-free background | Shared text-free background | Shared text-free background | Shared text-free background | Runtime text |
 
-The support popup uses text-free `popup_btn_gold.webp`, `popup_btn_green.webp`, and
-`popup_btn_blue.webp` backgrounds. Its labels and price must remain runtime text;
-only the localized price returned by Google Play may be displayed. The legacy
-support button images above and the localized `support_buttons` images are kept
-as source history only and are excluded from mobile exports.
+The support popup uses the text-free red-and-gold
+`popup_btn_support_dynamic.webp` background for purchase, restore, and close.
+Its labels and price must remain runtime text; only the localized price returned
+by the active store may be displayed. The legacy support button images above and
+the localized `support_buttons` images are kept as source history only and are
+excluded from mobile exports.
 
 ## Stage Intro
 

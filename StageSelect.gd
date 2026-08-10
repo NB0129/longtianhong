@@ -697,8 +697,8 @@ func _support_ui_text(key: String) -> String:
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
 	var texts := {
 		"ja": {
-			"body": "開発支援パックを購入すると、Music Roomが解放され、ゲーム内BGM全21曲をいつでも自由に聴けます。\nゲーム本編は購入しなくても、すべて無料で遊べます。\nご購入は、狼天紅ゲームズの今後の開発支援にもなります。",
-			"body_with_price": "開発支援パック（{price}）を購入すると、Music Roomが解放され、ゲーム内BGM全21曲をいつでも自由に聴けます。\nゲーム本編は購入しなくても、すべて無料で遊べます。\nご購入は、狼天紅ゲームズの今後の開発支援にもなります。",
+			"body": "開発支援パックを購入すると、Music Roomが解放され、\nゲーム内BGM全21曲をいつでも自由に聴けます。\nゲーム本編は購入しなくても、すべて無料で遊べます。\nご購入は、狼天紅ゲームズの今後の開発支援にもなります。",
+			"body_with_price": "開発支援パックを購入すると、Music Roomが解放され、\nゲーム内BGM全21曲をいつでも自由に聴けます。\nゲーム本編は購入しなくても、すべて無料で遊べます。\nご購入は、狼天紅ゲームズの今後の開発支援にもなります。",
 			"buy": "購入する",
 			"buy_with_price": "{price}で購入する",
 			"restore": "購入を復元",
@@ -774,7 +774,11 @@ func _support_ui_text(key: String) -> String:
 	elif key == "buy" and not SupportPurchase.formatted_price.is_empty():
 		lookup_key = "buy_with_price"
 	var value := str(locale_texts.get(lookup_key, texts["ja"].get(lookup_key, "")))
-	return value.replace("{price}", SupportPurchase.formatted_price)
+	var rendered_value := value.replace("{price}", SupportPurchase.formatted_price)
+	if lookup_key == "body" or lookup_key == "body_with_price":
+		# Keep the product name together when a narrow mobile line wraps.
+		rendered_value = rendered_value.replace("Music Room", "Music\u00a0Room")
+	return rendered_value
 
 # ============================================================
 # ステージ表示状態の更新
