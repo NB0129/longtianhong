@@ -110,6 +110,7 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 
 	@UsedByGodot
 	fun query_product_info(productId: String): Boolean {
+		Log.i(TAG, "query_product_info invoked")
 		runOnHostThread {
 			if (!isSupportedProduct(productId)) {
 				clearDisplayedOffer()
@@ -147,6 +148,7 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 
 	@UsedByGodot
 	fun purchase_support(productId: String): Boolean {
+		Log.i(TAG, "purchase_support invoked")
 		runOnHostThread {
 			if (!isSupportedProduct(productId)) {
 				emitPurchaseFinished(false, "product_invalid", false)
@@ -203,6 +205,7 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 
 	@UsedByGodot
 	fun restore_support(productId: String): Boolean {
+		Log.i(TAG, "restore_support invoked")
 		runOnHostThread {
 			if (!isSupportedProduct(productId)) {
 				emitRestoreFinished(false, "product_invalid", false)
@@ -229,6 +232,7 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 
 	@UsedByGodot
 	fun refresh_entitlements(productId: String): Boolean {
+		Log.i(TAG, "refresh_entitlements invoked")
 		runOnHostThread {
 			if (!isSupportedProduct(productId)) {
 				emitEntitlementCheckFinished(false, false, "product_invalid")
@@ -334,7 +338,14 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 			onError("activity_unavailable")
 			return
 		}
+		Log.i(
+			TAG,
+			"$label Billing state: isReady=${client.isReady}, " +
+				"connectionInProgress=$billingConnectionInProgress, " +
+				"pendingActions=${pendingBillingActions.size}"
+		)
 		if (client.isReady) {
+			Log.i(TAG, "$label using ready Billing connection")
 			onReady(client, currentActivity)
 			return
 		}
@@ -344,10 +355,12 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 			return
 		}
 		billingConnectionInProgress = true
+		Log.i(TAG, "Starting Billing connection for $label")
 		try {
 			client.startConnection(object : BillingClientStateListener {
 				override fun onBillingSetupFinished(billingResult: BillingResult) {
 					billingConnectionInProgress = false
+					Log.i(TAG, "Billing setup finished with responseCode=${billingResult.responseCode}")
 					if (isOk(billingResult)) {
 						drainPendingBillingActions(client, null)
 					} else {
@@ -403,6 +416,12 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 			.setProductList(listOf(product))
 			.build()
 		client.queryProductDetailsAsync(params) { billingResult, productDetailsResult ->
+			Log.i(
+				TAG,
+				"Product details finished with responseCode=${billingResult.responseCode}, " +
+					"products=${productDetailsResult.productDetailsList.size}, " +
+					"unfetched=${productDetailsResult.unfetchedProductList.size}"
+			)
 			if (!isOk(billingResult)) {
 				callback(billingResult, null, errorCode(billingResult))
 				return@queryProductDetailsAsync
@@ -503,6 +522,11 @@ class LongtianhongStoreKit(godot: Godot) : GodotPlugin(godot), PurchasesUpdatedL
 			.setProductType(PRODUCT_TYPE)
 			.build()
 		client.queryPurchasesAsync(params) { billingResult, purchases ->
+			Log.i(
+				TAG,
+				"Owned purchases finished with responseCode=${billingResult.responseCode}, " +
+					"purchases=${purchases.size}"
+			)
 			if (!isOk(billingResult)) {
 				callback(billingResult, false)
 				return@queryPurchasesAsync

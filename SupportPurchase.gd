@@ -673,13 +673,35 @@ func set_ios_in_app_store_for_test(store: Object) -> bool:
 func _call_native_bridge(method_name: String, args: Array) -> void:
 	_detect_native_bridge()
 	var bridge: Object = _native_bridge
-	if bridge != null and bridge.has_method(method_name):
-		var accepted: Variant = bridge.callv(method_name, args)
-		if not (accepted is bool) or bool(accepted):
-			return
+	if bridge == null:
+		push_error("[SupportPurchase] native bridge unavailable for method: %s" % method_name)
 		_handle_native_call_failure(method_name)
 		return
+	if not _native_bridge_has_method(bridge, method_name):
+		push_error("[SupportPurchase] native bridge is missing method: %s" % method_name)
+		_handle_native_call_failure(method_name)
+		return
+	print("[SupportPurchase] calling native bridge method: ", method_name)
+	var accepted: Variant = bridge.callv(method_name, args)
+	if _native_bridge_call_accepted(accepted):
+		return
+	push_error("[SupportPurchase] native bridge rejected method: %s (return type: %s)" % [method_name, type_string(typeof(accepted))])
 	_handle_native_call_failure(method_name)
+
+
+func _native_bridge_has_method(bridge: Object, method_name: String) -> bool:
+	if bridge.has_method("has_java_method"):
+		var java_method_exists: Variant = bridge.call("has_java_method", method_name)
+		return java_method_exists is bool and bool(java_method_exists)
+	return bridge.has_method(method_name)
+
+
+func _native_bridge_call_accepted(accepted: Variant) -> bool:
+	if accepted is bool:
+		return bool(accepted)
+	if accepted is int:
+		return int(accepted) != 0
+	return false
 
 
 func _handle_native_call_failure(method_name: String) -> void:
