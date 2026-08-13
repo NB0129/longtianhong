@@ -87,6 +87,13 @@ static func apply_support_popup(panel: Panel) -> void:
 		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportRestore"), Vector2(284.0, 52.0))
 	if panel.has_node("VBox/BtnSupportClose"):
 		_apply_dynamic_support_button(panel.get_node("VBox/BtnSupportClose"), Vector2(220.0, 48.0))
+	# Styling changes the children's minimum sizes. Restore the approved fixed
+	# layout after those changes so long localized copy cannot push the buttons
+	# below the panel.
+	if panel.has_node("VBox"):
+		var support_vbox := panel.get_node("VBox") as VBoxContainer
+		support_vbox.size = Vector2(284.0, 470.0)
+		support_vbox.queue_sort()
 
 
 static func apply_credit_popup(panel: Panel) -> void:

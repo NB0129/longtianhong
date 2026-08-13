@@ -565,7 +565,6 @@ func _create_support_popup() -> void:
 	_support_buy_button = buy_button
 	_support_restore_button = restore_button
 	_support_close_button = close_button
-	PopupSkin.apply_support_popup(panel)
 	_refresh_support_popup_texts()
 	_update_support_popup_state()
 
@@ -582,7 +581,6 @@ func _show_support_popup() -> void:
 		_create_support_popup()
 	if not SupportPurchase.product_info_loading and not SupportPurchase.product_available:
 		SupportPurchase.refresh_product_info()
-	PopupSkin.apply_support_popup(_support_popup)
 	_refresh_support_popup_texts()
 	_update_support_popup_state()
 	_set_support_popup_visible(true)
@@ -692,13 +690,16 @@ func _refresh_support_popup_texts() -> void:
 	var close_button := _support_popup.get_node_or_null("VBox/BtnSupportClose") as Button
 	if close_button != null:
 		close_button.text = _support_ui_text("close")
+	# Apply styles and fixed sizing after localized text changes so the
+	# container recalculates from the final copy rather than stale minima.
+	PopupSkin.apply_support_popup(_support_popup)
 
 func _support_ui_text(key: String) -> String:
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
 	var texts := {
 		"ja": {
-			"body": "開発支援パックを購入すると、Music Roomが解放され、\nゲーム内BGM全21曲をいつでも自由に聴けます。\nゲーム本編は購入しなくても、すべて無料で遊べます。\nご購入は、狼天紅ゲームズの今後の開発支援にもなります。",
-			"body_with_price": "開発支援パックを購入すると、Music Roomが解放され、\nゲーム内BGM全21曲をいつでも自由に聴けます。\nゲーム本編は購入しなくても、すべて無料で遊べます。\nご購入は、狼天紅ゲームズの今後の開発支援にもなります。",
+			"body": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援をご検討ください。\n支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"body_with_price": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援（{price}）をご検討ください。\n支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
 			"buy": "購入する",
 			"buy_with_price": "{price}で購入する",
 			"restore": "購入を復元",
@@ -711,8 +712,8 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "現在、購入情報を取得できません。購入済みの場合は「購入を復元」をお試しください。",
 		},
 		"en": {
-			"body": "Purchase the Support Pack to unlock the Music Room and listen to all 21 in-game BGM tracks whenever you like.\nThe full game remains free to play without a purchase.\nYour purchase also supports future development by Wolf Heaven Games.",
-			"body_with_price": "Purchase the Support Pack ({price}) to unlock the Music Room and listen to all 21 in-game BGM tracks whenever you like.\nThe full game remains free to play without a purchase.\nYour purchase also supports future development by Wolf Heaven Games.",
+			"body": "Thank you for playing Machi-ate!\nWolf Heaven Games will keep developing games, mainly mahjong and werewolf games.\nIf you enjoyed this game or are looking forward to future titles, please consider supporting development.\nAs a supporter benefit, Music Room unlocks, letting you freely listen to all 21 BGM tracks.\n*Even without support, the full main game is free to play.",
+			"body_with_price": "Thank you for playing Machi-ate!\nWolf Heaven Games will keep developing games, mainly mahjong and werewolf games.\nIf you enjoyed this game or are looking forward to future titles, please consider supporting development ({price}).\nAs a supporter benefit, Music Room unlocks, letting you freely listen to all 21 BGM tracks.\n*Even without support, the full main game is free to play.",
 			"buy": "Buy",
 			"buy_with_price": "Buy for {price}",
 			"restore": "Restore purchase",
@@ -725,8 +726,8 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "Purchase information is currently unavailable. If you already purchased, try Restore purchase.",
 		},
 		"zh_CN": {
-			"body": "购买开发支援包后，即可解锁 Music Room，随时自由欣赏游戏内全部21首 BGM。\n即使不购买，也可以免费游玩游戏本篇的全部内容。\n您的购买也将支持狼天红 Games 今后的开发。",
-			"body_with_price": "购买开发支援包（{price}）后，即可解锁 Music Room，随时自由欣赏游戏内全部21首 BGM。\n即使不购买，也可以免费游玩游戏本篇的全部内容。\n您的购买也将支持狼天红 Games 今后的开发。",
+			"body": "感谢您游玩《待牌猜猜看！》。\n狼天红 Games 今后也会继续以麻将游戏、人狼游戏为中心进行开发。\n如果您觉得“这个游戏很有趣”或“也期待今后的作品”，欢迎考虑开发支援。\n作为支援特典，将解锁 Music Room（可自由聆听全部21首 BGM）。\n※即使不支援，也可以免费游玩全部游戏本篇。",
+			"body_with_price": "感谢您游玩《待牌猜猜看！》。\n狼天红 Games 今后也会继续以麻将游戏、人狼游戏为中心进行开发。\n如果您觉得“这个游戏很有趣”或“也期待今后的作品”，欢迎考虑开发支援（{price}）。\n作为支援特典，将解锁 Music Room（可自由聆听全部21首 BGM）。\n※即使不支援，也可以免费游玩全部游戏本篇。",
 			"buy": "购买",
 			"buy_with_price": "以 {price} 购买",
 			"restore": "恢复购买",
@@ -739,8 +740,8 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "目前无法获取购买信息。如果已经购买，请尝试“恢复购买”。",
 		},
 		"zh_TW": {
-			"body": "購買開發支援包後，即可解鎖 Music Room，隨時自由欣賞遊戲內全部21首 BGM。\n即使不購買，也可以免費遊玩遊戲本篇的全部內容。\n您的購買也將支持狼天紅 Games 今後的開發。",
-			"body_with_price": "購買開發支援包（{price}）後，即可解鎖 Music Room，隨時自由欣賞遊戲內全部21首 BGM。\n即使不購買，也可以免費遊玩遊戲本篇的全部內容。\n您的購買也將支持狼天紅 Games 今後的開發。",
+			"body": "感謝您遊玩《待牌猜猜看！》。\n狼天紅 Games 今後也會繼續以麻將遊戲、人狼遊戲為中心進行開發。\n如果您覺得「這款遊戲很有趣」或「也期待今後的作品」，歡迎考慮開發支援。\n作為支援特典，將解鎖 Music Room（可自由聆聽全部21首 BGM）。\n※即使不支援，也可以免費遊玩全部遊戲本篇。",
+			"body_with_price": "感謝您遊玩《待牌猜猜看！》。\n狼天紅 Games 今後也會繼續以麻將遊戲、人狼遊戲為中心進行開發。\n如果您覺得「這款遊戲很有趣」或「也期待今後的作品」，歡迎考慮開發支援（{price}）。\n作為支援特典，將解鎖 Music Room（可自由聆聽全部21首 BGM）。\n※即使不支援，也可以免費遊玩全部遊戲本篇。",
 			"buy": "購買",
 			"buy_with_price": "以 {price} 購買",
 			"restore": "復原購買",
@@ -753,8 +754,8 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "目前無法取得購買資訊。如果已經購買，請嘗試「復原購買」。",
 		},
 		"ko": {
-			"body": "개발 지원 팩을 구매하면 Music Room이 해금되어 게임 내 BGM 21곡을 언제든 자유롭게 들을 수 있습니다.\n구매하지 않아도 게임 본편 전체를 무료로 즐길 수 있습니다.\n구매 금액은 늑천홍 Games의 향후 개발 지원에도 사용됩니다.",
-			"body_with_price": "개발 지원 팩({price})을 구매하면 Music Room이 해금되어 게임 내 BGM 21곡을 언제든 자유롭게 들을 수 있습니다.\n구매하지 않아도 게임 본편 전체를 무료로 즐길 수 있습니다.\n구매 금액은 늑천홍 Games의 향후 개발 지원에도 사용됩니다.",
+			"body": "마치아테!를 플레이해 주셔서 감사합니다.\n늑천홍 Games는 앞으로도 마작 게임과 인랑 게임을 중심으로 개발을 이어 나가겠습니다.\n“이 게임이 재미있었다”, “앞으로의 작품도 기대된다”고 느끼셨다면 개발 지원을 검토해 주세요.\n지원 특전으로 Music Room(21곡의 모든 BGM을 자유롭게 들을 수 있는 기능)이 해금됩니다.\n※지원을 하지 않아도 게임 본편은 모두 무료로 즐길 수 있습니다.",
+			"body_with_price": "마치아테!를 플레이해 주셔서 감사합니다.\n늑천홍 Games는 앞으로도 마작 게임과 인랑 게임을 중심으로 개발을 이어 나가겠습니다.\n“이 게임이 재미있었다”, “앞으로의 작품도 기대된다”고 느끼셨다면 개발 지원({price})을 검토해 주세요.\n지원 특전으로 Music Room(21곡의 모든 BGM을 자유롭게 들을 수 있는 기능)이 해금됩니다.\n※지원을 하지 않아도 게임 본편은 모두 무료로 즐길 수 있습니다.",
 			"buy": "구매",
 			"buy_with_price": "{price}에 구매",
 			"restore": "구매 복원",
@@ -1008,7 +1009,6 @@ func _on_language_button_pressed(code: String) -> void:
 	_update_lock_display()
 	_update_side_change_icon()
 	if _support_popup != null and is_instance_valid(_support_popup):
-		PopupSkin.apply_support_popup(_support_popup)
 		_refresh_support_popup_texts()
 		_update_support_popup_state()
 	AudioManager.play_se("se_btntap")
