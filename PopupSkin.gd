@@ -407,6 +407,7 @@ static func _layout_credit_popup(panel: Panel) -> void:
 		var scroll := vbox.get_node("CreditScroll") as ScrollContainer
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		scroll.scroll_deadzone = 8
 		scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	if vbox.has_node("CreditScroll/CreditBody"):
 		var body := vbox.get_node("CreditScroll/CreditBody") as Label

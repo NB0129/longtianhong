@@ -199,9 +199,6 @@ var _jacket_rect: TextureRect = null
 var _jacket_fallback_label: Label = null
 var _status_label: Label = null
 var _repeat_one_check: CheckBox = null
-var _list_dragging: bool = false
-var _list_drag_last_y: float = 0.0
-var _list_drag_total: float = 0.0
 
 # ============================================================
 # 蛻晄悄蛹・# ============================================================
@@ -272,8 +269,7 @@ func _setup_generated_ui() -> void:
 	$FullListLabel.visible = false
 	$FullListScroll.position = Vector2(18.0, 548.0)
 	$FullListScroll.size = Vector2(444.0, 188.0)
-	if not $FullListScroll.gui_input.is_connected(_on_full_list_scroll_gui_input):
-		$FullListScroll.gui_input.connect(_on_full_list_scroll_gui_input)
+	$FullListScroll.scroll_deadzone = 8
 	_set_scroll_panel_dark($FullListScroll)
 
 	_setup_image_button($BtnBack, ICON_HOME, Vector2(314.0, 752.0), Vector2(72.0, 72.0))
@@ -504,30 +500,6 @@ func _set_screen_keep_on(enable: bool) -> void:
 	if DisplayServer.has_method("screen_set_keep_on"):
 		DisplayServer.screen_set_keep_on(enable)
 
-func _on_full_list_scroll_gui_input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch:
-		_list_dragging = event.pressed
-		_list_drag_last_y = event.position.y
-		if event.pressed:
-			_list_drag_total = 0.0
-		if event.pressed:
-			$FullListScroll.accept_event()
-	elif event is InputEventScreenDrag:
-		$FullListScroll.scroll_vertical -= int(event.relative.y)
-		_list_drag_total += abs(event.relative.y)
-		$FullListScroll.accept_event()
-	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		_list_dragging = event.pressed
-		_list_drag_last_y = event.position.y
-		if event.pressed:
-			_list_drag_total = 0.0
-	elif event is InputEventMouseMotion and _list_dragging:
-		var delta_y: float = event.position.y - _list_drag_last_y
-		$FullListScroll.scroll_vertical -= int(delta_y)
-		_list_drag_total += abs(delta_y)
-		_list_drag_last_y = event.position.y
-		$FullListScroll.accept_event()
-
 # ============================================================
 # 蜈ｨ譖ｲ繝ｪ繧ｹ繝域ｧ狗ｯ・# ============================================================
 func _build_full_list() -> void:
@@ -547,20 +519,19 @@ func _build_full_list() -> void:
 		btn.text = "  " + display_name
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.flat = false
+		btn.mouse_filter = Control.MOUSE_FILTER_PASS
+		btn.focus_mode = Control.FOCUS_NONE
 		btn.add_theme_font_size_override("font_size", 18)
 		_apply_music_row_button_style(btn)
 		_set_btn_text_color(btn, Color(1.0, 0.94, 0.78))
+		ButtonFeedback.skip(btn)
 		btn.pressed.connect(_on_full_list_row_pressed.bind(i))
-		btn.gui_input.connect(_on_full_list_row_gui_input)
 		vbox.add_child(btn)
 
 		_full_list_row_nodes.append({
 			"button": btn,
 			"file": file,
 		})
-
-func _on_full_list_row_gui_input(event: InputEvent) -> void:
-	_on_full_list_scroll_gui_input(event)
 
 # ============================================================
 # 繝励Ξ繧､繝ｪ繧ｹ繝域ｧ狗ｯ・# ============================================================
@@ -595,8 +566,6 @@ func _get_jacket_path(file: String) -> String:
 # 蜈ｨ譖ｲ繝ｪ繧ｹ繝茨ｼ夊｡後ち繝・・
 # ============================================================
 func _on_full_list_row_pressed(index: int) -> void:
-	if _list_drag_total > 8.0:
-		return
 	AudioManager.play_se("se_btntap")
 	_full_list_selected_index = index
 	_update_visuals()

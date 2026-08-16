@@ -775,34 +775,7 @@ func _support_ui_text(key: String) -> String:
 	elif key == "buy" and not SupportPurchase.formatted_price.is_empty():
 		lookup_key = "buy_with_price"
 	var value := str(locale_texts.get(lookup_key, texts["ja"].get(lookup_key, "")))
-	var rendered_value := value.replace("{price}", SupportPurchase.formatted_price)
-	if locale == "ja" and (lookup_key == "body" or lookup_key == "body_with_price"):
-		# Keep natural Japanese phrases intact without visible characters or hard line breaks.
-		var no_break_phrases: Array[String] = [
-			"狼天紅ゲームズは",
-			"開発を続けていきます",
-			"「このゲーム",
-			"今後の作品も楽しみ",
-			"思っていただけた方は",
-			"ご検討ください",
-			"支援の特典として",
-			"Music Room",
-			"自由に聴ける機能",
-			"解放されます",
-			"※支援をしなくても",
-			"ゲーム本編はすべて無料で遊べます",
-		]
-		for phrase in no_break_phrases:
-			rendered_value = rendered_value.replace(phrase, _with_word_joiners(phrase))
-	return rendered_value
-
-func _with_word_joiners(phrase: String) -> String:
-	var result := ""
-	for index in range(phrase.length()):
-		if index > 0:
-			result += "\u2060"
-		result += phrase.substr(index, 1)
-	return result
+	return value.replace("{price}", SupportPurchase.formatted_price)
 
 # ============================================================
 # ステージ表示状態の更新
@@ -848,12 +821,17 @@ func _input(event: InputEvent) -> void:
 # スライド演出
 # ============================================================
 func _handle_page_swipe(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and not (event as InputEventScreenTouch).pressed:
+		_swipe_tracking = false
+		if _swipe_triggered:
+			set_deferred("_swipe_triggered", false)
+		return
 	if _support_operation_blocks_navigation() or _is_sliding or $SettingsPopup.visible or (_support_popup != null and _support_popup.visible):
 		return
 
 	if event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
-		_swipe_tracking = touch.pressed
+		_swipe_tracking = true
 		_swipe_start = touch.position
 		_swipe_triggered = false
 		return
@@ -869,6 +847,7 @@ func _handle_page_swipe(event: InputEvent) -> void:
 			return
 
 		_swipe_triggered = true
+		propagate_notification(Control.NOTIFICATION_SCROLL_BEGIN)
 		if delta.x < 0.0 and not _showing_ex:
 			_slide_to_ex()
 		elif delta.x > 0.0 and _showing_ex:
@@ -908,7 +887,7 @@ func _slide_to_surface() -> void:
 # ボタン処理
 # ============================================================
 func _on_story_btn_pressed(stage: String) -> void:
-	if _support_operation_blocks_navigation():
+	if _stage_activation_blocked():
 		return
 	if _get_stage_talk_scene_id(stage) != "":
 		_start_stage_story(stage)
@@ -916,15 +895,18 @@ func _on_story_btn_pressed(stage: String) -> void:
 	_start_stage(stage)
 
 func _on_game_btn_pressed(stage: String) -> void:
-	if _support_operation_blocks_navigation():
+	if _stage_activation_blocked():
 		return
 	_start_stage(stage)
+
+func _stage_activation_blocked() -> bool:
+	return _support_operation_blocks_navigation() or _is_sliding or _swipe_triggered
 
 func _get_stage_talk_scene_id(stage: String) -> String:
 	return str(STAGE_TALK_SCENE_IDS.get(stage, ""))
 
 func _start_stage_story(stage: String) -> void:
-	if _support_operation_blocks_navigation():
+	if _stage_activation_blocked():
 		return
 	SaveData.last_mode = "surface"
 	if stage not in SURFACE_STAGES:
@@ -939,7 +921,7 @@ func _start_stage_story(stage: String) -> void:
 	get_tree().change_scene_to_file("res://TalkScene.tscn")
 
 func _start_stage(stage: String) -> void:
-	if _support_operation_blocks_navigation():
+	if _stage_activation_blocked():
 		return
 	print("【デバッグ】_start_stage called: ", stage)
 	if stage == "music_room":

@@ -90,8 +90,6 @@ var _credit_overlay: Button = null
 var _credit_popup: Panel = null
 var _credit_scroll: ScrollContainer = null
 var _language_buttons: Dictionary = {}
-var _credit_dragging: bool = false
-var _credit_last_drag_y: float = 0.0
 var _credit_text_loaded: bool = false
 var _legal_notice_cache: String = ""
 var _settings_dragging: bool = false
@@ -147,9 +145,7 @@ func _handle_system_back() -> void:
 
 func _input(event: InputEvent) -> void:
 	if $SettingsPopup.visible and _settings_scroll != null and (event is InputEventScreenDrag or (_settings_dragging and event is InputEventMouseMotion)):
-		_handle_drag_scroll(event, _settings_scroll, true)
-	if _credit_popup != null and _credit_popup.visible and _credit_scroll != null and (event is InputEventScreenDrag or (_credit_dragging and event is InputEventMouseMotion)):
-		_handle_drag_scroll(event, _credit_scroll, false)
+		_handle_settings_drag_scroll(event, _settings_scroll)
 
 
 func _setup_background() -> void:
@@ -616,7 +612,6 @@ func _setup_credit_popup() -> void:
 		scroll.name = "CreditScroll"
 		scroll.follow_focus = true
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		scroll.gui_input.connect(_on_credit_scroll_gui_input)
 		vbox.add_child(scroll)
 		var body := Label.new()
 		body.name = "CreditBody"
@@ -870,7 +865,6 @@ func _on_btn_credit_pressed() -> void:
 func _on_btn_credit_close_pressed() -> void:
 	_credit_overlay.visible = false
 	_credit_popup.visible = false
-	_credit_dragging = false
 
 
 func _on_btn_privacy_policy_pressed() -> void:
@@ -887,10 +881,10 @@ func _open_external_https_url(url: String) -> Error:
 
 
 func _on_settings_scroll_gui_input(event: InputEvent) -> void:
-	_handle_drag_scroll(event, _settings_scroll, true)
+	_handle_settings_drag_scroll(event, _settings_scroll)
 
 
-func _handle_drag_scroll(event: InputEvent, scroll: ScrollContainer, is_settings: bool) -> void:
+func _handle_settings_drag_scroll(event: InputEvent, scroll: ScrollContainer) -> void:
 	if scroll == null:
 		return
 	var global_rect := Rect2(scroll.global_position, scroll.size)
@@ -898,12 +892,8 @@ func _handle_drag_scroll(event: InputEvent, scroll: ScrollContainer, is_settings
 		var touch := event as InputEventScreenTouch
 		if not global_rect.has_point(touch.position):
 			return
-		if is_settings:
-			_settings_dragging = touch.pressed
-			_settings_last_drag_y = touch.position.y
-		else:
-			_credit_dragging = touch.pressed
-			_credit_last_drag_y = touch.position.y
+		_settings_dragging = touch.pressed
+		_settings_last_drag_y = touch.position.y
 		get_viewport().set_input_as_handled()
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
@@ -917,54 +907,17 @@ func _handle_drag_scroll(event: InputEvent, scroll: ScrollContainer, is_settings
 			return
 		if not global_rect.has_point(button.position):
 			return
-		if is_settings:
-			_settings_dragging = button.pressed
-			_settings_last_drag_y = button.position.y
-		else:
-			_credit_dragging = button.pressed
-			_credit_last_drag_y = button.position.y
+		_settings_dragging = button.pressed
+		_settings_last_drag_y = button.position.y
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
-		if is_settings:
-			if not _settings_dragging:
-				return
-			var delta_y_settings := motion.position.y - _settings_last_drag_y
-			scroll.scroll_vertical = maxi(0, scroll.scroll_vertical - int(delta_y_settings))
-			_settings_last_drag_y = motion.position.y
-		else:
-			if not _credit_dragging:
-				return
-			var delta_y_credit := motion.position.y - _credit_last_drag_y
-			scroll.scroll_vertical = maxi(0, scroll.scroll_vertical - int(delta_y_credit))
-			_credit_last_drag_y = motion.position.y
+		if not _settings_dragging:
+			return
+		var delta_y_settings := motion.position.y - _settings_last_drag_y
+		scroll.scroll_vertical = maxi(0, scroll.scroll_vertical - int(delta_y_settings))
+		_settings_last_drag_y = motion.position.y
 		get_viewport().set_input_as_handled()
-
-
-func _on_credit_scroll_gui_input(event: InputEvent) -> void:
-	if _credit_scroll == null:
-		return
-	if event is InputEventScreenTouch:
-		var touch := event as InputEventScreenTouch
-		_credit_dragging = touch.pressed
-		_credit_last_drag_y = touch.position.y
-		_credit_scroll.accept_event()
-	elif event is InputEventScreenDrag:
-		var drag := event as InputEventScreenDrag
-		_credit_scroll.scroll_vertical = maxi(0, _credit_scroll.scroll_vertical - int(drag.relative.y))
-		_credit_scroll.accept_event()
-	elif event is InputEventMouseButton:
-		var button := event as InputEventMouseButton
-		if button.button_index == MOUSE_BUTTON_LEFT:
-			_credit_dragging = button.pressed
-			_credit_last_drag_y = button.position.y
-			_credit_scroll.accept_event()
-	elif event is InputEventMouseMotion and _credit_dragging:
-		var motion := event as InputEventMouseMotion
-		var delta_y := motion.position.y - _credit_last_drag_y
-		_credit_scroll.scroll_vertical = maxi(0, _credit_scroll.scroll_vertical - int(delta_y))
-		_credit_last_drag_y = motion.position.y
-		_credit_scroll.accept_event()
 
 
 func _on_btn_exit_game_pressed() -> void:
