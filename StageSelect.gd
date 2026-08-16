@@ -698,8 +698,8 @@ func _support_ui_text(key: String) -> String:
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
 	var texts := {
 		"ja": {
-			"body": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援をご検討ください。\n支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
-			"body_with_price": "「まちあて！」を遊んでいただき、ありがとうございます。\n狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。\n「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援（{price}）をご検討ください。\n支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。\n※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"body": "「まちあて！」を遊んでいただき、ありがとうございます。狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援をご検討ください。支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
+			"body_with_price": "「まちあて！」を遊んでいただき、ありがとうございます。狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援（{price}）をご検討ください。支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
 			"buy": "購入する",
 			"buy_with_price": "{price}で購入する",
 			"restore": "購入を復元",
@@ -776,10 +776,33 @@ func _support_ui_text(key: String) -> String:
 		lookup_key = "buy_with_price"
 	var value := str(locale_texts.get(lookup_key, texts["ja"].get(lookup_key, "")))
 	var rendered_value := value.replace("{price}", SupportPurchase.formatted_price)
-	if lookup_key == "body" or lookup_key == "body_with_price":
-		# Keep the product name together when a narrow mobile line wraps.
-		rendered_value = rendered_value.replace("Music Room", "Music\u00a0Room")
+	if locale == "ja" and (lookup_key == "body" or lookup_key == "body_with_price"):
+		# Keep natural Japanese phrases intact without visible characters or hard line breaks.
+		var no_break_phrases: Array[String] = [
+			"狼天紅ゲームズは",
+			"開発を続けていきます",
+			"「このゲーム",
+			"今後の作品も楽しみ",
+			"思っていただけた方は",
+			"ご検討ください",
+			"支援の特典として",
+			"Music Room",
+			"自由に聴ける機能",
+			"解放されます",
+			"※支援をしなくても",
+			"ゲーム本編はすべて無料で遊べます",
+		]
+		for phrase in no_break_phrases:
+			rendered_value = rendered_value.replace(phrase, _with_word_joiners(phrase))
 	return rendered_value
+
+func _with_word_joiners(phrase: String) -> String:
+	var result := ""
+	for index in range(phrase.length()):
+		if index > 0:
+			result += "\u2060"
+		result += phrase.substr(index, 1)
+	return result
 
 # ============================================================
 # ステージ表示状態の更新

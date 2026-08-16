@@ -35,7 +35,7 @@ const UI_TEXT := {
 		"settings_tile": "牌の種類",
 		"language": "Language",
 		"privacy_policy": "プライバシーポリシー",
-		"credit": "企画・制作\n狼天紅ゲームズ\n\n原画・キャラクターデザイン\n椿式\n\nコーディング\nCodex\nClaude Code\n\nUI・ビジュアル制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM・サウンド制作\nSuno\n\nフォント\n刻明朝 Regular / Koku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\nライセンス全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n効果音協力\n効果音ラボ\n\nゲームエンジン\nGodot Engine\n\nGodot Engine License\n",
+		"credit": "企画 / 制作\n狼天紅ゲームズ\n\n原画 / キャラクターデザイン\n椿式\n\nコーディング\nCodex\nClaude Code\n\nUI / ビジュアル制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / サウンド制作\nSuno\n\nフォント\n刻明朝 Regular / Koku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\nライセンス全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n効果音協力\n効果音ラボ\n\nゲームエンジン\nGodot Engine\n\nGodot Engine License\n",
 	},
 	"en": {
 		"settings_bgm": "BGM volume",

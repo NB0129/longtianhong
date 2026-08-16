@@ -356,7 +356,7 @@ static func _layout_support_popup(panel: Panel) -> void:
 	if not panel.has_node("VBox"):
 		return
 	var vbox := panel.get_node("VBox") as VBoxContainer
-	vbox.position = Vector2(62.0, 84.0)
+	vbox.position = Vector2(62.0, 76.0)
 	vbox.size = Vector2(284.0, 470.0)
 	vbox.add_theme_constant_override("separation", 8)
 	if vbox.has_node("SupportTitle"):
