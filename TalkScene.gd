@@ -6,25 +6,6 @@ const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
 const TalkLocalization := preload("res://TalkLocalization.gd")
 
-const FONT_PATH := "res://assets/font/font_1_kokumr_1.00_rls.ttf"
-const SYSTEM_LOCALE_FONT_NAMES := {
-	"ko": [
-		"Noto Sans CJK KR",
-		"Noto Sans KR",
-		"Malgun Gothic",
-		"Noto Sans CJK SC",
-		"Microsoft YaHei",
-		"sans-serif",
-	],
-	"zh_CN": [
-		"Noto Sans CJK SC",
-		"Noto Sans SC",
-		"Microsoft YaHei",
-		"Microsoft JhengHei",
-		"Noto Sans CJK KR",
-		"sans-serif",
-	],
-}
 const BODY_FONT_SIZE := 25
 const BODY_MIN_FONT_SIZE := 20
 const BG_TUTORIAL := "res://assets/bg/bg_sentaku_generated_screen.webp"
@@ -534,8 +515,6 @@ const NIGHTMARE_CLEAR_LINES: Array[Dictionary] = [
 
 var _lines: Array[Dictionary] = []
 var _line_index: int = 0
-var _font: FontFile = null
-var _system_locale_fonts: Dictionary = {}
 var _bg: TextureRect = null
 var _shade: ColorRect = null
 var _pyoko: TextureRect = null
@@ -573,13 +552,6 @@ func _ready() -> void:
 		_go_next_scene()
 		return
 	_play_talk_bgm()
-	_font = load(FONT_PATH) as FontFile
-	_system_locale_fonts.clear()
-	for locale in SYSTEM_LOCALE_FONT_NAMES:
-		var locale_font := SystemFont.new()
-		locale_font.font_names = PackedStringArray(SYSTEM_LOCALE_FONT_NAMES[locale])
-		locale_font.allow_system_fallback = true
-		_system_locale_fonts[locale] = locale_font
 	_build_ui()
 	_layout_ui()
 	_apply_text_language()
@@ -991,6 +963,7 @@ func _build_settings_popup() -> void:
 		button.custom_minimum_size = Vector2(126.0, 34.0)
 		button.add_theme_font_size_override("font_size", 16)
 		button.focus_mode = Control.FOCUS_NONE
+		LocaleFonts.apply_language_button(button, code)
 		button.pressed.connect(_on_language_button_pressed.bind(code))
 		language_grid.add_child(button)
 		_language_buttons[code] = button
@@ -1079,15 +1052,14 @@ func _make_button_style(bg_color: Color, border_color: Color) -> StyleBoxFlat:
 
 
 func _apply_label_font(label: Label, font_size: int) -> void:
-	if _font != null:
-		label.add_theme_font_override("font", _font)
+	var selected_font := LocaleFonts.font_for_locale(SaveData.language_code)
+	if selected_font != null:
+		label.add_theme_font_override("font", selected_font)
 	label.add_theme_font_size_override("font_size", font_size)
 
 
 func _apply_dialogue_locale_font(label: Label, locale: String) -> void:
-	var selected_font: Font = _font
-	if _system_locale_fonts.has(locale):
-		selected_font = _system_locale_fonts[locale] as Font
+	var selected_font := LocaleFonts.font_for_locale(locale)
 	if selected_font != null:
 		label.add_theme_font_override("font", selected_font)
 	label.language = locale.replace("_", "-")
@@ -1696,7 +1668,6 @@ func _on_tile_suit_changed(_tile_suit: String) -> void:
 
 func _on_language_button_pressed(code: String) -> void:
 	SaveData.set_language_code(code)
-	TranslationServer.set_locale(SaveData.language_code)
 	PopupSkin.apply_settings_popup(_settings_popup)
 	_apply_text_language()
 	AudioManager.play_se("se_btntap")

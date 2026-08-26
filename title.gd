@@ -3,6 +3,7 @@ extends Control
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
 const RankingNoticeScript := preload("res://RankingNotice.gd")
+const TalkLocalization := preload("res://TalkLocalization.gd")
 
 const PATH_BG := "res://assets/ui/bg_top_generated.webp"
 const PATH_LOGO := "res://assets/ui/matiate.webp"
@@ -14,16 +15,9 @@ const PATH_HIGHSCORE := "res://assets/ui/haisukoa.webp"
 const PATH_ICON_SETTINGS := "res://assets/bg/music_icon_settings_ui.webp"
 const PATH_CREDIT_BUTTON := "res://assets/ui/title_btn_credit.webp"
 const PATH_IPA_LICENSE := "res://assets/font/IPA_Font_License_Agreement_v1.0.txt"
+const PATH_NOTO_OFL := "res://assets/font/noto_cjk_2_004/OFL-1.1.txt"
 const PATH_ANDROID_OSS_NOTICES := "res://assets/legal/android_oss_notices.txt"
 const PRIVACY_POLICY_URL := "https://rotenkogames.com/privacy"
-
-const LANGUAGE_OPTIONS: Array[Dictionary] = [
-	{"code": "ja", "label": "日本語"},
-	{"code": "en", "label": "English"},
-	{"code": "zh_CN", "label": "简体中文"},
-	{"code": "zh_TW", "label": "繁體中文"},
-	{"code": "ko", "label": "한국어"},
-]
 
 const SETTINGS_LABEL_COLOR := Color(0.10, 0.38, 0.32)
 const SETTINGS_LABEL_OUTLINE := Color(1.0, 0.96, 0.82, 0.72)
@@ -35,7 +29,9 @@ const UI_TEXT := {
 		"settings_tile": "牌の種類",
 		"language": "Language",
 		"privacy_policy": "プライバシーポリシー",
-		"credit": "企画 / 制作\n狼天紅ゲームズ\n\n原画 / キャラクターデザイン\n椿式\n\nコーディング\nCodex\nClaude Code\n\nUI / ビジュアル制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / サウンド制作\nSuno\n\nフォント\n刻明朝 Regular / Koku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\nライセンス全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n効果音協力\n効果音ラボ\n\nゲームエンジン\nGodot Engine\n\nGodot Engine License\n",
+		"licenses_oss": "ライセンス / OSS",
+		"back_to_credits": "クレジットに戻る",
+		"credit": "企画 / 制作\n狼天紅ゲームズ\n\n原画 / キャラクターデザイン\n椿式\n\nコーディング\nCodex\nClaude Code\n\nUI / ビジュアル制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / サウンド制作\nSuno\n\nフォント\n刻明朝 Regular / Koku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nNoto Sans SC / TC / KR Regular\nCopyright (c) 2014-2021 Adobe\n\n効果音協力\n効果音ラボ\n\nゲームエンジン\nGodot Engine\n",
 	},
 	"en": {
 		"settings_bgm": "BGM volume",
@@ -43,7 +39,9 @@ const UI_TEXT := {
 		"settings_tile": "Tile suit",
 		"language": "Language",
 		"privacy_policy": "Privacy Policy",
-		"credit": "Planning / Production\n狼天紅 games\n\nOriginal art / Character design\n椿式\n\nCoding\nCodex\nClaude Code\n\nUI / Visual production\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / Sound production\nSuno\n\nFont\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\nLicense text: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\nSound effects\nSound Effect Lab\n\nGame engine\nGodot Engine\n\nGodot Engine License\n",
+		"licenses_oss": "Licenses / OSS",
+		"back_to_credits": "Back to Credits",
+		"credit": "Planning / Production\n狼天紅 games\n\nOriginal art / Character design\n椿式\n\nCoding\nCodex\nClaude Code\n\nUI / Visual production\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / Sound production\nSuno\n\nFonts\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nNoto Sans SC / TC / KR Regular\nCopyright (c) 2014-2021 Adobe\n\nSound effects\nSound Effect Lab\n\nGame engine\nGodot Engine\n",
 	},
 	"zh_CN": {
 		"settings_bgm": "BGM 音量",
@@ -51,7 +49,9 @@ const UI_TEXT := {
 		"settings_tile": "牌面花色",
 		"language": "Language",
 		"privacy_policy": "隐私政策",
-		"credit": "企划 / 制作\n狼天红 games\n\n原画 / 角色设计\n椿式\n\n程序\nCodex\nClaude Code\n\nUI / 视觉制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 音效制作\nSuno\n\n字体\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\n许可证全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n音效\nSound Effect Lab\n\n游戏引擎\nGodot Engine\n\nGodot Engine License\n",
+		"licenses_oss": "许可证 / 开源软件",
+		"back_to_credits": "返回制作人员名单",
+		"credit": "企划 / 制作\n狼天红 games\n\n原画 / 角色设计\n椿式\n\n程序\nCodex\nClaude Code\n\nUI / 视觉制作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 音效制作\nSuno\n\n字体\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nNoto Sans SC / TC / KR Regular\nCopyright (c) 2014-2021 Adobe\n\n音效\nSound Effect Lab\n\n游戏引擎\nGodot Engine\n",
 	},
 	"zh_TW": {
 		"settings_bgm": "BGM 音量",
@@ -59,7 +59,9 @@ const UI_TEXT := {
 		"settings_tile": "牌面花色",
 		"language": "Language",
 		"privacy_policy": "隱私權政策",
-		"credit": "企劃 / 製作\n狼天紅 games\n\n原畫 / 角色設計\n椿式\n\n程式\nCodex\nClaude Code\n\nUI / 視覺製作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 音效製作\nSuno\n\n字型\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\n授權全文: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n音效\nSound Effect Lab\n\n遊戲引擎\nGodot Engine\n\nGodot Engine License\n",
+		"licenses_oss": "授權條款 / 開源軟體",
+		"back_to_credits": "返回製作人員名單",
+		"credit": "企劃 / 製作\n狼天紅 games\n\n原畫 / 角色設計\n椿式\n\n程式\nCodex\nClaude Code\n\nUI / 視覺製作\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 音效製作\nSuno\n\n字型\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nNoto Sans SC / TC / KR Regular\nCopyright (c) 2014-2021 Adobe\n\n音效\nSound Effect Lab\n\n遊戲引擎\nGodot Engine\n",
 	},
 	"ko": {
 		"settings_bgm": "BGM 볼륨",
@@ -67,7 +69,9 @@ const UI_TEXT := {
 		"settings_tile": "패 종류",
 		"language": "Language",
 		"privacy_policy": "개인정보처리방침",
-		"credit": "기획 / 제작\n狼天紅 games\n\n원화 / 캐릭터 디자인\n椿式\n\n코딩\nCodex\nClaude Code\n\nUI / 비주얼 제작\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 사운드 제작\nSuno\n\n폰트\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nIPA Font License Agreement v1.0\n라이선스 전문: assets/font/IPA_Font_License_Agreement_v1.0.txt\n\n효과음\nSound Effect Lab\n\n게임 엔진\nGodot Engine\n\nGodot Engine License\n",
+		"licenses_oss": "라이선스 / 오픈 소스",
+		"back_to_credits": "크레딧으로 돌아가기",
+		"credit": "기획 / 제작\n狼天紅 games\n\n원화 / 캐릭터 디자인\n椿式\n\n코딩\nCodex\nClaude Code\n\nUI / 비주얼 제작\nAdobe Photoshop\nAdobe Firefly\nGPT Image\n\nBGM / 사운드 제작\nSuno\n\n폰트\nKoku Mincho Regular\nCopyright (c) freefontnoki, Information-technology Promotion Agency, Japan (IPA)\nNoto Sans SC / TC / KR Regular\nCopyright (c) 2014-2021 Adobe\n\n효과음\nSound Effect Lab\n\n게임 엔진\nGodot Engine\n",
 	},
 }
 
@@ -90,7 +94,7 @@ var _credit_overlay: Button = null
 var _credit_popup: Panel = null
 var _credit_scroll: ScrollContainer = null
 var _language_buttons: Dictionary = {}
-var _credit_text_loaded: bool = false
+var _credit_legal_view_active: bool = false
 var _legal_notice_cache: String = ""
 var _settings_dragging: bool = false
 var _settings_last_drag_y: float = 0.0
@@ -135,6 +139,10 @@ func _handle_system_back() -> void:
 	if not is_inside_tree():
 		return
 	if _credit_popup != null and _credit_popup.visible:
+		if _credit_legal_view_active:
+			_credit_legal_view_active = false
+			_update_credit_view(true)
+			return
 		_on_btn_credit_close_pressed()
 		return
 	if $SettingsPopup.visible:
@@ -213,7 +221,6 @@ func _localized_title_path(file_base: String, fallback_path: String) -> String:
 
 func _apply_title_language() -> void:
 	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
-	TranslationServer.set_locale(locale)
 	_set_texture(_logo, _localized_title_path("matiate", PATH_LOGO))
 	_set_texture(_subtitle, _localized_title_path("tinitukuizu", PATH_SUBTITLE))
 	_set_texture($StoryFrame/StoryImg, _localized_title_path("title_btn_story", PATH_STORY))
@@ -243,13 +250,8 @@ func _apply_text_language() -> void:
 		if grid != null:
 			for button_name in ["BtnPinzu", "BtnSouzu", "BtnManzu", "BtnManzu2"]:
 				_set_button_text(grid, button_name, "")
-	if _credit_popup != null and _credit_popup.has_node("VBox/CreditScroll/CreditBody"):
-		var body := _credit_popup.get_node("VBox/CreditScroll/CreditBody") as Label
-		body.text = _make_credit_text() if _credit_text_loaded else _text_value("credit")
-	if _credit_popup != null and _credit_popup.has_node("VBox/BtnPrivacyPolicy"):
-		var privacy_button := _credit_popup.get_node("VBox/BtnPrivacyPolicy") as Button
-		privacy_button.tooltip_text = _text_value("privacy_policy")
-		PopupSkin.refresh_credit_popup(_credit_popup)
+	if _credit_popup != null:
+		_update_credit_view(false)
 
 
 func _set_label_text(node_name: String, value: String) -> void:
@@ -538,7 +540,7 @@ func _setup_language_controls() -> void:
 
 	_language_buttons.clear()
 	var group := ButtonGroup.new()
-	for option in LANGUAGE_OPTIONS:
+	for option in TalkLocalization.LANGUAGE_OPTIONS:
 		var code: String = option["code"]
 		var button_name := "BtnLanguage" + code.replace("_", "")
 		var button := grid.get_node_or_null(button_name) as CheckBox
@@ -556,6 +558,7 @@ func _setup_language_controls() -> void:
 		button.custom_minimum_size = Vector2(124.0, 36.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_font_size_override("font_size", 17)
+		LocaleFonts.apply_language_button(button, code)
 		button.add_theme_color_override("font_color", Color(0.30, 0.18, 0.09))
 		button.add_theme_color_override("font_hover_color", Color(0.30, 0.18, 0.09))
 		button.add_theme_color_override("font_pressed_color", Color(0.30, 0.18, 0.09))
@@ -570,7 +573,7 @@ func _setup_language_controls() -> void:
 
 func _refresh_language_buttons() -> void:
 	var current: String = SaveData.normalize_language_code(SaveData.language_code)
-	for option in LANGUAGE_OPTIONS:
+	for option in TalkLocalization.LANGUAGE_OPTIONS:
 		var code: String = option["code"]
 		if not _language_buttons.has(code):
 			continue
@@ -619,13 +622,40 @@ func _setup_credit_popup() -> void:
 		body.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		scroll.add_child(body)
 	var credit_vbox := _credit_popup.get_node("VBox") as VBoxContainer
-	var privacy_button := credit_vbox.get_node_or_null("BtnPrivacyPolicy") as Button
+	var action_row := credit_vbox.get_node_or_null("CreditActionRow") as HBoxContainer
+	if action_row == null:
+		action_row = HBoxContainer.new()
+		action_row.name = "CreditActionRow"
+		action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_row.add_theme_constant_override("separation", 8)
+		credit_vbox.add_child(action_row)
+	var licenses_button := action_row.get_node_or_null("BtnLicenses") as Button
+	if licenses_button == null:
+		licenses_button = credit_vbox.get_node_or_null("BtnLicenses") as Button
+	if licenses_button == null:
+		licenses_button = Button.new()
+		licenses_button.name = "BtnLicenses"
+		licenses_button.pressed.connect(_on_btn_licenses_pressed)
+	if licenses_button.get_parent() != action_row:
+		var licenses_parent := licenses_button.get_parent()
+		if licenses_parent != null:
+			licenses_parent.remove_child(licenses_button)
+		action_row.add_child(licenses_button)
+	var privacy_button := action_row.get_node_or_null("BtnPrivacyPolicy") as Button
+	if privacy_button == null:
+		privacy_button = credit_vbox.get_node_or_null("BtnPrivacyPolicy") as Button
 	if privacy_button == null:
 		privacy_button = Button.new()
 		privacy_button.name = "BtnPrivacyPolicy"
 		privacy_button.focus_mode = Control.FOCUS_ALL
 		privacy_button.pressed.connect(_on_btn_privacy_policy_pressed)
-		credit_vbox.add_child(privacy_button)
+	if privacy_button.get_parent() != action_row:
+		var privacy_parent := privacy_button.get_parent()
+		if privacy_parent != null:
+			privacy_parent.remove_child(privacy_button)
+		action_row.add_child(privacy_button)
+	ButtonFeedback.skip(licenses_button)
 	ButtonFeedback.skip(privacy_button)
 	var close_button := credit_vbox.get_node_or_null("BtnCreditClose") as Button
 	if close_button == null:
@@ -633,12 +663,17 @@ func _setup_credit_popup() -> void:
 		close_button.name = "BtnCreditClose"
 		close_button.pressed.connect(_on_btn_credit_close_pressed)
 		credit_vbox.add_child(close_button)
-	if privacy_button.get_index() > close_button.get_index():
-		credit_vbox.move_child(privacy_button, close_button.get_index())
+	var credit_scroll := credit_vbox.get_node("CreditScroll") as ScrollContainer
+	credit_vbox.move_child(action_row, credit_scroll.get_index() + 1)
+	credit_vbox.move_child(close_button, action_row.get_index() + 1)
+	action_row.move_child(licenses_button, 0)
+	action_row.move_child(privacy_button, 1)
 	_credit_scroll = _credit_popup.get_node("VBox/CreditScroll")
-	privacy_button.text = ""
+	privacy_button.text = _text_value("privacy_policy")
 	privacy_button.tooltip_text = _text_value("privacy_policy")
+	licenses_button.tooltip_text = _text_value("licenses_oss")
 	PopupSkin.apply_credit_popup(_credit_popup)
+	_update_credit_view(false)
 
 
 func _layout_title() -> void:
@@ -703,6 +738,7 @@ func _layout_title() -> void:
 	_credit_overlay.size = vp
 	_credit_overlay.custom_minimum_size = vp
 	PopupSkin.apply_credit_popup(_credit_popup)
+	_update_credit_view(false)
 
 
 func _layout_button_frame(frame: Control, center_x: float, y: float, w: float, h: float) -> void:
@@ -729,16 +765,14 @@ func _layout_credit_button(size: float, vp: Vector2) -> void:
 	btn.custom_minimum_size = _credit_frame.size
 
 
-func _make_credit_text() -> String:
-	return _text_value("credit") + "\n" + _make_legal_notices()
-
-
 func _make_legal_notices() -> String:
 	if not _legal_notice_cache.is_empty():
 		return _legal_notice_cache
 	var sections := PackedStringArray()
 	sections.append("IPA Font License Agreement v1.0")
 	sections.append(_read_legal_text(PATH_IPA_LICENSE))
+	sections.append("\nNoto Sans SC / TC / KR Regular\nCopyright (c) 2014-2021 Adobe (http://www.adobe.com/).\nNoto is a trademark of Google Inc.\nLicensed under the SIL Open Font License, Version 1.1.")
+	sections.append(_read_legal_text(PATH_NOTO_OFL))
 	if OS.has_feature("android"):
 		sections.append("\nAndroid open-source software notices")
 		sections.append(_read_legal_text(PATH_ANDROID_OSS_NOTICES))
@@ -854,8 +888,8 @@ func _on_btn_settings_close_pressed() -> void:
 
 
 func _on_btn_credit_pressed() -> void:
-	_credit_text_loaded = true
-	_apply_text_language()
+	_credit_legal_view_active = false
+	_update_credit_view(true)
 	_credit_overlay.visible = true
 	_credit_popup.visible = true
 	_credit_overlay.move_to_front()
@@ -865,6 +899,39 @@ func _on_btn_credit_pressed() -> void:
 func _on_btn_credit_close_pressed() -> void:
 	_credit_overlay.visible = false
 	_credit_popup.visible = false
+	_credit_legal_view_active = false
+	_update_credit_view(true)
+
+
+func _on_btn_licenses_pressed() -> void:
+	_credit_legal_view_active = not _credit_legal_view_active
+	_update_credit_view(true)
+
+
+func _update_credit_view(reset_scroll: bool) -> void:
+	if _credit_popup == null:
+		return
+	var body := _credit_popup.get_node_or_null("VBox/CreditScroll/CreditBody") as Label
+	if body != null:
+		body.text = _make_legal_notices() if _credit_legal_view_active else _text_value("credit")
+		body.custom_minimum_size = Vector2.ZERO
+		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if _credit_legal_view_active else HORIZONTAL_ALIGNMENT_CENTER
+		body.add_theme_font_size_override("font_size", 14 if _credit_legal_view_active else 16)
+	var licenses_button := _credit_popup.get_node_or_null("VBox/CreditActionRow/BtnLicenses") as Button
+	if licenses_button != null:
+		licenses_button.text = _text_value("back_to_credits") if _credit_legal_view_active else _text_value("licenses_oss")
+		licenses_button.tooltip_text = licenses_button.text
+	var privacy_button := _credit_popup.get_node_or_null("VBox/CreditActionRow/BtnPrivacyPolicy") as Button
+	if privacy_button != null:
+		privacy_button.text = _text_value("privacy_policy")
+		privacy_button.visible = not _credit_legal_view_active
+		privacy_button.tooltip_text = privacy_button.text
+	PopupSkin.refresh_credit_popup(_credit_popup, _credit_legal_view_active)
+	var credit_vbox := _credit_popup.get_node_or_null("VBox") as VBoxContainer
+	if credit_vbox != null:
+		credit_vbox.queue_sort()
+	if reset_scroll and _credit_scroll != null:
+		_credit_scroll.set_deferred("scroll_vertical", 0)
 
 
 func _on_btn_privacy_policy_pressed() -> void:

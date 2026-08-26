@@ -22,6 +22,7 @@ AudioManager="*uid://bxcwnkne1s64a"
 MahjongLogic="*uid://nbp1b7ly2xqn"
 GameState="*uid://b6atrsxoi0b6n"
 SaveData="*uid://ccobpecv53eu3"
+LocaleFonts="*res://LocaleFonts.gd"
 SupportPurchase="*res://SupportPurchase.gd"
 RankingManager="*res://RankingManager.gd"
 TransitionOverlay="*res://TransitionOverlay.gd"
@@ -34,6 +35,10 @@ window/size/viewport_height=854
 window/size/mode=1
 window/stretch/mode="canvas_items"
 window/handheld/orientation=1
+
+[gui]
+
+theme/custom="res://assets/font/locale_theme.tres"
 
 [physics]
 

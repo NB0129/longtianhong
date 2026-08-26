@@ -1,4 +1,6 @@
 extends Node
+
+signal language_changed(code: String)
 # セーブデータ管理（AutoLoad名：SaveData）
 
 const SAVE_PATH = "user://save.cfg"
@@ -163,6 +165,7 @@ func load_data():
 
 
 func reset():
+	var did_change_language := language_code != "ja"
 	stage1_cleared     = false
 	stage2_cleared     = false
 	stage3_cleared     = false
@@ -194,6 +197,8 @@ func reset():
 	ios_ranking_unowned_scores = {}
 	language_code = "ja"
 	save()
+	if did_change_language:
+		language_changed.emit(language_code)
 
 
 func normalize_language_code(value: String) -> String:
@@ -239,6 +244,7 @@ func set_language_code(value: String) -> void:
 		return
 	language_code = normalized
 	save()
+	language_changed.emit(language_code)
 
 
 func get_high_score(stage_name: String) -> int:

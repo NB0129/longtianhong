@@ -1004,7 +1004,6 @@ func _on_se_slider_changed(value: float) -> void:
 
 func _on_language_button_pressed(code: String) -> void:
 	SaveData.set_language_code(code)
-	TranslationServer.set_locale(SaveData.language_code)
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)

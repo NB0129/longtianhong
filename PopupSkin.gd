@@ -33,6 +33,7 @@ const BTN_BUY_GENERATED := "res://assets/ui/popups/popup_btn_buy_generated.webp"
 const BTN_BUY_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_buy_generated_pressed.webp"
 const BTN_RESTORE_GENERATED := "res://assets/ui/popups/popup_btn_restore_generated.webp"
 const BTN_RESTORE_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_restore_generated_pressed.webp"
+const BTN_CREDIT_BLANK_OWNER_ADOPTED := "res://assets/ui/popups/credit_buttons/owner_adopted_known_alpha_debt/popup_btn_credit_blank_r01.png"
 const LOCALIZED_SETTINGS_PANEL_DIR := "res://assets/language/normalized/%s/settings_panels/"
 const LOCALIZED_SETTINGS_BUTTON_DIR := "res://assets/language/normalized/%s/settings_buttons/"
 const LOCALIZED_CONFIRM_PANEL_DIR := "res://assets/language/normalized/%s/confirm_panels/"
@@ -105,25 +106,33 @@ static func apply_credit_popup(panel: Panel) -> void:
 		body.add_theme_font_size_override("font_size", 16)
 		body.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0))
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	refresh_credit_popup(panel)
 	if panel.has_node("VBox/BtnCreditClose"):
 		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_CLOSE_V2)
 		var close_button := panel.get_node("VBox/BtnCreditClose") as Button
 		apply_generated_text_button(close_button, close_path, close_path)
 		close_button.custom_minimum_size = _generated_button_size_at_height(close_path, 70.0)
+	refresh_credit_popup(panel, false)
 
 
-static func refresh_credit_popup(panel: Panel) -> void:
-	if panel == null or not panel.has_node("VBox/BtnPrivacyPolicy"):
+static func refresh_credit_popup(panel: Panel, legal_view_active: bool = false) -> void:
+	if panel == null or not panel.has_node("VBox/CreditActionRow"):
 		return
-	var privacy_button := panel.get_node("VBox/BtnPrivacyPolicy") as Button
-	var normal_path := _localized_credit_button_path("popup_btn_privacy_policy.webp")
-	var pressed_path := _localized_credit_button_path("popup_btn_privacy_policy_pressed.webp")
-	apply_generated_text_button(privacy_button, normal_path, pressed_path)
-	privacy_button.custom_minimum_size = _generated_button_size_at_height(normal_path, 67.0)
-	privacy_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	privacy_button.focus_mode = Control.FOCUS_ALL
-	privacy_button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
+	var action_row := panel.get_node("VBox/CreditActionRow") as HBoxContainer
+	var licenses_button := action_row.get_node_or_null("BtnLicenses") as Button
+	var privacy_button := action_row.get_node_or_null("BtnPrivacyPolicy") as Button
+	if licenses_button == null or privacy_button == null:
+		return
+	var locale: String = SaveData.normalize_language_code(SaveData.language_code)
+	var compact_locale := locale in ["zh_CN", "zh_TW", "ko"]
+	if legal_view_active:
+		_apply_adopted_credit_button(licenses_button, BTN_CREDIT_BLANK_OWNER_ADOPTED, 58.0, locale, 12 if compact_locale else 15)
+		privacy_button.visible = false
+		action_row.queue_sort()
+		return
+	privacy_button.visible = true
+	_apply_adopted_credit_button(licenses_button, BTN_CREDIT_BLANK_OWNER_ADOPTED, 58.0, locale, 13 if compact_locale else 15)
+	_apply_adopted_credit_button(privacy_button, BTN_CREDIT_BLANK_OWNER_ADOPTED, 58.0, locale, 13 if locale == "ko" else 15)
+	action_row.queue_sort()
 
 
 static func ensure_settings_language_controls(panel: Panel, pressed_callback: Callable) -> void:
@@ -163,6 +172,7 @@ static func ensure_settings_language_controls(panel: Panel, pressed_callback: Ca
 		button.custom_minimum_size = Vector2(132.0, 32.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_font_size_override("font_size", 15)
+		LocaleFonts.apply_language_button(button, code)
 		if pressed_callback.is_valid() and not button.has_meta("settings_language_connected"):
 			button.pressed.connect(pressed_callback.bind(code))
 			button.set_meta("settings_language_connected", true)
@@ -288,6 +298,31 @@ static func apply_generated_text_button(button: Button, normal_path: String, pre
 	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
 
+static func _apply_adopted_credit_button(button: Button, texture_path: String, target_height: float, locale: String, font_size: int) -> void:
+	if button == null or not is_instance_valid(button):
+		return
+	ButtonFeedback.set_use_modulate(button, false)
+	button.modulate = Color.WHITE
+	button.flat = false
+	button.focus_mode = Control.FOCUS_ALL
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.custom_minimum_size = _generated_button_size_at_height(texture_path, target_height)
+	button.clip_text = true
+	LocaleFonts.apply_language_button(button, locale)
+	button.add_theme_font_size_override("font_size", font_size)
+	button.add_theme_color_override("font_color", Color(1.0, 0.96, 0.78, 1.0))
+	button.add_theme_color_override("font_hover_color", Color.WHITE)
+	button.add_theme_color_override("font_pressed_color", Color(0.95, 0.88, 0.68, 1.0))
+	button.add_theme_color_override("font_disabled_color", Color(0.82, 0.78, 0.70, 0.78))
+	button.add_theme_color_override("font_outline_color", Color(0.08, 0.01, 0.02, 1.0))
+	button.add_theme_constant_override("outline_size", 5)
+	button.add_theme_stylebox_override("normal", _make_tinted_style(texture_path, Color.WHITE))
+	button.add_theme_stylebox_override("hover", _make_tinted_style(texture_path, Color(1.0, 0.97, 0.90, 1.0)))
+	button.add_theme_stylebox_override("pressed", _make_tinted_style(texture_path, Color(0.72, 0.68, 0.68, 1.0)))
+	button.add_theme_stylebox_override("disabled", _make_tinted_style(texture_path, Color(0.52, 0.50, 0.50, 0.75)))
+	button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
+
+
 static func _apply_invisible_hit_button(button: Button) -> void:
 	button.text = ""
 	button.icon = null
@@ -393,16 +428,16 @@ static func _layout_support_popup(panel: Panel) -> void:
 
 
 static func _layout_credit_popup(panel: Panel) -> void:
-	panel.position = Vector2(36.0, 92.0)
-	panel.size = Vector2(408.0, 668.0)
+	panel.position = Vector2(18.0, 50.0)
+	panel.size = Vector2(444.0, 754.0)
 	if not panel.has_node("VBox"):
 		return
 	var vbox := panel.get_node("VBox") as VBoxContainer
-	vbox.offset_left = 62.0
+	vbox.offset_left = 48.0
 	vbox.offset_top = 110.0
-	vbox.offset_right = -62.0
+	vbox.offset_right = -48.0
 	vbox.offset_bottom = -106.0
-	vbox.add_theme_constant_override("separation", 5)
+	vbox.add_theme_constant_override("separation", 6)
 	if vbox.has_node("CreditScroll"):
 		var scroll := vbox.get_node("CreditScroll") as ScrollContainer
 		scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -411,9 +446,14 @@ static func _layout_credit_popup(panel: Panel) -> void:
 		scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 	if vbox.has_node("CreditScroll/CreditBody"):
 		var body := vbox.get_node("CreditScroll/CreditBody") as Label
-		body.custom_minimum_size = Vector2(0.0, 1480.0)
+		body.custom_minimum_size = Vector2.ZERO
 		body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if vbox.has_node("CreditActionRow"):
+		var action_row := vbox.get_node("CreditActionRow") as HBoxContainer
+		action_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		action_row.add_theme_constant_override("separation", 8)
 	if vbox.has_node("BtnCreditClose"):
 		var close_button := vbox.get_node("BtnCreditClose") as Button
 		close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://cq858e1bmmtis"]
 
 [ext_resource type="Script" uid="uid://cjg1vy2ghnelq" path="res://game.gd" id="1_80nbo"]
-[ext_resource type="FontFile" uid="uid://rqtorcaeqkr4" path="res://assets/font/font_1_kokumr_1.00_rls.ttf" id="2_e2o6t"]
 [ext_resource type="Script" path="res://TileSuitSelector.gd" id="3_tile_suit"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_settings"]
@@ -500,7 +499,6 @@ layout_mode = 0
 offset_top = 240.0
 offset_right = 480.0
 offset_bottom = 300.0
-theme_override_fonts/font = ExtResource("2_e2o6t")
 theme_override_font_sizes/font_size = 50
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -510,7 +508,6 @@ layout_mode = 0
 offset_top = 320.0
 offset_right = 480.0
 offset_bottom = 380.0
-theme_override_fonts/font = ExtResource("2_e2o6t")
 theme_override_font_sizes/font_size = 40
 horizontal_alignment = 1
 vertical_alignment = 1

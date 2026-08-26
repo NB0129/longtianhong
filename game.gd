@@ -833,9 +833,6 @@ func _setup_tutorial_layer() -> void:
 	tutorial_message_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.82))
 	tutorial_message_label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.95))
 	tutorial_message_label.add_theme_constant_override("outline_size", 4)
-	var font := load("res://assets/font/font_1_kokumr_1.00_rls.ttf") as Font
-	if font != null:
-		tutorial_message_label.add_theme_font_override("font", font)
 	tutorial_message_panel.add_child(tutorial_message_label)
 
 	_layout_tutorial_layer()
@@ -3679,7 +3676,6 @@ func _on_se_slider_changed(value: float) -> void:
 
 func _on_language_button_pressed(code: String) -> void:
 	SaveData.set_language_code(code)
-	TranslationServer.set_locale(SaveData.language_code)
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)

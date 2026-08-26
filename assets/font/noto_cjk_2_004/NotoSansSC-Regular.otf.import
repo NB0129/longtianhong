@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://rqtorcaeqkr4"
-path="res://.godot/imported/font_1_kokumr_1.00_rls.ttf-4e8dbace4c755b6f51d8208dfeb6a1bd.fontdata"
+uid="uid://cnj6i1tc2ywb5"
+path="res://.godot/imported/NotoSansSC-Regular.otf-51f581e5102fcefd3c021b872207e910.fontdata"
 
 [deps]
 
-source_file="res://assets/font/font_1_kokumr_1.00_rls.ttf"
-dest_files=["res://.godot/imported/font_1_kokumr_1.00_rls.ttf-4e8dbace4c755b6f51d8208dfeb6a1bd.fontdata"]
+source_file="res://assets/font/noto_cjk_2_004/NotoSansSC-Regular.otf"
+dest_files=["res://.godot/imported/NotoSansSC-Regular.otf-51f581e5102fcefd3c021b872207e910.fontdata"]
 
 [params]
 
