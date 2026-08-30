@@ -3,6 +3,7 @@ extends Control
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
 const DeveloperFeatures := preload("res://DeveloperFeatures.gd")
+const ModalFoundation := preload("res://ModalFoundation.gd")
 
 @onready var slide_container: Control        = $SlideContainer
 @onready var chara_pyoko: TextureRect        = $SlideContainer/CharaPyoko
@@ -95,6 +96,7 @@ var _support_message_label: Label = null
 var _support_buy_button: Button = null
 var _support_restore_button: Button = null
 var _support_close_button: Button = null
+var _support_invoker: Control = null
 var _showing_ex: bool = false
 var _swipe_tracking: bool = false
 var _swipe_start: Vector2 = Vector2.ZERO
@@ -125,6 +127,7 @@ func _ready() -> void:
 	_setup_chara_ex()
 	_setup_side_change_buttons()
 	_setup_settings_home_icons()
+	ModalFoundation.configure_backdrop($SettingsBackdrop, $SettingsPopup, 40)
 	_create_support_popup()
 	_connect_support_purchase_signals()
 	SupportPurchase.refresh_product_info()
@@ -478,12 +481,13 @@ func _make_high_score_digits(stage_key: String) -> Control:
 func _create_support_popup() -> void:
 	if _support_popup != null and is_instance_valid(_support_popup):
 		return
-	var input_blocker := Control.new()
+	var input_blocker := ColorRect.new()
 	input_blocker.name = "SupportPopupInputBlocker"
 	input_blocker.visible = false
 	input_blocker.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	input_blocker.mouse_filter = Control.MOUSE_FILTER_STOP
 	input_blocker.z_index = 49
+	input_blocker.color = Color(0.0, 0.0, 0.0, 0.58)
 	add_child(input_blocker)
 
 	var panel: Panel = Panel.new()
@@ -510,12 +514,12 @@ func _create_support_popup() -> void:
 
 	var title: Label = Label.new()
 	title.name = "SupportTitle"
-	title.text = "開発支援"
+	title.text = _support_ui_text("title")
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 30)
 	title.add_theme_color_override("font_color", Color.WHITE)
-	title.text = ""
-	title.custom_minimum_size = Vector2(0.0, 102.0)
+	title.custom_minimum_size = Vector2(0.0, 56.0)
 	vbox.add_child(title)
 
 	var body: Label = Label.new()
@@ -579,6 +583,7 @@ func _connect_support_purchase_signals() -> void:
 func _show_support_popup() -> void:
 	if _support_popup == null or not is_instance_valid(_support_popup):
 		_create_support_popup()
+	_support_invoker = get_viewport().gui_get_focus_owner()
 	if not SupportPurchase.product_info_loading and not SupportPurchase.product_available:
 		SupportPurchase.refresh_product_info()
 	_refresh_support_popup_texts()
@@ -650,20 +655,23 @@ func _update_support_popup_state() -> void:
 		_set_support_message("")
 
 func _set_support_popup_visible(value: bool) -> void:
-	if _support_popup != null and is_instance_valid(_support_popup):
-		_support_popup.visible = value
-	_sync_support_modal_state()
+	if _support_popup == null or not is_instance_valid(_support_popup) or _support_input_blocker == null:
+		return
+	if value:
+		ModalFoundation.open_modal(_support_input_blocker, _support_popup, _support_invoker, _support_buy_button, 49)
+	else:
+		ModalFoundation.close_modal(_support_input_blocker, _support_popup, true)
+		_support_invoker = null
 
 func _sync_support_modal_state() -> void:
 	if _support_popup == null or not is_instance_valid(_support_popup):
 		return
-	if SupportPurchase.is_busy:
-		_support_popup.visible = true
-	if _support_input_blocker != null and is_instance_valid(_support_input_blocker):
-		_support_input_blocker.visible = _support_popup.visible
-		if _support_input_blocker.visible:
-			_support_input_blocker.move_to_front()
-			_support_popup.move_to_front()
+	if SupportPurchase.is_busy and not _support_popup.visible:
+		_set_support_popup_visible(true)
+	elif _support_popup.visible and _support_input_blocker != null and is_instance_valid(_support_input_blocker):
+		ModalFoundation.open_modal(_support_input_blocker, _support_popup, _support_invoker, _support_buy_button, 49)
+	elif _support_input_blocker != null and is_instance_valid(_support_input_blocker):
+		_support_input_blocker.visible = false
 
 func _support_operation_blocks_navigation() -> bool:
 	return SupportPurchase.is_busy
@@ -680,7 +688,7 @@ func _refresh_support_popup_texts() -> void:
 		body.text = _support_ui_text("body")
 	var title := _support_popup.get_node_or_null("VBox/SupportTitle") as Label
 	if title != null:
-		title.text = ""
+		title.text = _support_ui_text("title")
 	var buy_button := _support_popup.get_node_or_null("VBox/BtnSupportBuy") as Button
 	if buy_button != null:
 		buy_button.text = _support_ui_text("buy")
@@ -698,6 +706,7 @@ func _support_ui_text(key: String) -> String:
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
 	var texts := {
 		"ja": {
+			"title": "開発支援",
 			"body": "「まちあて！」を遊んでいただき、ありがとうございます。狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援をご検討ください。支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
 			"body_with_price": "「まちあて！」を遊んでいただき、ありがとうございます。狼天紅ゲームズは、これからも麻雀ゲーム・人狼ゲームを中心に開発を続けていきます。「このゲームが面白かった」「今後の作品も楽しみ」と思っていただけた方は、開発支援（{price}）をご検討ください。支援の特典として、Music Room（BGM全21曲を自由に聴ける機能）が解放されます。※支援をしなくても、ゲーム本編はすべて無料で遊べます。",
 			"buy": "購入する",
@@ -712,6 +721,7 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "現在、購入情報を取得できません。購入済みの場合は「購入を復元」をお試しください。",
 		},
 		"en": {
+			"title": "Development Support",
 			"body": "Thank you for playing Machi-ate!\nWolf Heaven Games will keep developing games, mainly mahjong and werewolf games.\nIf you enjoyed this game or are looking forward to future titles, please consider supporting development.\nAs a supporter benefit, Music Room unlocks, letting you freely listen to all 21 BGM tracks.\n*Even without support, the full main game is free to play.",
 			"body_with_price": "Thank you for playing Machi-ate!\nWolf Heaven Games will keep developing games, mainly mahjong and werewolf games.\nIf you enjoyed this game or are looking forward to future titles, please consider supporting development ({price}).\nAs a supporter benefit, Music Room unlocks, letting you freely listen to all 21 BGM tracks.\n*Even without support, the full main game is free to play.",
 			"buy": "Buy",
@@ -726,6 +736,7 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "Purchase information is currently unavailable. If you already purchased, try Restore purchase.",
 		},
 		"zh_CN": {
+			"title": "开发支援",
 			"body": "感谢您游玩《待牌猜猜看！》。\n狼天红 Games 今后也会继续以麻将游戏、人狼游戏为中心进行开发。\n如果您觉得“这个游戏很有趣”或“也期待今后的作品”，欢迎考虑开发支援。\n作为支援特典，将解锁 Music Room（可自由聆听全部21首 BGM）。\n※即使不支援，也可以免费游玩全部游戏本篇。",
 			"body_with_price": "感谢您游玩《待牌猜猜看！》。\n狼天红 Games 今后也会继续以麻将游戏、人狼游戏为中心进行开发。\n如果您觉得“这个游戏很有趣”或“也期待今后的作品”，欢迎考虑开发支援（{price}）。\n作为支援特典，将解锁 Music Room（可自由聆听全部21首 BGM）。\n※即使不支援，也可以免费游玩全部游戏本篇。",
 			"buy": "购买",
@@ -740,6 +751,7 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "目前无法获取购买信息。如果已经购买，请尝试“恢复购买”。",
 		},
 		"zh_TW": {
+			"title": "開發支援",
 			"body": "感謝您遊玩《待牌猜猜看！》。\n狼天紅 Games 今後也會繼續以麻將遊戲、人狼遊戲為中心進行開發。\n如果您覺得「這款遊戲很有趣」或「也期待今後的作品」，歡迎考慮開發支援。\n作為支援特典，將解鎖 Music Room（可自由聆聽全部21首 BGM）。\n※即使不支援，也可以免費遊玩全部遊戲本篇。",
 			"body_with_price": "感謝您遊玩《待牌猜猜看！》。\n狼天紅 Games 今後也會繼續以麻將遊戲、人狼遊戲為中心進行開發。\n如果您覺得「這款遊戲很有趣」或「也期待今後的作品」，歡迎考慮開發支援（{price}）。\n作為支援特典，將解鎖 Music Room（可自由聆聽全部21首 BGM）。\n※即使不支援，也可以免費遊玩全部遊戲本篇。",
 			"buy": "購買",
@@ -754,6 +766,7 @@ func _support_ui_text(key: String) -> String:
 			"product_unavailable": "目前無法取得購買資訊。如果已經購買，請嘗試「復原購買」。",
 		},
 		"ko": {
+			"title": "개발 지원",
 			"body": "마치아테!를 플레이해 주셔서 감사합니다.\n늑천홍 Games는 앞으로도 마작 게임과 인랑 게임을 중심으로 개발을 이어 나가겠습니다.\n“이 게임이 재미있었다”, “앞으로의 작품도 기대된다”고 느끼셨다면 개발 지원을 검토해 주세요.\n지원 특전으로 Music Room(21곡의 모든 BGM을 자유롭게 들을 수 있는 기능)이 해금됩니다.\n※지원을 하지 않아도 게임 본편은 모두 무료로 즐길 수 있습니다.",
 			"body_with_price": "마치아테!를 플레이해 주셔서 감사합니다.\n늑천홍 Games는 앞으로도 마작 게임과 인랑 게임을 중심으로 개발을 이어 나가겠습니다.\n“이 게임이 재미있었다”, “앞으로의 작품도 기대된다”고 느끼셨다면 개발 지원({price})을 검토해 주세요.\n지원 특전으로 Music Room(21곡의 모든 BGM을 자유롭게 들을 수 있는 기능)이 해금됩니다.\n※지원을 하지 않아도 게임 본편은 모두 무료로 즐길 수 있습니다.",
 			"buy": "구매",
@@ -807,6 +820,9 @@ func _update_lock_display() -> void:
 # ============================================================
 func _input(event: InputEvent) -> void:
 	if _support_operation_blocks_navigation():
+		_swipe_tracking = false
+		return
+	if $SettingsPopup.visible or (_support_popup != null and _support_popup.visible):
 		_swipe_tracking = false
 		return
 	_handle_page_swipe(event)
@@ -981,19 +997,19 @@ func _on_btn_side_change_pressed() -> void:
 		_slide_to_ex()
 
 func _on_btn_settings_pressed() -> void:
-	if _support_operation_blocks_navigation():
+	if _support_operation_blocks_navigation() or $SettingsPopup.visible or (_support_popup != null and _support_popup.visible):
 		return
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)
 	$SettingsPopup/VBox/BgmSlider.value = AudioManager.bgm_volume
 	$SettingsPopup/VBox/SeSlider.value  = AudioManager.se_volume
-	$SettingsPopup.visible = true
+	ModalFoundation.open_modal($SettingsBackdrop, $SettingsPopup, $BtnSettings, $SettingsPopup/VBox/BgmSlider, 40)
 
 func _on_btn_settings_close_pressed() -> void:
 	if _support_operation_blocks_navigation():
 		return
-	$SettingsPopup.visible = false
+	ModalFoundation.close_modal($SettingsBackdrop, $SettingsPopup, true)
 
 func _on_bgm_slider_changed(value: float) -> void:
 	AudioManager.bgm_volume = value
@@ -1007,6 +1023,7 @@ func _on_language_button_pressed(code: String) -> void:
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)
+	ModalFoundation.configure_focus_ring(ModalFoundation.collect_focusable_controls($SettingsPopup))
 	_setup_select_images()
 	_build_surface_buttons()
 	_build_ex_buttons()

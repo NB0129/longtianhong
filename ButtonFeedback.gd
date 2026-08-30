@@ -56,7 +56,7 @@ static func _install_button(button: BaseButton) -> void:
 	if _should_skip_button(button):
 		return
 	button.set_meta(META_INSTALLED, true)
-	button.focus_mode = Control.FOCUS_NONE
+	_ensure_visible_focus_style(button)
 	button.button_down.connect(_on_button_down.bind(button))
 	button.button_up.connect(_on_button_up.bind(button))
 	button.visibility_changed.connect(_on_button_up.bind(button))
@@ -68,6 +68,25 @@ static func _should_skip_button(button: BaseButton) -> bool:
 		return true
 	var control := button as Control
 	return control != null and (control.size.x > 420.0 or control.size.y > 760.0)
+
+
+static func _ensure_visible_focus_style(button: BaseButton) -> void:
+	if button.focus_mode == Control.FOCUS_NONE:
+		return
+	if button.has_theme_stylebox_override("focus"):
+		var existing := button.get_theme_stylebox("focus")
+		if existing != null and not (existing is StyleBoxEmpty):
+			return
+	var focus_style := StyleBoxFlat.new()
+	focus_style.bg_color = Color.TRANSPARENT
+	focus_style.border_color = Color(1.0, 0.88, 0.45, 1.0)
+	focus_style.set_border_width_all(3)
+	focus_style.set_corner_radius_all(10)
+	focus_style.expand_margin_left = 2.0
+	focus_style.expand_margin_top = 2.0
+	focus_style.expand_margin_right = 2.0
+	focus_style.expand_margin_bottom = 2.0
+	button.add_theme_stylebox_override("focus", focus_style)
 
 
 static func _on_button_down(button: BaseButton) -> void:

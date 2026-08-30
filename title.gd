@@ -4,6 +4,7 @@ const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
 const RankingNoticeScript := preload("res://RankingNotice.gd")
 const TalkLocalization := preload("res://TalkLocalization.gd")
+const ModalFoundation := preload("res://ModalFoundation.gd")
 
 const PATH_BG := "res://assets/ui/bg_top_generated.webp"
 const PATH_LOGO := "res://assets/ui/matiate.webp"
@@ -156,6 +157,12 @@ func _input(event: InputEvent) -> void:
 		_handle_settings_drag_scroll(event, _settings_scroll)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if _title_modal_visible() and event.is_action_pressed("ui_cancel"):
+		_handle_system_back()
+		get_viewport().set_input_as_handled()
+
+
 func _setup_background() -> void:
 	if ResourceLoader.exists(PATH_BG):
 		$BG.texture = load(PATH_BG)
@@ -283,7 +290,7 @@ func _setup_image_button(frame: Control, img: TextureRect, btn: Button, path: St
 	img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	btn.flat = true
 	btn.text = ""
-	btn.focus_mode = Control.FOCUS_NONE
+	btn.focus_mode = Control.FOCUS_ALL
 	ButtonFeedback.set_target(btn, img)
 
 
@@ -387,7 +394,7 @@ func _setup_settings_button() -> void:
 	var btn: Button = $BtnSettings
 	btn.text = ""
 	btn.flat = true
-	btn.focus_mode = Control.FOCUS_NONE
+	btn.focus_mode = Control.FOCUS_ALL
 	if ResourceLoader.exists(PATH_ICON_SETTINGS):
 		btn.icon = load(PATH_ICON_SETTINGS)
 	btn.expand_icon = true
@@ -417,7 +424,7 @@ func _setup_credit_button() -> void:
 	credit_img.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	credit_btn.text = ""
 	credit_btn.flat = true
-	credit_btn.focus_mode = Control.FOCUS_NONE
+	credit_btn.focus_mode = Control.FOCUS_ALL
 	ButtonFeedback.set_target(credit_btn, credit_img)
 
 
@@ -437,6 +444,7 @@ func _setup_settings_popup() -> void:
 		_settings_overlay.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 		_settings_overlay.pressed.connect(_on_btn_settings_close_pressed)
 		add_child(_settings_overlay)
+	ModalFoundation.configure_backdrop(_settings_overlay, $SettingsPopup, 40)
 
 	if has_node("SettingsPopup/VBox/BtnExitGame"):
 		$SettingsPopup/VBox/BtnExitGame.queue_free()
@@ -470,7 +478,7 @@ func _ensure_settings_scroll_content() -> void:
 	_settings_scroll = null
 	_settings_content = root_vbox
 	_settings_content.mouse_filter = Control.MOUSE_FILTER_PASS
-	_settings_content.add_theme_constant_override("separation", 7)
+	_settings_content.add_theme_constant_override("separation", 4)
 	if close_button != null:
 		root_vbox.move_child(close_button, root_vbox.get_child_count() - 1)
 
@@ -491,16 +499,26 @@ func _layout_settings_content() -> void:
 		_style_settings_label(label_tile, 18)
 	if _settings_content.has_node("BgmSlider"):
 		var bgm_slider := _settings_content.get_node("BgmSlider") as HSlider
-		bgm_slider.custom_minimum_size = Vector2(250.0, 32.0)
+		bgm_slider.custom_minimum_size = Vector2(250.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
 		bgm_slider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		bgm_slider.focus_mode = Control.FOCUS_ALL
 	if _settings_content.has_node("SeSlider"):
 		var se_slider := _settings_content.get_node("SeSlider") as HSlider
-		se_slider.custom_minimum_size = Vector2(250.0, 32.0)
+		se_slider.custom_minimum_size = Vector2(250.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
 		se_slider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		se_slider.focus_mode = Control.FOCUS_ALL
 	if _settings_content.has_node("TileSuitGrid"):
 		var grid := _settings_content.get_node("TileSuitGrid") as GridContainer
 		grid.add_theme_constant_override("h_separation", 8)
 		grid.add_theme_constant_override("v_separation", 5)
+		for child in grid.get_children():
+			var check := child as CheckBox
+			if check != null:
+				check.focus_mode = Control.FOCUS_ALL
+				ModalFoundation.ensure_minimum_touch_height(check)
+	var close_button := _settings_content.get_node_or_null("BtnSettingsClose") as Button
+	if close_button != null:
+		close_button.focus_mode = Control.FOCUS_ALL
 	_apply_text_language()
 
 
@@ -536,7 +554,7 @@ func _setup_language_controls() -> void:
 		grid.add_theme_constant_override("v_separation", 6)
 		_settings_content.add_child(grid)
 	grid.columns = 2
-	grid.custom_minimum_size = Vector2(0.0, 118.0)
+	grid.custom_minimum_size = Vector2(0.0, 156.0)
 
 	_language_buttons.clear()
 	var group := ButtonGroup.new()
@@ -551,11 +569,11 @@ func _setup_language_controls() -> void:
 				old_button.free()
 			button = CheckBox.new()
 			button.name = button_name
-			button.focus_mode = Control.FOCUS_NONE
 			button.pressed.connect(_on_language_button_pressed.bind(code))
 			grid.add_child(button)
 		button.button_group = group
-		button.custom_minimum_size = Vector2(124.0, 36.0)
+		button.focus_mode = Control.FOCUS_ALL
+		button.custom_minimum_size = Vector2(124.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_font_size_override("font_size", 17)
 		LocaleFonts.apply_language_button(button, code)
@@ -648,8 +666,8 @@ func _setup_credit_popup() -> void:
 	if privacy_button == null:
 		privacy_button = Button.new()
 		privacy_button.name = "BtnPrivacyPolicy"
-		privacy_button.focus_mode = Control.FOCUS_ALL
 		privacy_button.pressed.connect(_on_btn_privacy_policy_pressed)
+	privacy_button.focus_mode = Control.FOCUS_ALL
 	if privacy_button.get_parent() != action_row:
 		var privacy_parent := privacy_button.get_parent()
 		if privacy_parent != null:
@@ -657,12 +675,14 @@ func _setup_credit_popup() -> void:
 		action_row.add_child(privacy_button)
 	ButtonFeedback.skip(licenses_button)
 	ButtonFeedback.skip(privacy_button)
+	licenses_button.focus_mode = Control.FOCUS_ALL
 	var close_button := credit_vbox.get_node_or_null("BtnCreditClose") as Button
 	if close_button == null:
 		close_button = Button.new()
 		close_button.name = "BtnCreditClose"
 		close_button.pressed.connect(_on_btn_credit_close_pressed)
 		credit_vbox.add_child(close_button)
+	close_button.focus_mode = Control.FOCUS_ALL
 	var credit_scroll := credit_vbox.get_node("CreditScroll") as ScrollContainer
 	credit_vbox.move_child(action_row, credit_scroll.get_index() + 1)
 	credit_vbox.move_child(close_button, action_row.get_index() + 1)
@@ -674,6 +694,7 @@ func _setup_credit_popup() -> void:
 	licenses_button.tooltip_text = _text_value("licenses_oss")
 	PopupSkin.apply_credit_popup(_credit_popup)
 	_update_credit_view(false)
+	ModalFoundation.configure_backdrop(_credit_overlay, _credit_popup, 50)
 
 
 func _layout_title() -> void:
@@ -731,12 +752,6 @@ func _layout_title() -> void:
 	$BtnSettings.custom_minimum_size = $BtnSettings.size
 	$BtnSettings.position = Vector2(vp.x - settings_size - 12.0, vp.y - settings_size - 12.0)
 	_layout_credit_button(settings_size, vp)
-	_settings_overlay.position = Vector2.ZERO
-	_settings_overlay.size = vp
-	_settings_overlay.custom_minimum_size = vp
-	_credit_overlay.position = Vector2.ZERO
-	_credit_overlay.size = vp
-	_credit_overlay.custom_minimum_size = vp
 	PopupSkin.apply_credit_popup(_credit_popup)
 	_update_credit_view(false)
 
@@ -825,10 +840,14 @@ func _make_godot_third_party_notice() -> String:
 
 
 func _on_btn_story_pressed() -> void:
+	if _title_modal_visible():
+		return
 	get_tree().change_scene_to_file("res://StageSelect.tscn")
 
 
 func _on_btn_instant_pressed() -> void:
+	if _title_modal_visible():
+		return
 	GameState.came_from_stage3 = false
 	GameState.came_from_ex = false
 	GameState.current_stage = "endless"
@@ -840,7 +859,7 @@ func _on_btn_instant_pressed() -> void:
 
 
 func _on_btn_ranking_pressed() -> void:
-	if _ranking_request_active:
+	if _title_modal_visible() or _ranking_request_active:
 		return
 	if not RankingManager.should_show_ranking_ui():
 		print("[Title] ranking press ignored because Game Center is unavailable")
@@ -872,35 +891,32 @@ func _set_ranking_button_disabled(disabled: bool) -> void:
 
 
 func _on_btn_settings_pressed() -> void:
+	if _title_modal_visible():
+		return
 	_refresh_settings_skin()
 	_sync_settings_sliders()
 	_refresh_language_buttons()
-	_settings_overlay.visible = true
-	$SettingsPopup.visible = true
-	_settings_overlay.move_to_front()
-	$SettingsPopup.move_to_front()
+	ModalFoundation.open_modal(_settings_overlay, $SettingsPopup, $BtnSettings, $SettingsPopup/VBox/BgmSlider, 40)
 
 
 func _on_btn_settings_close_pressed() -> void:
-	_settings_overlay.visible = false
-	$SettingsPopup.visible = false
+	ModalFoundation.close_modal(_settings_overlay, $SettingsPopup, true)
 	_settings_dragging = false
 
 
 func _on_btn_credit_pressed() -> void:
+	if _title_modal_visible():
+		return
 	_credit_legal_view_active = false
 	_update_credit_view(true)
-	_credit_overlay.visible = true
-	_credit_popup.visible = true
-	_credit_overlay.move_to_front()
-	_credit_popup.move_to_front()
+	var licenses_button := _credit_popup.get_node_or_null("VBox/CreditActionRow/BtnLicenses") as Control
+	ModalFoundation.open_modal(_credit_overlay, _credit_popup, _credit_frame.get_node("BtnCredit") as Control, licenses_button, 50)
 
 
 func _on_btn_credit_close_pressed() -> void:
-	_credit_overlay.visible = false
-	_credit_popup.visible = false
 	_credit_legal_view_active = false
 	_update_credit_view(true)
+	ModalFoundation.close_modal(_credit_overlay, _credit_popup, true)
 
 
 func _on_btn_licenses_pressed() -> void:
@@ -927,6 +943,10 @@ func _update_credit_view(reset_scroll: bool) -> void:
 		privacy_button.visible = not _credit_legal_view_active
 		privacy_button.tooltip_text = privacy_button.text
 	PopupSkin.refresh_credit_popup(_credit_popup, _credit_legal_view_active)
+	if _credit_popup.visible:
+		ModalFoundation.configure_focus_ring(ModalFoundation.collect_focusable_controls(_credit_popup))
+		if _credit_legal_view_active and licenses_button != null:
+			licenses_button.grab_focus()
 	var credit_vbox := _credit_popup.get_node_or_null("VBox") as VBoxContainer
 	if credit_vbox != null:
 		credit_vbox.queue_sort()
@@ -1006,3 +1026,9 @@ func _on_language_button_pressed(code: String) -> void:
 	_refresh_settings_skin()
 	_setup_language_controls()
 	_refresh_language_buttons()
+	if $SettingsPopup.visible:
+		ModalFoundation.configure_focus_ring(ModalFoundation.collect_focusable_controls($SettingsPopup))
+
+
+func _title_modal_visible() -> bool:
+	return $SettingsPopup.visible or (_credit_popup != null and _credit_popup.visible)

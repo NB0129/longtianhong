@@ -25,16 +25,16 @@ const DYNAMIC_SURFACES := {
 }
 
 const DYNAMIC_SOURCE_RANGES := {
-	"Title": [Vector2i(27, 34)],
-	"StageSelect": [Vector2i(513, 513), Vector2i(541, 557), Vector2i(701, 712)],
-	"MusicRoom": [Vector2i(7, 27), Vector2i(127, 129), Vector2i(668, 673)],
-	"custom": [Vector2i(20, 35)],
-	"game": [Vector2i(10, 27), Vector2i(156, 169), Vector2i(381, 391), Vector2i(966, 991), Vector2i(1737, 1740), Vector2i(2032, 2039), Vector2i(2235, 2249), Vector2i(2530, 2530), Vector2i(2680, 2680), Vector2i(2759, 2761), Vector2i(2997, 3014)],
-	"TalkLocalization": [Vector2i(6, 6)],
+	"Title": [Vector2i(28, 35)],
+	"StageSelect": [Vector2i(545, 561), Vector2i(709, 721)],
+	"MusicRoom": [Vector2i(9, 29), Vector2i(129, 131), Vector2i(157, 159), Vector2i(739, 744)],
+	"custom": [Vector2i(22, 38)],
+	"game": [Vector2i(12, 29), Vector2i(158, 171), Vector2i(383, 393), Vector2i(974, 999), Vector2i(1745, 1748), Vector2i(2040, 2047), Vector2i(2243, 2257), Vector2i(2538, 2538), Vector2i(2688, 2688), Vector2i(2770, 2772), Vector2i(3008, 3025)],
+	"TalkLocalization": [Vector2i(6, 6), Vector2i(21, 21)],
 }
 
-const EXPECTED_JAPANESE_CODEPOINT_COUNT := 312
-const EXPECTED_JAPANESE_MANIFEST_SHA256 := "516F60E39DA8E7C629071072BB76ED025770DCDE9EB0222F1261A30E7C910EC8"
+const EXPECTED_JAPANESE_CODEPOINT_COUNT := 316
+const EXPECTED_JAPANESE_MANIFEST_SHA256 := "84CEDB756D2EA8D44E73B0B32CE13C5DAECF43EB94F69D59D4F4A534B59F817F"
 
 const REPRESENTATIVE_TEXT := {
 	"Title": "設定　BGM音量　SE音量\n牌の種類　筒子　索子　萬子　閉じる",

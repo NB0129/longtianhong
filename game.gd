@@ -4,6 +4,8 @@ const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
 const RankingNoticeScript := preload("res://RankingNotice.gd")
 const DeveloperFeatures := preload("res://DeveloperFeatures.gd")
+const TalkLocalization := preload("res://TalkLocalization.gd")
+const ModalFoundation := preload("res://ModalFoundation.gd")
 
 const TUTORIAL_TEXT := {
 	"ja": {
@@ -286,16 +288,16 @@ const RESULT_GAMEOVER_CHARAS: Array[String] = [
 ]
 const SEIKAI_IMAGE_PATH := "res://assets/ui/seikai.webp"
 const RESULT_PANEL_IMAGE_PATH := "res://assets/ui/result_panel_v2.webp"
-const RESULT_BTN_RETRY := "res://assets/ui/result_buttons/result_btn_retry_v2.webp"
-const RESULT_BTN_RETRY_PRESSED := "res://assets/ui/result_buttons/result_btn_retry_v2.webp"
-const RESULT_BTN_NEXT := "res://assets/ui/result_buttons/result_btn_next_v2.webp"
-const RESULT_BTN_NEXT_PRESSED := "res://assets/ui/result_buttons/result_btn_next_v2.webp"
-const RESULT_BTN_HOME := "res://assets/ui/result_buttons/result_btn_home_v2.webp"
-const RESULT_BTN_HOME_PRESSED := "res://assets/ui/result_buttons/result_btn_home_v2.webp"
-const RESULT_BTN_RANKING := "res://assets/ui/result_buttons/result_btn_ranking_v2.webp"
-const RESULT_BTN_RANKING_PRESSED := "res://assets/ui/result_buttons/result_btn_ranking_v2.webp"
-const RESULT_BTN_ANSWER := "res://assets/ui/result_buttons/result_btn_answer_v2.webp"
-const RESULT_BTN_ANSWER_PRESSED := "res://assets/ui/result_buttons/result_btn_answer_v2.webp"
+const RESULT_BUTTON_BLANK_FRAME := "res://assets/ui/result_buttons/result_button_blank_r02.png"
+const RESULT_BUTTON_KAISEI_FONT := "res://assets/font/kaisei_decol_bold_700/KaiseiDecol-Bold.ttf"
+const RESULT_RUNTIME_BUTTON_NAMES := ["BtnRetry", "BtnHome", "BtnSubmitRanking", "BtnShowAnswer"]
+const RESULT_BUTTON_TEXT_MAX_WIDTH := 108.0
+const RESULT_BUTTON_TEXT_BASE_SIZE := 21
+const RESULT_BUTTON_TEXT_MIN_SIZE := 12
+const RESULT_BUTTON_TEXT_Y_OFFSET := -2.0
+const RESULT_BUTTON_TEXT_FILL := Color(1.0, 0.9372549, 0.7098039, 1.0)
+const RESULT_BUTTON_TEXT_OUTLINE := Color(0.3490196, 0.0666667, 0.054902, 1.0)
+const RESULT_BUTTON_TEXT_SHADOW := Color(0.0784314, 0.0117647, 0.0156863, 0.7215686)
 const RESULT_BTN_BACK := "res://assets/ui/result_buttons/result_btn_back_v2.webp"
 const RESULT_BTN_BACK_PRESSED := "res://assets/ui/result_buttons/result_btn_back_v2.webp"
 const RESULT_PETAL_IMAGE_PATH := "res://assets/ui/result_petal.webp"
@@ -406,6 +408,8 @@ var is_animating: bool = false
 var is_game_over: bool = false
 var is_gameover_result: bool = false
 var is_result_answer_view: bool = false
+var _result_button_base_font: FontFile = null
+var _result_button_font_stacks: Dictionary = {}
 var _stage_intro_card: Control = null
 var _last_answer_toggle_key: String = ""
 var _last_answer_toggle_msec: int = -100000
@@ -445,6 +449,8 @@ var tutorial_feedback_key: String = ""
 var tutorial_advance_block_until_msec: int = 0
 var _ranking_notice: RankingNotice = null
 var _ranking_request_active := false
+var _home_confirm_modal_active := false
+var _time_up_resolution_count := 0
 
 # ============================================================
 # 初期化
@@ -463,7 +469,7 @@ func _handle_system_back() -> void:
 	if $SettingsPopup.visible:
 		_on_btn_settings_close_pressed()
 		return
-	if $HomeConfirmPopup.visible:
+	if _home_confirm_modal_active:
 		_on_btn_confirm_no_pressed()
 		return
 	if is_result_answer_view:
@@ -568,6 +574,8 @@ func _ready() -> void:
 		$PopupResult/PopupPanel/BtnRetry.pressed.connect(_on_btn_retry_pressed)
 	if not $PopupResult/PopupPanel/BtnHome.pressed.is_connected(_on_popup_btn_home_pressed):
 		$PopupResult/PopupPanel/BtnHome.pressed.connect(_on_popup_btn_home_pressed)
+	if not $PopupResult.visibility_changed.is_connected(_on_result_visibility_changed):
+		$PopupResult.visibility_changed.connect(_on_result_visibility_changed)
 
 	$SettingsPopup/VBox/BgmSlider.value_changed.connect(_on_bgm_slider_changed)
 	$SettingsPopup/VBox/SeSlider.value_changed.connect(_on_se_slider_changed)
@@ -576,11 +584,15 @@ func _ready() -> void:
 	$SettingsPopup/VBox/TileSuitGrid.tile_suit_changed.connect(_on_tile_suit_changed)
 	_sync_tile_suit_buttons()
 	$SettingsPopup.visible = false
+	ModalFoundation.configure_backdrop($SettingsBackdrop, $SettingsPopup, 80)
+	ModalFoundation.configure_backdrop($HomeConfirmBackdrop, $HomeConfirmPopup, 90)
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)
 	PopupSkin.apply_home_confirm_popup($HomeConfirmPopup)
 	_setup_home_confirm_feedback_targets()
+	_refresh_home_confirm_notice()
+	_configure_home_confirm_focus()
 	ButtonFeedback.install(self)
 	_setup_ranking_notice()
 
@@ -1578,6 +1590,7 @@ func _show_clear_result(_message: String) -> void:
 	_move_clear_buttons_to_result_layer()
 	$PopupResult.visible = true
 	$PopupResult.move_to_front()
+	call_deferred("_focus_initial_result_button")
 	_start_result_sakura_fx()
 	_play_stage_clear_animation(false)
 	_show_result_scores_sequence()
@@ -1596,6 +1609,7 @@ func _show_gameover_result() -> void:
 	_move_clear_buttons_to_result_layer()
 	$PopupResult.visible = true
 	$PopupResult.move_to_front()
+	call_deferred("_focus_initial_result_button")
 	_start_result_sakura_fx()
 	_play_stage_clear_animation(true)
 	_show_result_scores_sequence()
@@ -1684,6 +1698,7 @@ func _refresh_localized_game_images() -> void:
 	_setup_keypad_action_buttons()
 	_refresh_visible_result_buttons()
 	_refresh_back_to_result_button()
+	_configure_result_focus_navigation()
 	_refresh_visible_result_header()
 	_refresh_visible_result_panel()
 	if four_chiitoi_hint != null:
@@ -1703,7 +1718,9 @@ func _refresh_visible_result_buttons() -> void:
 func _refresh_back_to_result_button() -> void:
 	if not has_node("PopupResult/BtnBackToResult"):
 		return
-	_apply_result_image_button_style($PopupResult/BtnBackToResult, _localized_result_button_path("result_btn_back.webp", RESULT_BTN_BACK))
+	var btn_back := $PopupResult/BtnBackToResult as Button
+	_apply_result_image_button_style(btn_back, _localized_result_button_path("result_btn_back.webp", RESULT_BTN_BACK))
+	_set_result_button_semantics(btn_back, "result_back")
 
 func _refresh_visible_result_header() -> void:
 	if not has_node("PopupResult/StageClearImage"):
@@ -1738,30 +1755,65 @@ func _result_ui_text(key: String) -> String:
 			"score_time_bonus": "タイムボーナス",
 			"score_wait_bonus": "多面張ボーナス",
 			"score_total": "合計",
+			"result_retry": "もう一度",
+			"result_next": "次へ",
+			"result_home": "ホーム",
+			"result_title": "タイトルへ",
+			"result_ranking": "ランキング",
+			"result_answer": "答えを確認",
+			"result_back": "戻る",
 		},
 		"en": {
 			"score_base": "Base Score",
 			"score_time_bonus": "Time Bonus",
 			"score_wait_bonus": "Wait Bonus",
 			"score_total": "Total",
+			"result_retry": "Retry",
+			"result_next": "Next",
+			"result_home": "Home",
+			"result_title": "To Title",
+			"result_ranking": "Ranking",
+			"result_answer": "Answer",
+			"result_back": "Back",
 		},
 		"zh_CN": {
 			"score_base": "基础分",
 			"score_time_bonus": "时间奖励",
 			"score_wait_bonus": "多面听奖励",
 			"score_total": "合计",
+			"result_retry": "重试",
+			"result_next": "下一关",
+			"result_home": "主页",
+			"result_title": "返回标题",
+			"result_ranking": "排行榜",
+			"result_answer": "答案",
+			"result_back": "返回",
 		},
 		"zh_TW": {
 			"score_base": "基本分",
 			"score_time_bonus": "時間獎勵",
 			"score_wait_bonus": "多面聽獎勵",
 			"score_total": "合計",
+			"result_retry": "重試",
+			"result_next": "下一關",
+			"result_home": "首頁",
+			"result_title": "返回標題",
+			"result_ranking": "排行榜",
+			"result_answer": "答案",
+			"result_back": "返回",
 		},
 		"ko": {
 			"score_base": "기본 점수",
 			"score_time_bonus": "시간 보너스",
 			"score_wait_bonus": "다중 대기 보너스",
 			"score_total": "합계",
+			"result_retry": "다시 하기",
+			"result_next": "다음",
+			"result_home": "홈",
+			"result_title": "타이틀로",
+			"result_ranking": "랭킹",
+			"result_answer": "정답 보기",
+			"result_back": "뒤로",
 		},
 	}
 	var locale_texts: Dictionary = texts.get(locale, texts["ja"])
@@ -1771,16 +1823,25 @@ func _apply_result_image_button_style(button: Button, normal_path: String) -> vo
 	button.text = ""
 	button.icon = null
 	button.flat = true
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	button.clip_contents = false
 	button.size_flags_horizontal = Control.SIZE_FILL
 	button.size_flags_vertical = Control.SIZE_FILL
 	var empty := StyleBoxEmpty.new()
 	button.add_theme_stylebox_override("normal", empty)
 	button.add_theme_stylebox_override("hover", empty)
-	button.add_theme_stylebox_override("focus", empty)
 	button.add_theme_stylebox_override("disabled", empty)
 	button.add_theme_stylebox_override("pressed", empty)
+	var focus_style := StyleBoxFlat.new()
+	focus_style.bg_color = Color.TRANSPARENT
+	focus_style.border_color = Color(1.0, 0.88, 0.45, 1.0)
+	focus_style.set_border_width_all(3)
+	focus_style.set_corner_radius_all(10)
+	focus_style.expand_margin_left = 2.0
+	focus_style.expand_margin_top = 2.0
+	focus_style.expand_margin_right = 2.0
+	focus_style.expand_margin_bottom = 2.0
+	button.add_theme_stylebox_override("focus", focus_style)
 	var art: TextureRect = button.get_node_or_null("ResultButtonArt") as TextureRect
 	if art == null:
 		art = TextureRect.new()
@@ -1797,6 +1858,85 @@ func _apply_result_image_button_style(button: Button, normal_path: String) -> vo
 	art.clip_contents = false
 	if ResourceLoader.exists(normal_path):
 		art.texture = load(normal_path)
+
+
+func _result_runtime_font(locale: String) -> Font:
+	var normalized := str(SaveData.normalize_language_code(locale))
+	if _result_button_font_stacks.has(normalized):
+		return _result_button_font_stacks[normalized] as Font
+	if _result_button_base_font == null:
+		_result_button_base_font = load(RESULT_BUTTON_KAISEI_FONT) as FontFile
+		if _result_button_base_font == null:
+			push_error("[Game] Failed to load adopted result button font: %s" % RESULT_BUTTON_KAISEI_FONT)
+			return null
+		_result_button_base_font.allow_system_fallback = false
+	var stack := FontVariation.new()
+	stack.base_font = _result_button_base_font
+	var locale_fallback := LocaleFonts.font_for_locale(normalized)
+	if locale_fallback != null:
+		var fallbacks: Array[Font] = [locale_fallback]
+		stack.fallbacks = fallbacks
+	_result_button_font_stacks[normalized] = stack
+	return stack
+
+
+func _fit_result_runtime_text(label: Label, text: String, locale: String) -> void:
+	var font := _result_runtime_font(locale)
+	if font == null:
+		return
+	label.add_theme_font_override("font", font)
+	var selected_size := RESULT_BUTTON_TEXT_MIN_SIZE
+	var measured_width := INF
+	var measured_height := INF
+	for candidate_size in range(RESULT_BUTTON_TEXT_BASE_SIZE, RESULT_BUTTON_TEXT_MIN_SIZE - 1, -1):
+		var glyph_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, candidate_size)
+		var composite_width := ceilf(glyph_size.x) + 3.0
+		var composite_height := ceilf(font.get_height(candidate_size)) + 3.0
+		selected_size = candidate_size
+		measured_width = composite_width
+		measured_height = composite_height
+		if composite_width <= RESULT_BUTTON_TEXT_MAX_WIDTH and composite_height <= 70.0:
+			break
+	label.add_theme_font_size_override("font_size", selected_size)
+	label.set_meta("result_text_composite_width", measured_width)
+	label.set_meta("result_text_composite_height", measured_height)
+	label.set_meta("result_text_font_size", selected_size)
+	label.set_meta("result_text_locale", str(SaveData.normalize_language_code(locale)))
+
+
+func _apply_result_runtime_button_style(button: Button) -> void:
+	if button == null or str(button.name) not in RESULT_RUNTIME_BUTTON_NAMES:
+		return
+	_apply_result_image_button_style(button, RESULT_BUTTON_BLANK_FRAME)
+	button.set_meta("result_runtime_text_button", true)
+	var label := button.get_node_or_null("ResultButtonText") as Label
+	if label == null:
+		label = Label.new()
+		label.name = "ResultButtonText"
+		button.add_child(label)
+	label.anchor_left = 0.5
+	label.anchor_top = 0.0
+	label.anchor_right = 0.5
+	label.anchor_bottom = 1.0
+	label.offset_left = -RESULT_BUTTON_TEXT_MAX_WIDTH * 0.5
+	label.offset_top = RESULT_BUTTON_TEXT_Y_OFFSET
+	label.offset_right = RESULT_BUTTON_TEXT_MAX_WIDTH * 0.5
+	label.offset_bottom = RESULT_BUTTON_TEXT_Y_OFFSET
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+	label.clip_text = false
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.add_theme_color_override("font_color", RESULT_BUTTON_TEXT_FILL)
+	label.add_theme_color_override("font_outline_color", RESULT_BUTTON_TEXT_OUTLINE)
+	label.add_theme_color_override("font_shadow_color", RESULT_BUTTON_TEXT_SHADOW)
+	label.add_theme_constant_override("outline_size", 1)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	var semantic_key := str(button.get_meta("result_semantic_key", ""))
+	if semantic_key != "":
+		_set_result_button_semantics(button, semantic_key)
 
 func _get_next_stage_after_clear() -> String:
 	match GameState.current_stage:
@@ -1823,6 +1963,125 @@ func _should_show_next_stage_button() -> bool:
 
 func _should_show_result_next_button() -> bool:
 	return _should_show_next_stage_button() or _is_mirage_clear_result() or _is_nightmare_clear_result()
+
+
+func _should_hide_result_home_button() -> bool:
+	return _is_mirage_clear_result() or _is_nightmare_clear_result()
+
+
+func _is_instant_title_result_action() -> bool:
+	return GameState.is_instant_mode and (popup_state == "wrong" or is_gameover_result)
+
+
+func _get_result_button(button_name: String) -> Button:
+	for path in [
+		"PopupResult/ResultButtons/" + button_name,
+		"PopupResult/PopupPanel/" + button_name,
+		"PopupResult/" + button_name,
+	]:
+		var button := get_node_or_null(path) as Button
+		if button != null:
+			return button
+	return null
+
+
+func _set_result_button_semantics(button: Button, text_key: String) -> void:
+	if button == null:
+		return
+	var accessible_text := _result_ui_text(text_key)
+	button.accessibility_name = accessible_text
+	button.set_meta("result_semantic_key", text_key)
+	if bool(button.get_meta("result_runtime_text_button", false)):
+		button.text = ""
+		var label := button.get_node_or_null("ResultButtonText") as Label
+		if label != null:
+			var locale := str(SaveData.normalize_language_code(SaveData.language_code))
+			label.text = accessible_text
+			label.language = locale.replace("_", "-")
+			_fit_result_runtime_text(label, accessible_text, locale)
+
+
+func _refresh_result_button_semantics() -> void:
+	var btn_retry := _get_result_button("BtnRetry")
+	var btn_home := _get_result_button("BtnHome")
+	var btn_ranking := _get_result_button("BtnSubmitRanking")
+	var btn_answer := _get_result_button("BtnShowAnswer")
+	var btn_back := _get_result_button("BtnBackToResult")
+	_set_result_button_semantics(btn_retry, "result_next" if _should_show_result_next_button() else "result_retry")
+	_set_result_button_semantics(btn_home, "result_title" if _is_instant_title_result_action() else "result_home")
+	_set_result_button_semantics(btn_ranking, "result_ranking")
+	_set_result_button_semantics(btn_answer, "result_answer")
+	_set_result_button_semantics(btn_back, "result_back")
+	if btn_home != null and btn_home.has_meta("result_title_asset_blocked"):
+		btn_home.remove_meta("result_title_asset_blocked")
+
+
+func _clear_result_focus_neighbors(button: Button) -> void:
+	if button == null:
+		return
+	button.focus_neighbor_left = NodePath()
+	button.focus_neighbor_right = NodePath()
+	button.focus_neighbor_top = NodePath()
+	button.focus_neighbor_bottom = NodePath()
+	button.focus_next = NodePath()
+	button.focus_previous = NodePath()
+
+
+func _visible_enabled_result_buttons() -> Array[Button]:
+	var active: Array[Button] = []
+	var button_names := ["BtnBackToResult"] if is_result_answer_view else ["BtnRetry", "BtnHome", "BtnSubmitRanking", "BtnShowAnswer"]
+	for button_name in button_names:
+		var button := _get_result_button(button_name)
+		if button != null and button.is_visible_in_tree() and not button.disabled:
+			active.append(button)
+	return active
+
+
+func _configure_result_focus_navigation() -> void:
+	_refresh_result_button_semantics()
+	for button_name in ["BtnRetry", "BtnHome", "BtnSubmitRanking", "BtnShowAnswer", "BtnBackToResult"]:
+		var button := _get_result_button(button_name)
+		if button == null:
+			continue
+		_clear_result_focus_neighbors(button)
+		button.focus_mode = Control.FOCUS_ALL if button.is_visible_in_tree() and not button.disabled else Control.FOCUS_NONE
+	var active := _visible_enabled_result_buttons()
+	if active.is_empty():
+		return
+	for index in range(active.size()):
+		var button := active[index]
+		var previous := active[(index - 1 + active.size()) % active.size()]
+		var next_button := active[(index + 1) % active.size()]
+		var previous_path := previous.get_path()
+		var next_path := next_button.get_path()
+		button.focus_neighbor_left = previous_path
+		button.focus_neighbor_top = previous_path
+		button.focus_previous = previous_path
+		button.focus_neighbor_right = next_path
+		button.focus_neighbor_bottom = next_path
+		button.focus_next = next_path
+
+
+func _focus_initial_result_button() -> void:
+	_configure_result_focus_navigation()
+	var primary := _get_result_button("BtnBackToResult" if is_result_answer_view else "BtnRetry")
+	if primary != null and primary.focus_mode == Control.FOCUS_ALL:
+		primary.grab_focus()
+		return
+	var active := _visible_enabled_result_buttons()
+	if not active.is_empty():
+		active[0].grab_focus()
+
+
+func _focus_result_answer_button() -> void:
+	_configure_result_focus_navigation()
+	var btn_answer := _get_result_button("BtnShowAnswer")
+	if btn_answer != null and btn_answer.focus_mode == Control.FOCUS_ALL:
+		btn_answer.grab_focus()
+
+
+func _on_result_visibility_changed() -> void:
+	call_deferred("_configure_result_focus_navigation")
 
 func _get_stage_talk_scene_id(stage: String) -> String:
 	match stage:
@@ -1981,18 +2240,22 @@ func _update_keypad_feedback_pivot(button: Button) -> void:
 func _move_clear_buttons_to_result_layer() -> void:
 	_ensure_result_answer_buttons()
 	var buttons: GridContainer = $PopupResult/ResultButtons
-	var btn_retry: Button = $PopupResult/PopupPanel/BtnRetry
-	var btn_home: Button = $PopupResult/PopupPanel/BtnHome
-	var btn_ranking: Button = $PopupResult/ResultButtons/BtnSubmitRanking
-	var btn_answer: Button = $PopupResult/ResultButtons/BtnShowAnswer
+	var btn_retry := _get_result_button("BtnRetry")
+	var btn_home := _get_result_button("BtnHome")
+	var btn_ranking := _get_result_button("BtnSubmitRanking")
+	var btn_answer := _get_result_button("BtnShowAnswer")
+	var home_spacer := $PopupResult/ResultButtons.get_node_or_null("FinalHomeSpacer") as Control
+	if btn_retry == null or btn_home == null or btn_ranking == null or btn_answer == null or home_spacer == null:
+		return
 	if btn_retry.get_parent() != buttons:
 		btn_retry.reparent(buttons)
 	if btn_home.get_parent() != buttons:
 		btn_home.reparent(buttons)
 	buttons.move_child(btn_retry, 0)
 	buttons.move_child(btn_home, 1)
-	buttons.move_child(btn_ranking, 2)
-	buttons.move_child(btn_answer, 3)
+	buttons.move_child(home_spacer, 2)
+	buttons.move_child(btn_ranking, 3)
+	buttons.move_child(btn_answer, 4)
 	buttons.columns = 2
 	buttons.position = Vector2(50.0, 700.0)
 	buttons.size = Vector2(380.0, 144.0)
@@ -2000,39 +2263,51 @@ func _move_clear_buttons_to_result_layer() -> void:
 	buttons.add_theme_constant_override("v_separation", 4)
 	btn_retry.custom_minimum_size = Vector2(184.0, 70.0)
 	btn_home.custom_minimum_size = Vector2(184.0, 70.0)
+	home_spacer.custom_minimum_size = Vector2(184.0, 70.0)
 	btn_ranking.custom_minimum_size = Vector2(184.0, 70.0)
 	btn_answer.custom_minimum_size = Vector2(184.0, 70.0)
-	var retry_button_image := _localized_result_button_path("result_btn_next.webp", RESULT_BTN_NEXT) if _should_show_result_next_button() else _localized_result_button_path("result_btn_retry.webp", RESULT_BTN_RETRY)
-	_apply_result_image_button_style(btn_retry, retry_button_image)
-	if btn_home.text == "OK":
-		_clear_image_button_style(btn_home)
-	else:
-		_apply_result_image_button_style(btn_home, _localized_result_button_path("result_btn_home.webp", RESULT_BTN_HOME))
-	_apply_result_image_button_style(btn_ranking, _localized_result_button_path("result_btn_ranking.webp", RESULT_BTN_RANKING))
-	_apply_result_image_button_style(btn_answer, _localized_result_button_path("result_btn_answer.webp", RESULT_BTN_ANSWER))
+	_apply_result_runtime_button_style(btn_retry)
+	_apply_result_runtime_button_style(btn_home)
+	_apply_result_runtime_button_style(btn_ranking)
+	_apply_result_runtime_button_style(btn_answer)
 	var ranking_stage_key := _get_ranking_stage_key()
 	var ranking_ui_available := ranking_stage_key != "" and RankingManager.should_show_ranking_ui(ranking_stage_key)
-	btn_ranking.visible = ranking_ui_available
 	btn_ranking.disabled = not ranking_ui_available
+	btn_ranking.visible = ranking_ui_available
+	var hide_home := _should_hide_result_home_button()
+	btn_home.disabled = hide_home
+	btn_home.visible = not hide_home
+	home_spacer.visible = hide_home
+	btn_retry.disabled = false
+	btn_answer.disabled = false
 	btn_answer.visible = true
 	buttons.visible = true
 	buttons.move_to_front()
+	_configure_result_focus_navigation()
 
 func _ensure_result_answer_buttons() -> void:
 	if not has_node("PopupResult/ResultButtons/BtnSubmitRanking"):
 		var btn_ranking: Button = Button.new()
 		btn_ranking.name = "BtnSubmitRanking"
-		btn_ranking.text = "RANKING"
-		btn_ranking.add_theme_font_size_override("font_size", 18)
+		btn_ranking.text = ""
 		btn_ranking.pressed.connect(_on_btn_submit_ranking_pressed)
 		$PopupResult/ResultButtons.add_child(btn_ranking)
 	if not has_node("PopupResult/ResultButtons/BtnShowAnswer"):
 		var btn_answer: Button = Button.new()
 		btn_answer.name = "BtnShowAnswer"
-		btn_answer.text = "答えを確認"
-		btn_answer.add_theme_font_size_override("font_size", 22)
+		btn_answer.text = ""
 		btn_answer.pressed.connect(_on_btn_show_answer_pressed)
 		$PopupResult/ResultButtons.add_child(btn_answer)
+	if not has_node("PopupResult/ResultButtons/FinalHomeSpacer"):
+		var home_spacer := Control.new()
+		home_spacer.name = "FinalHomeSpacer"
+		home_spacer.custom_minimum_size = Vector2(184.0, 70.0)
+		home_spacer.size_flags_horizontal = Control.SIZE_FILL
+		home_spacer.size_flags_vertical = Control.SIZE_FILL
+		home_spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		home_spacer.focus_mode = Control.FOCUS_NONE
+		home_spacer.visible = false
+		$PopupResult/ResultButtons.add_child(home_spacer)
 	if not has_node("PopupResult/BtnBackToResult"):
 		var btn_back: Button = Button.new()
 		btn_back.name = "BtnBackToResult"
@@ -2044,6 +2319,10 @@ func _ensure_result_answer_buttons() -> void:
 		btn_back.visible = false
 		btn_back.pressed.connect(_on_btn_back_to_result_pressed)
 		$PopupResult.add_child(btn_back)
+	for button_name in ["BtnRetry", "BtnHome", "BtnSubmitRanking", "BtnShowAnswer", "BtnBackToResult"]:
+		var result_button := _get_result_button(button_name)
+		if result_button != null:
+			ButtonFeedback.install(result_button)
 	_refresh_back_to_result_button()
 
 func _on_btn_submit_ranking_pressed() -> void:
@@ -2088,7 +2367,11 @@ func _on_leaderboard_show_finished(stage_key: String, success: bool, reason: Str
 func _set_result_ranking_button_disabled(disabled: bool) -> void:
 	var ranking_button := get_node_or_null("PopupResult/ResultButtons/BtnSubmitRanking") as Button
 	if ranking_button != null:
+		var was_focused := ranking_button.has_focus()
 		ranking_button.disabled = disabled
+		_configure_result_focus_navigation()
+		if disabled and was_focused:
+			call_deferred("_focus_initial_result_button")
 
 func _on_btn_show_answer_pressed() -> void:
 	_show_answer_view_from_result()
@@ -2114,6 +2397,8 @@ func _show_answer_view_from_result() -> void:
 	if has_node("PopupResult/BtnBackToResult"):
 		$PopupResult/BtnBackToResult.visible = true
 		$PopupResult/BtnBackToResult.move_to_front()
+	_configure_result_focus_navigation()
+	call_deferred("_focus_initial_result_button")
 
 func _show_result_view_from_answer() -> void:
 	if not is_result_answer_view:
@@ -2131,6 +2416,8 @@ func _show_result_view_from_answer() -> void:
 	$PopupResult/PopupPanel/CorrectTilesRow2.visible = false
 	if has_node("PopupResult/BtnBackToResult"):
 		$PopupResult/BtnBackToResult.visible = false
+	_configure_result_focus_navigation()
+	call_deferred("_focus_result_answer_button")
 
 func _get_time_bonus() -> int:
 	return time_bonus_total
@@ -2231,23 +2518,28 @@ func _setup_popup_buttons(state: String) -> void:
 		$PopupResult/PopupPanel/ResultLabel.position.y = 40.0
 
 	if state == "clear":
+		btn_retry.disabled = false
 		btn_retry.visible = true
-		btn_retry.text    = "次へ" if _should_show_result_next_button() else "もう一度"
-		btn_home.visible  = true
-		btn_home.text     = "ホーム"
+		btn_retry.text = ""
+		var hide_home := _should_hide_result_home_button()
+		btn_home.disabled = hide_home
+		btn_home.visible  = not hide_home
+		btn_home.text = ""
 		btn_home.position.x = BTN_HOME_X_NORMAL
 	elif state == "correct":
+		btn_retry.disabled = true
 		btn_retry.visible = false
+		btn_home.disabled = true
 		btn_home.visible  = false
 	else:
+		btn_retry.disabled = false
 		btn_retry.visible = true
-		btn_retry.text    = "もう一度"
+		btn_retry.text = ""
+		btn_home.disabled = false
 		btn_home.visible  = true
-		if GameState.is_instant_mode:
-			btn_home.text = "タイトルへ"
-		else:
-			btn_home.text = "ホーム"
+		btn_home.text = ""
 		btn_home.position.x = BTN_HOME_X_NORMAL
+	_configure_result_focus_navigation()
 
 # ============================================================
 # 正解牌を画像で表示
@@ -2717,10 +3009,11 @@ func on_time_up() -> void:
 	if is_game_over:
 		return
 	is_game_over = true
+	_time_up_resolution_count += 1
 	is_animating = false
 	stop_timer()
-	$HomeConfirmPopup.visible = false
-	$SettingsPopup.visible = false
+	_close_home_confirm_modal(false)
+	ModalFoundation.close_modal($SettingsBackdrop, $SettingsPopup, false)
 	$Keypad/BtnSubmit.disabled = true
 	_show_gameover_result()
 
@@ -2728,6 +3021,8 @@ func on_time_up() -> void:
 # デバッグ
 # ============================================================
 func _input(event: InputEvent) -> void:
+	if _modal_blocks_gameplay():
+		return
 	if _is_tutorial_stage() and _handle_tutorial_advance_input(event):
 		return
 	if not DeveloperFeatures.developer_shortcuts_enabled():
@@ -2867,7 +3162,7 @@ func update_question_counter() -> void:
 # 入力処理
 # ============================================================
 func _on_number_pressed(number: int) -> void:
-	if is_animating or is_game_over:
+	if _modal_blocks_gameplay() or is_animating or is_game_over:
 		return
 	if _is_tutorial_stage() and not _can_press_tutorial_number(number):
 		return
@@ -2889,7 +3184,7 @@ func _on_number_pressed(number: int) -> void:
 	_update_tutorial_step()
 
 func _on_none_pressed() -> void:
-	if is_animating or is_game_over or not current_question_allows_none:
+	if _modal_blocks_gameplay() or is_animating or is_game_over or not current_question_allows_none:
 		return
 	if not _can_accept_answer_toggle("none"):
 		return
@@ -2901,7 +3196,7 @@ func _on_none_pressed() -> void:
 	update_ui()
 
 func _on_clear_pressed() -> void:
-	if is_animating or is_game_over:
+	if _modal_blocks_gameplay() or is_animating or is_game_over:
 		return
 	selected_tiles = []
 	update_ui()
@@ -3021,7 +3316,7 @@ func _handle_correct_progress() -> void:
 # 提出・正誤判定
 # ============================================================
 func _on_submit_pressed() -> void:
-	if is_animating or is_game_over:
+	if _modal_blocks_gameplay() or is_animating or is_game_over:
 		return
 	if _is_tutorial_stage():
 		_on_tutorial_submit_pressed()
@@ -3641,6 +3936,8 @@ func _on_popup_btn_home_pressed() -> void:
 # レイアウト切り替え
 # ============================================================
 func _on_btn_layout_pressed() -> void:
+	if _modal_blocks_gameplay():
+		return
 	if _can_use_tall_tiles():
 		GameState.two_row_layout = not GameState.two_row_layout
 		_update_tile_shape_button_state()
@@ -3657,7 +3954,7 @@ func _on_btn_layout_pressed() -> void:
 # 設定ボタン
 # ============================================================
 func _on_btn_settings_pressed() -> void:
-	if timer_enabled:
+	if _modal_blocks_gameplay() or timer_enabled:
 		return
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
@@ -3665,7 +3962,7 @@ func _on_btn_settings_pressed() -> void:
 	$SettingsPopup/VBox/BgmSlider.value = AudioManager.bgm_volume
 	$SettingsPopup/VBox/SeSlider.value  = AudioManager.se_volume
 	_sync_tile_suit_buttons()
-	$SettingsPopup.visible = true
+	ModalFoundation.open_modal($SettingsBackdrop, $SettingsPopup, $TopBar/BtnSettings, $SettingsPopup/VBox/BgmSlider, 80)
 
 func _on_bgm_slider_changed(value: float) -> void:
 	AudioManager.bgm_volume = value
@@ -3679,24 +3976,32 @@ func _on_language_button_pressed(code: String) -> void:
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)
+	ModalFoundation.configure_focus_ring(ModalFoundation.collect_focusable_controls($SettingsPopup))
 	_refresh_localized_game_images()
+	_refresh_home_confirm_notice()
 	update_timer_display()
 	if _is_tutorial_stage() and tutorial_layer != null:
 		_update_tutorial_step()
 	AudioManager.play_se("se_btntap")
 
 func _on_btn_settings_close_pressed() -> void:
-	$SettingsPopup.visible = false
+	ModalFoundation.close_modal($SettingsBackdrop, $SettingsPopup, true)
 
 # ============================================================
 # TopBarのホームボタン
 # ============================================================
 func _on_btn_home_pressed() -> void:
+	if _modal_blocks_gameplay() or is_game_over:
+		return
 	PopupSkin.apply_home_confirm_popup($HomeConfirmPopup)
 	_setup_home_confirm_feedback_targets()
-	$HomeConfirmPopup.visible = true
+	_refresh_home_confirm_notice()
+	_open_home_confirm_modal($TopBar/BtnHome)
 
 func _on_btn_confirm_yes_pressed() -> void:
+	if not _home_confirm_modal_active:
+		return
+	_close_home_confirm_modal(false)
 	GameState.came_from_stage3 = false
 	if GameState.is_instant_mode:
 		GameState.is_instant_mode = false
@@ -3712,7 +4017,53 @@ func _on_btn_confirm_yes_pressed() -> void:
 	get_tree().change_scene_to_file("res://StageSelect.tscn")
 
 func _on_btn_confirm_no_pressed() -> void:
-	$HomeConfirmPopup.visible = false
+	if not _home_confirm_modal_active:
+		return
+	_close_home_confirm_modal(true)
+
+
+func _open_home_confirm_modal(invoker: Control) -> void:
+	_home_confirm_modal_active = true
+	ModalFoundation.open_modal($HomeConfirmBackdrop, $HomeConfirmPopup, invoker, $HomeConfirmPopup/BtnConfirmNo, 90)
+
+
+func _close_home_confirm_modal(restore_focus: bool) -> void:
+	_home_confirm_modal_active = false
+	ModalFoundation.close_modal($HomeConfirmBackdrop, $HomeConfirmPopup, restore_focus)
+
+
+func _modal_blocks_gameplay() -> bool:
+	return _home_confirm_modal_active or $SettingsPopup.visible
+
+
+func _refresh_home_confirm_notice() -> void:
+	var notice := $HomeConfirmPopup/TimerNoticeLabel as Label
+	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	notice.text = TalkLocalization.ui_text(locale, "home_confirm_timer_notice")
+	var locale_font := LocaleFonts.font_for_locale(locale)
+	if locale_font != null:
+		notice.add_theme_font_override("font", locale_font)
+	notice.language = locale.replace("_", "-")
+	notice.set_meta("locale_font_code", locale)
+
+
+func _configure_home_confirm_focus() -> void:
+	var yes_button := $HomeConfirmPopup/BtnConfirmYes as Button
+	var no_button := $HomeConfirmPopup/BtnConfirmNo as Button
+	yes_button.focus_mode = Control.FOCUS_ALL
+	no_button.focus_mode = Control.FOCUS_ALL
+	yes_button.focus_neighbor_left = yes_button.get_path()
+	yes_button.focus_neighbor_right = no_button.get_path()
+	yes_button.focus_neighbor_top = yes_button.get_path()
+	yes_button.focus_neighbor_bottom = yes_button.get_path()
+	yes_button.focus_next = no_button.get_path()
+	yes_button.focus_previous = no_button.get_path()
+	no_button.focus_neighbor_left = yes_button.get_path()
+	no_button.focus_neighbor_right = no_button.get_path()
+	no_button.focus_neighbor_top = no_button.get_path()
+	no_button.focus_neighbor_bottom = no_button.get_path()
+	no_button.focus_next = yes_button.get_path()
+	no_button.focus_previous = yes_button.get_path()
 
 
 func _setup_home_confirm_feedback_targets() -> void:

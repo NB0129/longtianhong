@@ -1,6 +1,7 @@
 extends Control
 
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const ModalFoundation := preload("res://ModalFoundation.gd")
 
 const PATH_BG := "res://assets/bg/custom_room_bg_generated.webp"
 const PATH_TITLE := "res://assets/bg/custom_room_title.webp"
@@ -14,6 +15,7 @@ const LINE_CYAN := Color(0.60, 0.84, 0.66, 0.55)
 const LINE_GOLD := Color(0.96, 0.66, 0.18, 0.75)
 const TEXT_MAIN := Color(0.28, 0.18, 0.10)
 const TEXT_SUB := Color(0.10, 0.38, 0.32)
+const TEXT_ERROR := Color(0.72, 0.10, 0.06)
 
 const CUSTOM_TEXT := {
 	"ja": {
@@ -32,6 +34,7 @@ const CUSTOM_TEXT := {
 		"bgm_utu": "現棘",
 		"bgm_mabo_a": "まぼろし1",
 		"bgm_mabo_b": "まぼろし2",
+		"bgm_required": "BGMを1曲以上選んでください",
 		"seconds_format": "%d秒",
 	},
 	"en": {
@@ -50,6 +53,7 @@ const CUSTOM_TEXT := {
 		"bgm_utu": "Ututsu",
 		"bgm_mabo_a": "Maboroshi 1",
 		"bgm_mabo_b": "Maboroshi 2",
+		"bgm_required": "Select at least one BGM track.",
 		"seconds_format": "%d sec",
 	},
 	"zh_CN": {
@@ -68,6 +72,7 @@ const CUSTOM_TEXT := {
 		"bgm_utu": "现棘",
 		"bgm_mabo_a": "幻胧1",
 		"bgm_mabo_b": "幻胧2",
+		"bgm_required": "请至少选择1首BGM。",
 		"seconds_format": "%d秒",
 	},
 	"zh_TW": {
@@ -86,6 +91,7 @@ const CUSTOM_TEXT := {
 		"bgm_utu": "現棘",
 		"bgm_mabo_a": "幻朧1",
 		"bgm_mabo_b": "幻朧2",
+		"bgm_required": "請至少選擇1首BGM。",
 		"seconds_format": "%d秒",
 	},
 	"ko": {
@@ -104,6 +110,7 @@ const CUSTOM_TEXT := {
 		"bgm_utu": "우츠츠",
 		"bgm_mabo_a": "마보로시 1",
 		"bgm_mabo_b": "마보로시 2",
+		"bgm_required": "BGM을 1곡 이상 선택해 주세요.",
 		"seconds_format": "%d초",
 	},
 }
@@ -178,12 +185,12 @@ func _ready() -> void:
 
 func _setup_generated_ui() -> void:
 	_add_texture_layer("CustomTitleImage", _localized_custom_room_path("custom_room_title.webp", PATH_TITLE), Vector2(24.0, 20.0), Vector2(432.0, 112.0))
-	_add_texture_layer("MainPanelBacking", PATH_PANEL, Vector2(32.0, 146.0), Vector2(416.0, 560.0))
+	_add_texture_layer("MainPanelBacking", PATH_PANEL, Vector2(32.0, 138.0), Vector2(416.0, 600.0))
 
 	$MainVBox.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	$MainVBox.position = Vector2(70.0, 212.0)
-	$MainVBox.size = Vector2(340.0, 426.0)
-	$MainVBox.add_theme_constant_override("separation", 4)
+	$MainVBox.position = Vector2(70.0, 170.0)
+	$MainVBox.size = Vector2(340.0, 540.0)
+	$MainVBox.add_theme_constant_override("separation", 2)
 
 	_style_section_label($MainVBox/DiffLabel)
 	$MainVBox/DiffLabel.custom_minimum_size = Vector2(0.0, 30.0)
@@ -192,6 +199,7 @@ func _setup_generated_ui() -> void:
 	_style_section_label($MainVBox/TimerLabel)
 	_style_section_label($MainVBox/CountLabel)
 	_style_section_label($MainVBox/BgmLabel)
+	_style_bgm_validation($MainVBox/BgmValidationLabel)
 	_style_seconds_label($MainVBox/SecondsBox/SecondsHeadLabel)
 	_style_seconds_label($MainVBox/SecondsBox/SecondsLabel)
 
@@ -278,6 +286,7 @@ func _apply_text_language() -> void:
 	$MainVBox/BgmGrid/CheckUtu.text = _custom_text("bgm_utu")
 	$MainVBox/BgmGrid/CheckMaboA.text = _custom_text("bgm_mabo_a")
 	$MainVBox/BgmGrid/CheckMaboB.text = _custom_text("bgm_mabo_b")
+	$MainVBox/BgmValidationLabel.text = _custom_text("bgm_required")
 
 func _add_texture_layer(name: String, path: String, position: Vector2, size: Vector2) -> TextureRect:
 	var rect: TextureRect = get_node_or_null(name) as TextureRect
@@ -337,7 +346,8 @@ func _style_seconds_label(label: Label) -> void:
 	label.add_theme_constant_override("shadow_offset_y", 1)
 
 func _style_option_button(button: Button) -> void:
-	button.custom_minimum_size = Vector2(78.0, 34.0)
+	button.custom_minimum_size = Vector2(78.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
+	button.focus_mode = Control.FOCUS_ALL
 	button.add_theme_font_size_override("font_size", 19)
 	button.add_theme_stylebox_override("normal", _make_button_style(Color(1.0, 0.96, 0.80, 0.72), LINE_CYAN))
 	button.add_theme_stylebox_override("hover", _make_button_style(Color(0.90, 1.0, 0.86, 0.84), LINE_CYAN))
@@ -382,7 +392,8 @@ func _set_button_art(button: Button, path: String) -> void:
 		art.texture = load(path)
 
 func _style_bgm_check(check: CheckBox) -> void:
-	check.custom_minimum_size = Vector2(152.0, 30.0)
+	check.custom_minimum_size = Vector2(152.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
+	check.focus_mode = Control.FOCUS_ALL
 	check.add_theme_font_size_override("font_size", 18)
 	check.add_theme_color_override("font_color", TEXT_MAIN)
 	check.add_theme_color_override("font_hover_color", TEXT_MAIN)
@@ -391,6 +402,15 @@ func _style_bgm_check(check: CheckBox) -> void:
 	check.add_theme_color_override("font_shadow_color", Color(1.0, 0.98, 0.86, 0.75))
 	check.add_theme_constant_override("shadow_offset_x", 1)
 	check.add_theme_constant_override("shadow_offset_y", 1)
+
+
+func _style_bgm_validation(label: Label) -> void:
+	label.custom_minimum_size = Vector2(0.0, 28.0)
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", TEXT_ERROR)
+	label.add_theme_color_override("font_outline_color", Color(1.0, 0.96, 0.78, 0.95))
+	label.add_theme_constant_override("outline_size", 3)
+
 
 func _make_texture_style(texture_path: String, margin: float) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
@@ -498,14 +518,47 @@ func _on_bgm_changed(_pressed: bool) -> void:
 	SaveData.custom_bgm_mabo_first  = $MainVBox/BgmGrid/CheckMaboA.button_pressed
 	SaveData.custom_bgm_mabo_second = $MainVBox/BgmGrid/CheckMaboB.button_pressed
 	SaveData.save()
+	if _has_bgm_selection():
+		_set_bgm_validation_visible(false)
+
+
+func _has_bgm_selection() -> bool:
+	return $MainVBox/BgmGrid/CheckYume.button_pressed \
+		or $MainVBox/BgmGrid/CheckUtu.button_pressed \
+		or $MainVBox/BgmGrid/CheckMaboA.button_pressed \
+		or $MainVBox/BgmGrid/CheckMaboB.button_pressed
+
+
+func _set_bgm_validation_visible(should_show: bool, move_focus: bool = false) -> void:
+	var warning_label := $MainVBox/BgmValidationLabel as Label
+	warning_label.visible = should_show
+	warning_label.set_meta("validation_active", should_show)
+	_style_section_label($MainVBox/BgmLabel)
+	if should_show:
+		$MainVBox/BgmLabel.add_theme_color_override("font_color", TEXT_ERROR)
+	for check in [
+		$MainVBox/BgmGrid/CheckYume,
+		$MainVBox/BgmGrid/CheckUtu,
+		$MainVBox/BgmGrid/CheckMaboA,
+		$MainVBox/BgmGrid/CheckMaboB,
+	]:
+		_style_bgm_check(check)
+		if should_show:
+			check.add_theme_color_override("font_color", TEXT_ERROR)
+			check.add_theme_color_override("font_hover_color", TEXT_ERROR)
+			check.add_theme_color_override("font_pressed_color", TEXT_ERROR)
+			check.add_theme_color_override("font_focus_color", TEXT_ERROR)
+	if should_show and move_focus:
+		var first_bgm := $MainVBox/BgmGrid/CheckYume as CheckBox
+		first_bgm.focus_mode = Control.FOCUS_ALL
+		first_bgm.grab_focus()
 
 func _on_btn_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://StageSelect.tscn")
 
 func _on_btn_start_pressed() -> void:
-	if not SaveData.custom_bgm_yume and not SaveData.custom_bgm_utu \
-	and not SaveData.custom_bgm_mabo_first and not SaveData.custom_bgm_mabo_second:
-		print("BGMを1つ以上選んでください")
+	if not _has_bgm_selection():
+		_set_bgm_validation_visible(true, true)
 		return
 	GameState.came_from_stage3 = false
 	GameState.current_stage = "custom"

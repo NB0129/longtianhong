@@ -2,6 +2,7 @@ extends RefCounted
 
 const TalkLocalization := preload("res://TalkLocalization.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const ModalFoundation := preload("res://ModalFoundation.gd")
 
 const PANEL_SETTINGS := "res://assets/ui/popups/popup_panel_settings.webp"
 const PANEL_CONFIRM := "res://assets/ui/popups/popup_panel_confirm.webp"
@@ -64,6 +65,12 @@ static func apply_home_confirm_popup(panel: Panel) -> void:
 	if panel.has_node("ConfirmLabel"):
 		var label: Label = panel.get_node("ConfirmLabel")
 		label.text = ""
+	if panel.has_node("TimerNoticeLabel"):
+		var notice := panel.get_node("TimerNoticeLabel") as Label
+		notice.add_theme_font_size_override("font_size", 15)
+		notice.add_theme_color_override("font_color", Color(1.0, 0.91, 0.58, 1.0))
+		notice.add_theme_color_override("font_outline_color", Color(0.08, 0.01, 0.02, 1.0))
+		notice.add_theme_constant_override("outline_size", 4)
 	if panel.has_node("BtnConfirmYes"):
 		var yes_path := _localized_confirm_button_path("popup_btn_yes.webp", BTN_YES_V2)
 		apply_generated_text_button(panel.get_node("BtnConfirmYes"), yes_path, yes_path)
@@ -154,7 +161,7 @@ static func ensure_settings_language_controls(panel: Panel, pressed_callback: Ca
 		grid.add_theme_constant_override("v_separation", 6)
 		vbox.add_child(grid)
 	grid.columns = 2
-	grid.custom_minimum_size = Vector2(0.0, 118.0)
+	grid.custom_minimum_size = Vector2(0.0, 156.0)
 
 	_move_settings_language_controls_before_close_area(vbox, label, grid)
 
@@ -166,12 +173,13 @@ static func ensure_settings_language_controls(panel: Panel, pressed_callback: Ca
 		if button == null:
 			button = CheckBox.new()
 			button.name = button_name
-			button.focus_mode = Control.FOCUS_NONE
 			grid.add_child(button)
 		button.button_group = group
-		button.custom_minimum_size = Vector2(132.0, 32.0)
+		button.focus_mode = Control.FOCUS_ALL
+		button.custom_minimum_size = Vector2(132.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.add_theme_font_size_override("font_size", 15)
+		button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 		LocaleFonts.apply_language_button(button, code)
 		if pressed_callback.is_valid() and not button.has_meta("settings_language_connected"):
 			button.pressed.connect(pressed_callback.bind(code))
@@ -230,12 +238,12 @@ static func apply_button(button: Button, kind: String = "blue") -> void:
 			pressed_path = BTN_GOLD_PRESSED
 
 	button.flat = false
-	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_stylebox_override("normal", _make_style(normal_path, 24.0))
 	button.add_theme_stylebox_override("hover", _make_style(normal_path, 24.0))
 	button.add_theme_stylebox_override("pressed", _make_style(pressed_path, 24.0))
 	button.add_theme_stylebox_override("disabled", _make_style(pressed_path, 24.0))
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	if button.focus_mode != Control.FOCUS_NONE:
+		button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 	button.add_theme_color_override("font_color", Color.WHITE)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
 	button.add_theme_color_override("font_pressed_color", Color.WHITE)
@@ -282,7 +290,6 @@ static func apply_generated_text_button(button: Button, normal_path: String, pre
 		return
 	button.text = ""
 	button.flat = false
-	button.focus_mode = Control.FOCUS_NONE
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var button_size := _generated_button_min_size(normal_path)
 	button.custom_minimum_size = button_size
@@ -295,7 +302,8 @@ static func apply_generated_text_button(button: Button, normal_path: String, pre
 	button.add_theme_stylebox_override("hover", _make_style(normal_path, 0.0))
 	button.add_theme_stylebox_override("pressed", _make_style(pressed_path, 0.0))
 	button.add_theme_stylebox_override("disabled", _make_style(pressed_path, 0.0))
-	button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	if button.focus_mode != Control.FOCUS_NONE:
+		button.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 
 
 static func _apply_adopted_credit_button(button: Button, texture_path: String, target_height: float, locale: String, font_size: int) -> void:
@@ -347,10 +355,10 @@ static func _layout_settings_popup(panel: Panel) -> void:
 		return
 	var vbox := panel.get_node("VBox") as VBoxContainer
 	vbox.offset_left = 58.0
-	vbox.offset_top = 156.0
+	vbox.offset_top = 142.0
 	vbox.offset_right = -50.0
-	vbox.offset_bottom = -72.0
-	vbox.add_theme_constant_override("separation", 6)
+	vbox.offset_bottom = -50.0
+	vbox.add_theme_constant_override("separation", 4)
 	if vbox.has_node("LabelBgm"):
 		(vbox.get_node("LabelBgm") as Label).add_theme_font_size_override("font_size", 24)
 	if vbox.has_node("LabelSe"):
@@ -359,12 +367,16 @@ static func _layout_settings_popup(panel: Panel) -> void:
 		(vbox.get_node("LabelTileSuit") as Label).add_theme_font_size_override("font_size", 20)
 	if vbox.has_node("BgmSlider"):
 		var bgm_slider := vbox.get_node("BgmSlider") as HSlider
-		bgm_slider.custom_minimum_size = Vector2(250.0, 34.0)
+		bgm_slider.custom_minimum_size = Vector2(250.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
 		bgm_slider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		bgm_slider.focus_mode = Control.FOCUS_ALL
+		bgm_slider.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 	if vbox.has_node("SeSlider"):
 		var se_slider := vbox.get_node("SeSlider") as HSlider
-		se_slider.custom_minimum_size = Vector2(250.0, 34.0)
+		se_slider.custom_minimum_size = Vector2(250.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
 		se_slider.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		se_slider.focus_mode = Control.FOCUS_ALL
+		se_slider.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 	if vbox.has_node("TileSuitGrid"):
 		var grid := vbox.get_node("TileSuitGrid") as GridContainer
 		grid.add_theme_constant_override("h_separation", 8)
@@ -372,7 +384,9 @@ static func _layout_settings_popup(panel: Panel) -> void:
 		for child in grid.get_children():
 			if child is CheckBox:
 				var check := child as CheckBox
-				check.custom_minimum_size = Vector2(144.0, 36.0)
+				check.custom_minimum_size = Vector2(144.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
+				check.focus_mode = Control.FOCUS_ALL
+				check.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 				check.add_theme_font_size_override("font_size", 18)
 	if vbox.has_node("LanguageGrid"):
 		var language_grid := vbox.get_node("LanguageGrid") as GridContainer
@@ -381,7 +395,9 @@ static func _layout_settings_popup(panel: Panel) -> void:
 		for child in language_grid.get_children():
 			if child is CheckBox:
 				var check := child as CheckBox
-				check.custom_minimum_size = Vector2(132.0, 32.0)
+				check.custom_minimum_size = Vector2(132.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
+				check.focus_mode = Control.FOCUS_ALL
+				check.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 				check.add_theme_font_size_override("font_size", 15)
 
 
@@ -396,7 +412,7 @@ static func _layout_support_popup(panel: Panel) -> void:
 	vbox.add_theme_constant_override("separation", 8)
 	if vbox.has_node("SupportTitle"):
 		var title := vbox.get_node("SupportTitle") as Label
-		title.custom_minimum_size = Vector2(0.0, 16.0)
+		title.custom_minimum_size = Vector2(0.0, 56.0)
 	if vbox.get_child_count() > 1:
 		var body := vbox.get_child(1) as Label
 		if body != null:
@@ -435,7 +451,7 @@ static func _layout_credit_popup(panel: Panel) -> void:
 	var vbox := panel.get_node("VBox") as VBoxContainer
 	vbox.offset_left = 48.0
 	vbox.offset_top = 110.0
-	vbox.offset_right = -48.0
+	vbox.offset_right = -44.0
 	vbox.offset_bottom = -106.0
 	vbox.add_theme_constant_override("separation", 6)
 	if vbox.has_node("CreditScroll"):
@@ -598,6 +614,12 @@ static func _layout_home_confirm_popup(panel: Panel) -> void:
 		label.position = Vector2(58.0, 104.0)
 		label.size = Vector2(294.0, 42.0)
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if panel.has_node("TimerNoticeLabel"):
+		var notice := panel.get_node("TimerNoticeLabel") as Label
+		notice.position = Vector2(42.0, 145.0)
+		notice.size = Vector2(326.0, 34.0)
+		notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		notice.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if panel.has_node("BtnConfirmYes"):
 		var yes_button: Button = panel.get_node("BtnConfirmYes")
 		yes_button.position = Vector2(55.0, 194.0)
@@ -618,6 +640,8 @@ static func _style_settings_content(panel: Panel) -> void:
 		label.add_theme_constant_override("outline_size", 3)
 	for node in panel.find_children("*", "CheckBox", true, false):
 		var check := node as CheckBox
+		check.focus_mode = Control.FOCUS_ALL
+		check.add_theme_stylebox_override("focus", _make_keyboard_focus_style())
 		check.add_theme_color_override("font_color", text_color)
 		check.add_theme_color_override("font_hover_color", text_color)
 		check.add_theme_color_override("font_pressed_color", text_color)

@@ -2,6 +2,8 @@ extends Control
 
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const ModalFoundation := preload("res://ModalFoundation.gd")
+const META_VISUAL_ART_SIZE := "music_room_visual_art_size"
 
 const ALL_BGM_LIST: Array = [
 	{"file": "bgm_talk_tutorial",          "name": "ちゅーとりある"},
@@ -150,6 +152,34 @@ const MUSIC_SETTINGS_TEXT: Dictionary = {
 	},
 }
 
+const MUSIC_STATUS_TEXT: Dictionary = {
+	"ja": {
+		"selected": "選択中｜{track}",
+		"playing": "再生中｜{track}",
+		"paused": "一時停止｜{track}",
+	},
+	"en": {
+		"selected": "Selected｜{track}",
+		"playing": "Playing｜{track}",
+		"paused": "Paused｜{track}",
+	},
+	"zh_CN": {
+		"selected": "已选择｜{track}",
+		"playing": "播放中｜{track}",
+		"paused": "已暂停｜{track}",
+	},
+	"zh_TW": {
+		"selected": "已選擇｜{track}",
+		"playing": "播放中｜{track}",
+		"paused": "已暫停｜{track}",
+	},
+	"ko": {
+		"selected": "선택 중｜{track}",
+		"playing": "재생 중｜{track}",
+		"paused": "일시 정지｜{track}",
+	},
+}
+
 const PATH_BG_MUSIC   := "res://assets/bg/music_bg.webp"
 const ICON_SETTINGS   := "res://assets/bg/music_icon_settings_ui.webp"
 const ICON_HOME       := "res://assets/bg/music_icon_home_ui.webp"
@@ -238,6 +268,7 @@ func _ready() -> void:
 
 	# 險ｭ螳壹・繝・・繧｢繝・・縺ｯ譛蛻昴・髱櫁｡ｨ遉ｺ
 	$SettingsPopup.visible = false
+	ModalFoundation.configure_backdrop($SettingsBackdrop, $SettingsPopup, 40)
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)
@@ -329,6 +360,9 @@ func _setup_jacket_view() -> void:
 	_status_label.size = Vector2(404.0, 28.0)
 	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_status_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_status_label.clip_text = true
+	_status_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_status_label.add_theme_font_size_override("font_size", 18)
 	_status_label.add_theme_color_override("font_color", Color(1.0, 0.88, 0.56))
 	_status_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.85))
@@ -352,7 +386,8 @@ func _setup_music_settings() -> void:
 	var se_slider := vbox.get_node_or_null("SeSlider")
 	if se_slider != null:
 		vbox.move_child(_repeat_one_check, se_slider.get_index() + 1)
-	_repeat_one_check.custom_minimum_size = Vector2(0.0, 46.0)
+	_repeat_one_check.custom_minimum_size = Vector2(0.0, ModalFoundation.PREFERRED_TOUCH_TARGET)
+	_repeat_one_check.focus_mode = Control.FOCUS_ALL
 	_repeat_one_check.add_theme_font_size_override("font_size", 22)
 	var settings_label_color := Color(0.10, 0.38, 0.32)
 	_repeat_one_check.add_theme_color_override("font_color", settings_label_color)
@@ -401,13 +436,17 @@ func _add_texture_layer(name: String, path: String, position: Vector2, size: Vec
 	return rect
 
 func _setup_image_button(button: Button, path: String, position: Vector2, size: Vector2) -> void:
+	var touch_size := Vector2(size.x, maxf(size.y, ModalFoundation.PREFERRED_TOUCH_TARGET))
+	var touch_position := position - Vector2(0.0, (touch_size.y - size.y) * 0.5)
 	button.text = ""
-	button.position = position
-	button.size = size
-	button.custom_minimum_size = size
+	button.position = touch_position
+	button.size = touch_size
+	button.custom_minimum_size = touch_size
 	button.flat = true
+	button.focus_mode = Control.FOCUS_ALL
 	button.icon = null
 	button.expand_icon = false
+	button.set_meta(META_VISUAL_ART_SIZE, size)
 	_set_button_art(button, path)
 
 func _set_button_art(button: Button, path: String) -> void:
@@ -416,11 +455,10 @@ func _set_button_art(button: Button, path: String) -> void:
 		art = TextureRect.new()
 		art.name = "AspectArt"
 		button.add_child(art)
-	art.set_anchors_preset(Control.PRESET_FULL_RECT)
-	art.offset_left = 0.0
-	art.offset_top = 0.0
-	art.offset_right = 0.0
-	art.offset_bottom = 0.0
+	var visual_size := button.get_meta(META_VISUAL_ART_SIZE, button.size) as Vector2
+	art.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	art.position = (button.size - visual_size) * 0.5
+	art.size = visual_size
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_SCALE
 	art.clip_contents = true
@@ -477,10 +515,14 @@ func _apply_music_row_button_style(button: Button) -> void:
 	var pressed := normal.duplicate() as StyleBoxFlat
 	pressed.bg_color = Color(0.35, 0.16, 0.05, 0.88)
 	pressed.border_color = Color(1.0, 0.78, 0.32, 0.55)
+	var focus := hover.duplicate() as StyleBoxFlat
+	focus.bg_color = Color(0.20, 0.045, 0.075, 0.88)
+	focus.border_color = Color(1.0, 0.88, 0.45, 1.0)
+	focus.set_border_width_all(3)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_stylebox_override("focus", hover)
+	button.add_theme_stylebox_override("focus", focus)
 
 func _setup_compact_icon_button(button: Button, path: String) -> void:
 	button.text = ""
@@ -504,6 +546,7 @@ func _set_screen_keep_on(enable: bool) -> void:
 # 蜈ｨ譖ｲ繝ｪ繧ｹ繝域ｧ狗ｯ・# ============================================================
 func _build_full_list() -> void:
 	var vbox: VBoxContainer = $FullListScroll/FullListVBox
+	$FullListScroll.follow_focus = true
 	for child in vbox.get_children():
 		vbox.remove_child(child)
 		child.queue_free()
@@ -520,18 +563,38 @@ func _build_full_list() -> void:
 		btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		btn.flat = false
 		btn.mouse_filter = Control.MOUSE_FILTER_PASS
-		btn.focus_mode = Control.FOCUS_NONE
+		btn.focus_mode = Control.FOCUS_ALL
 		btn.add_theme_font_size_override("font_size", 18)
 		_apply_music_row_button_style(btn)
 		_set_btn_text_color(btn, Color(1.0, 0.94, 0.78))
 		ButtonFeedback.skip(btn)
 		btn.pressed.connect(_on_full_list_row_pressed.bind(i))
+		btn.focus_entered.connect(_on_full_list_row_focused.bind(i))
 		vbox.add_child(btn)
 
 		_full_list_row_nodes.append({
 			"button": btn,
 			"file": file,
 		})
+	_configure_full_list_focus_navigation()
+
+
+func _configure_full_list_focus_navigation() -> void:
+	if _full_list_row_nodes.is_empty():
+		return
+	for index in range(_full_list_row_nodes.size()):
+		var button := _full_list_row_nodes[index]["button"] as Button
+		var previous := _full_list_row_nodes[(index - 1 + _full_list_row_nodes.size()) % _full_list_row_nodes.size()]["button"] as Button
+		var next := _full_list_row_nodes[(index + 1) % _full_list_row_nodes.size()]["button"] as Button
+		button.focus_neighbor_top = previous.get_path()
+		button.focus_neighbor_bottom = next.get_path()
+
+
+func _on_full_list_row_focused(index: int) -> void:
+	if index < 0 or index >= _full_list_row_nodes.size():
+		return
+	var button := _full_list_row_nodes[index]["button"] as Button
+	$FullListScroll.call_deferred("ensure_control_visible", button)
 
 # ============================================================
 # 繝励Ξ繧､繝ｪ繧ｹ繝域ｧ狗ｯ・# ============================================================
@@ -566,6 +629,8 @@ func _get_jacket_path(file: String) -> String:
 # 蜈ｨ譖ｲ繝ｪ繧ｹ繝茨ｼ夊｡後ち繝・・
 # ============================================================
 func _on_full_list_row_pressed(index: int) -> void:
+	if $SettingsPopup.visible:
+		return
 	AudioManager.play_se("se_btntap")
 	_full_list_selected_index = index
 	_update_visuals()
@@ -576,6 +641,8 @@ func _on_full_list_row_pressed(index: int) -> void:
 # 繝励Ξ繧､繝ｪ繧ｹ繝茨ｼ壼炎髯､
 # ============================================================
 func _on_btn_play_pressed() -> void:
+	if $SettingsPopup.visible:
+		return
 	AudioManager.play_se("se_btntap")
 
 	if _player_state == "paused":
@@ -599,6 +666,8 @@ func _on_btn_play_pressed() -> void:
 	_update_visuals()
 	_update_track_name_display()
 func _on_btn_pause_pressed() -> void:
+	if $SettingsPopup.visible:
+		return
 	AudioManager.play_se("se_btntap")
 	if _player_state == "playing":
 		AudioManager.bgm_player.stream_paused = true
@@ -607,6 +676,8 @@ func _on_btn_pause_pressed() -> void:
 		_update_track_name_display()
 
 func _on_btn_stop_pressed() -> void:
+	if $SettingsPopup.visible:
+		return
 	AudioManager.play_se("se_btntap")
 	_stop_playback()
 
@@ -658,12 +729,12 @@ func _update_track_name_display() -> void:
 				_jacket_fallback_label.text = display_name
 				_jacket_fallback_label.visible = display_name != ""
 	if _status_label != null:
+		var status_key := "selected"
 		if _player_state == "playing":
-			_status_label.text = "NOW PLAYING"
+			status_key = "playing"
 		elif _player_state == "paused":
-			_status_label.text = "PAUSED"
-		else:
-			_status_label.text = ""
+			status_key = "paused"
+		_status_label.text = _music_status_text(status_key, display_name) if display_name != "" else ""
 	if _player_state == "idle" or _current_playing_file == "":
 		label.text = "繝ｼ"
 	else:
@@ -671,6 +742,13 @@ func _update_track_name_display() -> void:
 		if _player_state == "paused":
 			prefix = "(荳譎ょ●豁｢) "
 		label.text = prefix + "笙ｪ " + _get_display_name(_current_playing_file)
+
+
+func _music_status_text(key: String, track_name: String) -> String:
+	var locale := SaveData.normalize_language_code(SaveData.language_code)
+	var locale_texts: Dictionary = MUSIC_STATUS_TEXT.get(locale, MUSIC_STATUS_TEXT["ja"])
+	var template := str(locale_texts.get(key, MUSIC_STATUS_TEXT["ja"].get(key, "")))
+	return template.replace("{track}", track_name)
 
 # ============================================================
 # 繝上う繝ｩ繧､繝医・驕ｸ謚櫁｡ｨ遉ｺ譖ｴ譁ｰ
@@ -694,6 +772,8 @@ func _update_visuals() -> void:
 # 險ｭ螳壹・繧ｿ繝ｳ繝ｻ險ｭ螳壹・繝・・繧｢繝・・
 # ============================================================
 func _on_btn_settings_pressed() -> void:
+	if $SettingsPopup.visible:
+		return
 	AudioManager.play_se("se_btntap")
 	PopupSkin.ensure_settings_language_controls($SettingsPopup, Callable(self, "_on_language_button_pressed"))
 	PopupSkin.apply_settings_popup($SettingsPopup)
@@ -704,7 +784,7 @@ func _on_btn_settings_pressed() -> void:
 	$SettingsPopup/VBox/SeSlider.value  = AudioManager.se_volume
 	if _repeat_one_check != null:
 		_repeat_one_check.button_pressed = SaveData.music_repeat_one
-	$SettingsPopup.visible = true
+	ModalFoundation.open_modal($SettingsBackdrop, $SettingsPopup, $BtnSettings, $SettingsPopup/VBox/BgmSlider, 40)
 
 func _on_repeat_one_toggled(enabled: bool) -> void:
 	AudioManager.play_se("se_btntap")
@@ -726,6 +806,7 @@ func _on_language_button_pressed(code: String) -> void:
 	PopupSkin.apply_settings_popup($SettingsPopup)
 	PopupSkin.refresh_settings_language($SettingsPopup)
 	_setup_music_settings()
+	ModalFoundation.configure_focus_ring(ModalFoundation.collect_focusable_controls($SettingsPopup))
 	_refresh_localized_music_images()
 	_build_full_list()
 	_update_track_name_display()
@@ -733,12 +814,14 @@ func _on_language_button_pressed(code: String) -> void:
 	AudioManager.play_se("se_btntap")
 
 func _on_btn_settings_close_pressed() -> void:
-	$SettingsPopup.visible = false
+	ModalFoundation.close_modal($SettingsBackdrop, $SettingsPopup, true)
 
 # ============================================================
 # 謌ｻ繧九・繧ｿ繝ｳ
 # ============================================================
 func _on_btn_back_pressed() -> void:
+	if $SettingsPopup.visible:
+		return
 	AudioManager.play_se("se_btntap")
 	AudioManager.stop_bgm()
 	SaveData.save()

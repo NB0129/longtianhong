@@ -137,7 +137,7 @@ func _validate_action_layout() -> void:
 	_assert(_licenses_button.get_index() < _privacy_button.get_index(), "Licenses / OSS is left of Privacy Policy")
 	_assert(is_equal_approx(_credit_popup.position.x, 18.0) and is_equal_approx(_credit_popup.position.y, 50.0), "Credit popup uses the enlarged centered position")
 	_assert(_credit_popup.size.is_equal_approx(Vector2(444.0, 754.0)), "Credit popup uses the enlarged size")
-	_assert(is_equal_approx(_action_row.size.x, 348.0), "Credit action row has the approved inner width")
+	_assert(is_equal_approx(_action_row.size.x, 352.0), "Credit action row has the adopted +4px inner width")
 	_assert(_licenses_button.size.y >= 48.0 and _privacy_button.size.y >= 48.0, "Both credit action buttons keep a touch-safe height")
 	var licenses_rect := Rect2(_licenses_button.position, _licenses_button.size)
 	var privacy_rect := Rect2(_privacy_button.position, _privacy_button.size)

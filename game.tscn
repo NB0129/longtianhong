@@ -359,12 +359,31 @@ theme_override_font_sizes/font_size = 20
 [node name="TimerLabel" type="Label" parent="." unique_id=1502907259]
 visible = false
 layout_mode = 0
-offset_right = 40.0
-offset_bottom = 23.0
-theme_override_font_sizes/font_size = 24
+offset_left = 12.0
+offset_top = 1.0
+offset_right = 194.0
+offset_bottom = 46.0
+theme_override_font_sizes/font_size = 22
+clip_text = false
+text_overrun_behavior = 0
+autowrap_mode = 0
+vertical_alignment = 1
+
+[node name="HomeConfirmBackdrop" type="ColorRect" parent="."]
+visible = false
+z_index = 90
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.58)
 
 [node name="HomeConfirmPopup" type="Panel" parent="." unique_id=201548151]
 visible = false
+z_index = 91
 layout_mode = 0
 offset_left = 35.0
 offset_top = 255.0
@@ -380,6 +399,17 @@ offset_bottom = 124.0
 theme_override_font_sizes/font_size = 24
 text = "ステージ選択に戻りますか？"
 horizontal_alignment = 1
+
+[node name="TimerNoticeLabel" type="Label" parent="HomeConfirmPopup"]
+layout_mode = 0
+offset_left = 42.0
+offset_top = 145.0
+offset_right = 368.0
+offset_bottom = 179.0
+theme_override_font_sizes/font_size = 15
+text = "※確認中も制限時間は進みます"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="BtnConfirmYes" type="Button" parent="HomeConfirmPopup" unique_id=435839645]
 layout_mode = 0
@@ -397,8 +427,21 @@ offset_right = 342.0
 offset_bottom = 210.0
 text = "いいえ"
 
+[node name="SettingsBackdrop" type="ColorRect" parent="."]
+visible = false
+z_index = 80
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+color = Color(0, 0, 0, 0.58)
+
 [node name="SettingsPopup" type="Panel" parent="." unique_id=600000001]
 visible = false
+z_index = 81
 layout_mode = 0
 offset_left = 30.0
 offset_top = 95.0

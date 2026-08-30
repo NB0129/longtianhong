@@ -74,7 +74,7 @@ func _setup_tile_button(button: CheckBox, tile_suit: String) -> void:
 	button.text = ""
 	button.custom_minimum_size = TILE_BUTTON_SIZE
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
 	if button.has_node("TilePreview"):
 		button.get_node("TilePreview").queue_free()
 
