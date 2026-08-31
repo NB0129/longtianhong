@@ -166,6 +166,12 @@ func _validate_normal_result_and_answer_focus() -> void:
 	var btn_retry := _button("BtnRetry")
 	var btn_home := _button("BtnHome")
 	var btn_answer := _button("BtnShowAnswer")
+	var top_home := _game.get_node("TopBar/BtnHome") as Button
+	var top_settings := _game.get_node("TopBar/BtnSettings") as Button
+	var original_top_home_state := _button_state(top_home)
+	var original_top_settings_state := _button_state(top_settings)
+	var original_top_home_rest_modulate := top_home.modulate
+	var original_top_settings_rest_modulate := top_settings.modulate
 	_assert(btn_retry.visible and not btn_retry.disabled, "normal gameover Retry remains enabled")
 	_assert(btn_home.visible and not btn_home.disabled, "normal gameover Home remains enabled")
 	for locale: String in LOCALE_LABELS:
@@ -196,6 +202,11 @@ func _validate_normal_result_and_answer_focus() -> void:
 	_assert(get_viewport().gui_get_focus_owner() == btn_retry, "gameover initial focus is Retry")
 	_game.call("_show_answer_view_from_result")
 	await get_tree().process_frame
+	_assert_answer_top_bar_hidden(top_home, top_settings, "Answer entry")
+	var saved_once := (_game.get("_answer_view_top_bar_states") as Dictionary).duplicate(true)
+	_game.call("_show_answer_view_from_result")
+	_assert((_game.get("_answer_view_top_bar_states") as Dictionary) == saved_once, "duplicate Answer entry does not overwrite saved TopBar state")
+	_assert_answer_top_bar_hidden(top_home, top_settings, "duplicate Answer entry")
 	var btn_back := _button("BtnBackToResult")
 	_assert(btn_back.visible and btn_back.focus_mode == Control.FOCUS_ALL, "Answer view Back is visible and focusable")
 	_assert(btn_back.accessibility_name == "戻る", "Answer view Back accessibility")
@@ -204,10 +215,33 @@ func _validate_normal_result_and_answer_focus() -> void:
 	_assert_focus_graph_closed("answer")
 	_game.call("_handle_system_back")
 	await get_tree().process_frame
+	await get_tree().create_timer(0.13).timeout
 	_assert(not bool(_game.get("is_result_answer_view")), "system Back returns from Answer view")
 	_assert(not btn_back.visible and btn_back.focus_mode == Control.FOCUS_NONE, "hidden Back is not focusable")
 	_assert(get_viewport().gui_get_focus_owner() == btn_answer, "returning to result restores Answer focus")
 	_assert_focus_graph_closed("result restored")
+	_assert_button_state(top_home, original_top_home_state, "system Back restores Home exactly")
+	_assert_button_state(top_settings, original_top_settings_state, "system Back restores Settings exactly")
+	_assert_restored_button_visual(top_home, original_top_home_rest_modulate, "system Back Home")
+	_assert_restored_button_visual(top_settings, original_top_settings_rest_modulate, "system Back Settings")
+	_assert((_game.get("_answer_view_top_bar_states") as Dictionary).is_empty(), "system Back clears saved TopBar state")
+
+	var mixed_home_state := {"visible": true, "disabled": false, "focus_mode": Control.FOCUS_ALL}
+	var mixed_settings_state := {"visible": false, "disabled": true, "focus_mode": Control.FOCUS_NONE}
+	_apply_button_state(top_home, mixed_home_state)
+	_apply_button_state(top_settings, mixed_settings_state)
+	var mixed_home_rest_modulate := top_home.modulate
+	_game.call("_show_answer_view_from_result")
+	_assert_answer_top_bar_hidden(top_home, top_settings, "mixed-state Answer entry")
+	_game.call("_show_answer_view_from_result")
+	_game.call("_show_result_view_from_answer")
+	await get_tree().create_timer(0.13).timeout
+	_assert_button_state(top_home, mixed_home_state, "explicit return restores visible Home state")
+	_assert_button_state(top_settings, mixed_settings_state, "explicit return restores hidden Settings state")
+	_assert_restored_button_visual(top_home, mixed_home_rest_modulate, "explicit return Home")
+	_assert((_game.get("_answer_view_top_bar_states") as Dictionary).is_empty(), "explicit return clears saved TopBar state")
+	_apply_button_state(top_home, original_top_home_state)
+	_apply_button_state(top_settings, original_top_settings_state)
 	(_game.get_node("PopupResult") as Control).visible = false
 	await get_tree().process_frame
 	for name in ["BtnRetry", "BtnHome", "BtnSubmitRanking", "BtnShowAnswer", "BtnBackToResult"]:
@@ -258,6 +292,40 @@ func _assert_focus_graph_closed(context: String) -> void:
 
 func _button(button_name: String) -> Button:
 	return _game.call("_get_result_button", button_name) as Button
+
+
+func _button_state(button: Button) -> Dictionary:
+	return {
+		"visible": button.visible,
+		"disabled": button.disabled,
+		"focus_mode": button.focus_mode,
+	}
+
+
+func _apply_button_state(button: Button, state: Dictionary) -> void:
+	button.disabled = bool(state["disabled"])
+	button.focus_mode = int(state["focus_mode"])
+	button.visible = bool(state["visible"])
+
+
+func _assert_button_state(button: Button, expected: Dictionary, context: String) -> void:
+	_assert(button.visible == bool(expected["visible"]), "%s visible state" % context)
+	_assert(button.disabled == bool(expected["disabled"]), "%s disabled state" % context)
+	_assert(button.focus_mode == int(expected["focus_mode"]), "%s focus mode" % context)
+
+
+func _assert_restored_button_visual(button: Button, expected_modulate: Color, context: String) -> void:
+	if not button.visible:
+		return
+	_assert(button.scale == Vector2.ONE, "%s feedback scale returns to one" % context)
+	_assert(button.modulate.is_equal_approx(expected_modulate), "%s feedback modulate returns to its pre-Answer rest state" % context)
+
+
+func _assert_answer_top_bar_hidden(home: Button, settings: Button, context: String) -> void:
+	for button in [home, settings]:
+		_assert(not button.visible, "%s hides %s" % [context, button.name])
+		_assert(button.disabled, "%s disables %s" % [context, button.name])
+		_assert(button.focus_mode == Control.FOCUS_NONE, "%s removes %s from focus" % [context, button.name])
 
 
 func _finish() -> void:

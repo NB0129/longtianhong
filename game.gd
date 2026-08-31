@@ -2,6 +2,7 @@ extends Control
 
 const PopupSkin := preload("res://PopupSkin.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const ButtonFamilyRuntime := preload("res://ButtonFamilyRuntime.gd")
 const RankingNoticeScript := preload("res://RankingNotice.gd")
 const DeveloperFeatures := preload("res://DeveloperFeatures.gd")
 const TalkLocalization := preload("res://TalkLocalization.gd")
@@ -300,6 +301,7 @@ const RESULT_BUTTON_TEXT_OUTLINE := Color(0.3490196, 0.0666667, 0.054902, 1.0)
 const RESULT_BUTTON_TEXT_SHADOW := Color(0.0784314, 0.0117647, 0.0156863, 0.7215686)
 const RESULT_BTN_BACK := "res://assets/ui/result_buttons/result_btn_back_v2.webp"
 const RESULT_BTN_BACK_PRESSED := "res://assets/ui/result_buttons/result_btn_back_v2.webp"
+const BUTTON_FAMILY_RESULT_BACK := "res://assets/ui/button_families_r02/result_back_compact_r02_170x62.png"
 const RESULT_PETAL_IMAGE_PATH := "res://assets/ui/result_petal.webp"
 const KEYPAD_BTN_CLEAR := "res://assets/ui/keypad_buttons/keypad_btn_clear.webp"
 const KEYPAD_BTN_CLEAR_PRESSED := "res://assets/ui/keypad_buttons/keypad_btn_clear_pressed.webp"
@@ -408,6 +410,7 @@ var is_animating: bool = false
 var is_game_over: bool = false
 var is_gameover_result: bool = false
 var is_result_answer_view: bool = false
+var _answer_view_top_bar_states: Dictionary = {}
 var _result_button_base_font: FontFile = null
 var _result_button_font_stacks: Dictionary = {}
 var _stage_intro_card: Control = null
@@ -1268,6 +1271,8 @@ func _finish_tutorial_mode() -> void:
 
 
 func _reset_gameover_display() -> void:
+	if not _answer_view_top_bar_states.is_empty():
+		_restore_answer_view_top_bar_buttons()
 	is_result_answer_view = false
 	$PopupResult/PopupPanel.visible = true
 	if has_node("PopupResult/ResultButtons/BtnRetry"):
@@ -1719,7 +1724,9 @@ func _refresh_back_to_result_button() -> void:
 	if not has_node("PopupResult/BtnBackToResult"):
 		return
 	var btn_back := $PopupResult/BtnBackToResult as Button
-	_apply_result_image_button_style(btn_back, _localized_result_button_path("result_btn_back.webp", RESULT_BTN_BACK))
+	btn_back.position = Vector2(112.5, 751.0)
+	btn_back.size = Vector2(255.0, 93.0)
+	ButtonFamilyRuntime.apply(btn_back, BUTTON_FAMILY_RESULT_BACK, Vector2(255.0, 93.0), _result_ui_text("result_back"), str(SaveData.normalize_language_code(SaveData.language_code)), "result_back")
 	_set_result_button_semantics(btn_back, "result_back")
 
 func _refresh_visible_result_header() -> void:
@@ -1999,6 +2006,8 @@ func _set_result_button_semantics(button: Button, text_key: String) -> void:
 			label.text = accessible_text
 			label.language = locale.replace("_", "-")
 			_fit_result_runtime_text(label, accessible_text, locale)
+	elif bool(button.get_meta("button_family_runtime_text", false)):
+		ButtonFamilyRuntime.set_text(button, accessible_text, str(SaveData.normalize_language_code(SaveData.language_code)))
 
 
 func _refresh_result_button_semantics() -> void:
@@ -2312,9 +2321,9 @@ func _ensure_result_answer_buttons() -> void:
 		var btn_back: Button = Button.new()
 		btn_back.name = "BtnBackToResult"
 		btn_back.text = "リザルトに戻る"
-		btn_back.position = Vector2(110.0, 782.0)
-		btn_back.size = Vector2(260.0, 62.0)
-		btn_back.custom_minimum_size = Vector2(260.0, 62.0)
+		btn_back.position = Vector2(112.5, 751.0)
+		btn_back.size = Vector2(255.0, 93.0)
+		btn_back.custom_minimum_size = Vector2(255.0, 93.0)
 		btn_back.add_theme_font_size_override("font_size", 22)
 		btn_back.visible = false
 		btn_back.pressed.connect(_on_btn_back_to_result_pressed)
@@ -2383,6 +2392,7 @@ func _show_answer_view_from_result() -> void:
 	if is_result_answer_view:
 		return
 	is_result_answer_view = true
+	_hide_answer_view_top_bar_buttons()
 	_stop_result_sakura_fx()
 	$PopupResult/ResultMask.visible = false
 	$PopupResult/StageClearImage.visible = false
@@ -2404,6 +2414,7 @@ func _show_result_view_from_answer() -> void:
 	if not is_result_answer_view:
 		return
 	is_result_answer_view = false
+	_restore_answer_view_top_bar_buttons()
 	_start_result_sakura_fx()
 	$PopupResult/ResultMask.visible = true
 	$PopupResult/StageClearImage.visible = true
@@ -2418,6 +2429,40 @@ func _show_result_view_from_answer() -> void:
 		$PopupResult/BtnBackToResult.visible = false
 	_configure_result_focus_navigation()
 	call_deferred("_focus_result_answer_button")
+
+
+func _hide_answer_view_top_bar_buttons() -> void:
+	if _answer_view_top_bar_states.is_empty():
+		for button_name in ["BtnHome", "BtnSettings"]:
+			var button := get_node_or_null("TopBar/" + button_name) as Button
+			if button == null:
+				continue
+			_answer_view_top_bar_states[button_name] = {
+				"visible": button.visible,
+				"disabled": button.disabled,
+				"focus_mode": button.focus_mode,
+			}
+	for button_name in ["BtnHome", "BtnSettings"]:
+		var button := get_node_or_null("TopBar/" + button_name) as Button
+		if button == null:
+			continue
+		button.visible = false
+		button.disabled = true
+		button.focus_mode = Control.FOCUS_NONE
+
+
+func _restore_answer_view_top_bar_buttons() -> void:
+	for button_name in ["BtnHome", "BtnSettings"]:
+		if not _answer_view_top_bar_states.has(button_name):
+			continue
+		var button := get_node_or_null("TopBar/" + button_name) as Button
+		if button == null:
+			continue
+		var saved_state := _answer_view_top_bar_states[button_name] as Dictionary
+		button.disabled = bool(saved_state["disabled"])
+		button.focus_mode = int(saved_state["focus_mode"])
+		button.visible = bool(saved_state["visible"])
+	_answer_view_top_bar_states.clear()
 
 func _get_time_bonus() -> int:
 	return time_bonus_total

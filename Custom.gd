@@ -1,13 +1,14 @@
 extends Control
 
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const ButtonFamilyRuntime := preload("res://ButtonFamilyRuntime.gd")
 const ModalFoundation := preload("res://ModalFoundation.gd")
 
 const PATH_BG := "res://assets/bg/custom_room_bg_generated.webp"
 const PATH_TITLE := "res://assets/bg/custom_room_title.webp"
 const PATH_PANEL := "res://assets/bg/custom_room_panel.webp"
-const PATH_BTN_BACK := "res://assets/bg/custom_btn_back.webp"
-const PATH_BTN_START := "res://assets/bg/custom_btn_start.webp"
+const BUTTON_FAMILY_BACK := "res://assets/ui/button_families_r01/custom_secondary_back_154x54.png"
+const BUTTON_FAMILY_START := "res://assets/ui/button_families_r01/custom_primary_start_204x54.png"
 const LOCALIZED_CUSTOM_ROOM_DIR := "res://assets/language/normalized/%s/custom_room/"
 
 const PANEL_COLOR := Color(1.0, 0.95, 0.78, 0.58)
@@ -36,6 +37,8 @@ const CUSTOM_TEXT := {
 		"bgm_mabo_b": "まぼろし2",
 		"bgm_required": "BGMを1曲以上選んでください",
 		"seconds_format": "%d秒",
+		"custom_back": "戻る",
+		"custom_start": "ゲーム開始",
 	},
 	"en": {
 		"difficulty": "Difficulty",
@@ -55,6 +58,8 @@ const CUSTOM_TEXT := {
 		"bgm_mabo_b": "Maboroshi 2",
 		"bgm_required": "Select at least one BGM track.",
 		"seconds_format": "%d sec",
+		"custom_back": "Back",
+		"custom_start": "Start game",
 	},
 	"zh_CN": {
 		"difficulty": "难度",
@@ -74,6 +79,8 @@ const CUSTOM_TEXT := {
 		"bgm_mabo_b": "幻胧2",
 		"bgm_required": "请至少选择1首BGM。",
 		"seconds_format": "%d秒",
+		"custom_back": "返回",
+		"custom_start": "开始游戏",
 	},
 	"zh_TW": {
 		"difficulty": "難度",
@@ -93,6 +100,8 @@ const CUSTOM_TEXT := {
 		"bgm_mabo_b": "幻朧2",
 		"bgm_required": "請至少選擇1首BGM。",
 		"seconds_format": "%d秒",
+		"custom_back": "返回",
+		"custom_start": "開始遊戲",
 	},
 	"ko": {
 		"difficulty": "난이도",
@@ -112,6 +121,8 @@ const CUSTOM_TEXT := {
 		"bgm_mabo_b": "마보로시 2",
 		"bgm_required": "BGM을 1곡 이상 선택해 주세요.",
 		"seconds_format": "%d초",
+		"custom_back": "뒤로",
+		"custom_start": "게임 시작",
 	},
 }
 
@@ -247,8 +258,8 @@ func _setup_generated_ui() -> void:
 	$BottomBox.size = Vector2(412.0, 62.0)
 	$BottomBox.add_theme_constant_override("separation", 32)
 	$BottomBox.alignment = BoxContainer.ALIGNMENT_CENTER
-	_style_command_button($BottomBox/BtnBack, _localized_custom_room_path("custom_btn_back.webp", PATH_BTN_BACK), Vector2(154.0, 54.0), false)
-	_style_command_button($BottomBox/BtnStart, _localized_custom_room_path("custom_btn_start.webp", PATH_BTN_START), Vector2(204.0, 54.0), true)
+	_apply_button_family_texts()
+
 
 func _localized_custom_room_path(file_name: String, fallback_path: String) -> String:
 	var locale := SaveData.normalize_language_code(SaveData.language_code)
@@ -287,6 +298,13 @@ func _apply_text_language() -> void:
 	$MainVBox/BgmGrid/CheckMaboA.text = _custom_text("bgm_mabo_a")
 	$MainVBox/BgmGrid/CheckMaboB.text = _custom_text("bgm_mabo_b")
 	$MainVBox/BgmValidationLabel.text = _custom_text("bgm_required")
+	_apply_button_family_texts()
+
+
+func _apply_button_family_texts() -> void:
+	var locale := str(SaveData.normalize_language_code(SaveData.language_code))
+	ButtonFamilyRuntime.apply($BottomBox/BtnBack, BUTTON_FAMILY_BACK, Vector2(154.0, 54.0), _custom_text("custom_back"), locale, "custom_back")
+	ButtonFamilyRuntime.apply($BottomBox/BtnStart, BUTTON_FAMILY_START, Vector2(204.0, 54.0), _custom_text("custom_start"), locale, "custom_start")
 
 func _add_texture_layer(name: String, path: String, position: Vector2, size: Vector2) -> TextureRect:
 	var rect: TextureRect = get_node_or_null(name) as TextureRect
@@ -359,37 +377,6 @@ func _style_option_button(button: Button) -> void:
 	button.add_theme_color_override("font_pressed_color", Color(0.45, 0.24, 0.04))
 	button.add_theme_color_override("font_focus_color", TEXT_MAIN)
 	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.58, 0.62))
-
-func _style_command_button(button: Button, image_path: String, size: Vector2, primary: bool) -> void:
-	button.text = ""
-	button.custom_minimum_size = size
-	button.flat = true
-	var clear := StyleBoxEmpty.new()
-	button.add_theme_stylebox_override("normal", clear)
-	button.add_theme_stylebox_override("hover", clear)
-	button.add_theme_stylebox_override("pressed", clear)
-	button.add_theme_stylebox_override("focus", clear)
-	_set_button_art(button, image_path)
-
-func _set_button_art(button: Button, path: String) -> void:
-	button.icon = null
-	button.expand_icon = false
-	var art: TextureRect = button.get_node_or_null("AspectArt") as TextureRect
-	if art == null:
-		art = TextureRect.new()
-		art.name = "AspectArt"
-		button.add_child(art)
-	art.set_anchors_preset(Control.PRESET_FULL_RECT)
-	art.offset_left = 0.0
-	art.offset_top = 0.0
-	art.offset_right = 0.0
-	art.offset_bottom = 0.0
-	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	art.stretch_mode = TextureRect.STRETCH_SCALE
-	art.clip_contents = true
-	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if ResourceLoader.exists(path):
-		art.texture = load(path)
 
 func _style_bgm_check(check: CheckBox) -> void:
 	check.custom_minimum_size = Vector2(152.0, ModalFoundation.PREFERRED_TOUCH_TARGET)

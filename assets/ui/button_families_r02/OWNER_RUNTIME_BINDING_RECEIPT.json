@@ -1,0 +1,86 @@
+{
+  "schema": "machi-ate.button-families-r02.owner-runtime-binding-receipt.v1",
+  "recorded_jst_date": "2026-08-31",
+  "owner_decision": "R02 TEXT90 final exact20 adopted for runtime textless-frame binding; owner-adopted geometry revision enlarges Settings and Result Back without changing exact PNG bytes or locale tuples",
+  "lifecycle": "OWNER_ACCEPTED_KNOWN_ALPHA_DEBT",
+  "alpha_gate_pass": false,
+  "mechanical_pass": false,
+  "repair": false,
+  "crop": false,
+  "repaint": false,
+  "hidden_pixel_cleanup": false,
+  "runtime_binding": true,
+  "runtime_method": "Three exact textless PNG frames plus localized Godot Label",
+  "runtime_text_composite_png_count": 0,
+  "source_manifest": {
+    "path": "artifacts/imagegen_candidates/button_families_r02/owner_waived_static_sample/text90/TEXT90_STATIC_SAMPLE_MANIFEST.json",
+    "bytes": 123166,
+    "sha256": "3A90086C238FFF6B7ADB5F35E70CFEADFC164F10FF89D302F1D0F4B74A87E110"
+  },
+  "runtime_layout_mirror": {
+    "path": "res://assets/ui/button_families_r02/INK_LAYOUTS.json",
+    "bytes": 2464,
+    "sha256": "D65D5D598DC17588D86B525A7949E7CBDF332CDBEA17261085FA975C1D81866D"
+  },
+  "frames": [
+    {
+      "path": "res://assets/ui/button_families_r02/result_back_compact_r02_170x62.png",
+      "dimensions": [170, 62],
+      "bytes": 11873,
+      "sha256": "FA4219B78153E24E8344B6D6A34A107FA9E888632964FAF4BBB913CA723FE2D9"
+    },
+    {
+      "path": "res://assets/ui/button_families_r02/confirm_compact_r02_112x48.png",
+      "dimensions": [112, 48],
+      "bytes": 6545,
+      "sha256": "8A35099418E777F1D44E2685BD2202D6010C31B3E9318D35338EB5FDF8F8B7CF"
+    },
+    {
+      "path": "res://assets/ui/button_families_r02/close_compact_r02_130x54.png",
+      "dimensions": [130, 54],
+      "bytes": 8624,
+      "sha256": "0AD98422D4D055778A8CF4083B948C41A416A33A67E111ABE31E91879CB20399"
+    }
+  ],
+  "accepted_exact20": [
+    {"role": "result_back", "locale": "ja", "text": "戻る", "godot_tuple": [24, 63, 11]},
+    {"role": "result_back", "locale": "en", "text": "Back", "godot_tuple": [26, 53, 10]},
+    {"role": "result_back", "locale": "zh_CN", "text": "返回", "godot_tuple": [23, 62, 12]},
+    {"role": "result_back", "locale": "zh_TW", "text": "返回", "godot_tuple": [23, 62, 12]},
+    {"role": "result_back", "locale": "ko", "text": "뒤로", "godot_tuple": [23, 63, 12]},
+    {"role": "confirm_yes", "locale": "ja", "text": "はい", "godot_tuple": [23, 32, 4]},
+    {"role": "confirm_yes", "locale": "en", "text": "Yes", "godot_tuple": [24, 35, 4]},
+    {"role": "confirm_yes", "locale": "zh_CN", "text": "是", "godot_tuple": [18, 46, 9]},
+    {"role": "confirm_yes", "locale": "zh_TW", "text": "是", "godot_tuple": [18, 46, 9]},
+    {"role": "confirm_yes", "locale": "ko", "text": "예", "godot_tuple": [18, 47, 9]},
+    {"role": "confirm_no", "locale": "ja", "text": "いいえ", "godot_tuple": [19, 26, 7]},
+    {"role": "confirm_no", "locale": "en", "text": "No", "godot_tuple": [23, 39, 5]},
+    {"role": "confirm_no", "locale": "zh_CN", "text": "否", "godot_tuple": [19, 46, 7]},
+    {"role": "confirm_no", "locale": "zh_TW", "text": "否", "godot_tuple": [19, 46, 7]},
+    {"role": "confirm_no", "locale": "ko", "text": "아니요", "godot_tuple": [18, 30, 9]},
+    {"role": "close", "locale": "ja", "text": "閉じる", "godot_tuple": [22, 32, 7]},
+    {"role": "close", "locale": "en", "text": "Close", "godot_tuple": [21, 35, 9]},
+    {"role": "close", "locale": "zh_CN", "text": "关闭", "godot_tuple": [21, 43, 9]},
+    {"role": "close", "locale": "zh_TW", "text": "關閉", "godot_tuple": [23, 41, 7]},
+    {"role": "close", "locale": "ko", "text": "닫기", "godot_tuple": [22, 44, 8]}
+  ],
+  "geometry": {
+    "result_back": {"position": [112.5, 751], "hitbox": [255, 93], "art_rect": [0, 0, 255, 93], "source_frame_scale": 1.5},
+    "confirm_yes": {"position": [93, 194], "hitbox": [112, 48], "art_rect": [0, 0, 112, 48]},
+    "confirm_no": {"position": [205, 194], "hitbox": [112, 48], "art_rect": [0, 0, 112, 48]},
+    "settings_panel": {"position": [20, 17], "size": [440, 820]},
+    "settings_vbox": {"offsets": [58, 160, -50, -70], "resolved_rect": [58, 160, 332, 590], "inner_cream_top": 152, "bgm_top_margin": 8},
+    "settings_close": {"hitbox": [130, 70], "art_rect": [0, 8, 130, 54]},
+    "credit_close": {"hitbox": [130, 70], "art_rect": [0, 8, 130, 54]}
+  },
+  "preserved": {
+    "custom_back_b26": true,
+    "custom_start_r01": true,
+    "result_exact4": true,
+    "callbacks": true,
+    "disabled_states": true,
+    "focus": true,
+    "pressed_feedback": true
+  },
+  "fallback_inventory": []
+}

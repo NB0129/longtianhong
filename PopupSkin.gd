@@ -2,6 +2,7 @@ extends RefCounted
 
 const TalkLocalization := preload("res://TalkLocalization.gd")
 const ButtonFeedback := preload("res://ButtonFeedback.gd")
+const ButtonFamilyRuntime := preload("res://ButtonFamilyRuntime.gd")
 const ModalFoundation := preload("res://ModalFoundation.gd")
 
 const PANEL_SETTINGS := "res://assets/ui/popups/popup_panel_settings.webp"
@@ -35,6 +36,10 @@ const BTN_BUY_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_buy_generat
 const BTN_RESTORE_GENERATED := "res://assets/ui/popups/popup_btn_restore_generated.webp"
 const BTN_RESTORE_GENERATED_PRESSED := "res://assets/ui/popups/popup_btn_restore_generated_pressed.webp"
 const BTN_CREDIT_BLANK_OWNER_ADOPTED := "res://assets/ui/popups/credit_buttons/owner_adopted_known_alpha_debt/popup_btn_credit_blank_r01.png"
+const BUTTON_FAMILY_MODAL_CONFIRM := "res://assets/ui/button_families_r02/confirm_compact_r02_112x48.png"
+const BUTTON_FAMILY_MODAL_CLOSE := "res://assets/ui/button_families_r02/close_compact_r02_130x54.png"
+const BUTTON_FAMILY_SETTINGS_CLOSE_ART_RECT := Rect2(0.0, 8.0, 130.0, 54.0)
+const BUTTON_FAMILY_CREDIT_CLOSE_ART_RECT := Rect2(0.0, 8.0, 130.0, 54.0)
 const LOCALIZED_SETTINGS_PANEL_DIR := "res://assets/language/normalized/%s/settings_panels/"
 const LOCALIZED_SETTINGS_BUTTON_DIR := "res://assets/language/normalized/%s/settings_buttons/"
 const LOCALIZED_CONFIRM_PANEL_DIR := "res://assets/language/normalized/%s/confirm_panels/"
@@ -51,8 +56,9 @@ static func apply_settings_popup(panel: Panel) -> void:
 	if panel.has_node("VBox/BtnSettingsClose"):
 		var close_button: Button = panel.get_node("VBox/BtnSettingsClose")
 		_ensure_spacer_before(close_button, "SettingsCloseSpacer")
-		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_CLOSE_V2)
-		apply_generated_text_button(close_button, close_path, close_path)
+		close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var locale := str(SaveData.normalize_language_code(SaveData.language_code))
+		ButtonFamilyRuntime.apply(close_button, BUTTON_FAMILY_MODAL_CLOSE, Vector2(130.0, 70.0), TalkLocalization.ui_text(locale, "close"), locale, "settings_close", 1.0, BUTTON_FAMILY_SETTINGS_CLOSE_ART_RECT)
 	if panel.has_node("VBox/BtnExitGame"):
 		apply_button(panel.get_node("VBox/BtnExitGame"), "pink")
 
@@ -72,11 +78,11 @@ static func apply_home_confirm_popup(panel: Panel) -> void:
 		notice.add_theme_color_override("font_outline_color", Color(0.08, 0.01, 0.02, 1.0))
 		notice.add_theme_constant_override("outline_size", 4)
 	if panel.has_node("BtnConfirmYes"):
-		var yes_path := _localized_confirm_button_path("popup_btn_yes.webp", BTN_YES_V2)
-		apply_generated_text_button(panel.get_node("BtnConfirmYes"), yes_path, yes_path)
+		var locale := str(SaveData.normalize_language_code(SaveData.language_code))
+		ButtonFamilyRuntime.apply(panel.get_node("BtnConfirmYes"), BUTTON_FAMILY_MODAL_CONFIRM, Vector2(112.0, 48.0), TalkLocalization.ui_text(locale, "yes"), locale, "confirm_yes")
 	if panel.has_node("BtnConfirmNo"):
-		var no_path := _localized_confirm_button_path("popup_btn_no.webp", BTN_NO_V2)
-		apply_generated_text_button(panel.get_node("BtnConfirmNo"), no_path, no_path)
+		var locale := str(SaveData.normalize_language_code(SaveData.language_code))
+		ButtonFamilyRuntime.apply(panel.get_node("BtnConfirmNo"), BUTTON_FAMILY_MODAL_CONFIRM, Vector2(112.0, 48.0), TalkLocalization.ui_text(locale, "no"), locale, "confirm_no")
 
 
 static func apply_support_popup(panel: Panel) -> void:
@@ -114,10 +120,9 @@ static func apply_credit_popup(panel: Panel) -> void:
 		body.add_theme_color_override("font_color", Color(0.96, 0.98, 1.0))
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if panel.has_node("VBox/BtnCreditClose"):
-		var close_path := _localized_settings_button_path("popup_btn_close.webp", BTN_CLOSE_V2)
 		var close_button := panel.get_node("VBox/BtnCreditClose") as Button
-		apply_generated_text_button(close_button, close_path, close_path)
-		close_button.custom_minimum_size = _generated_button_size_at_height(close_path, 70.0)
+		var locale := str(SaveData.normalize_language_code(SaveData.language_code))
+		ButtonFamilyRuntime.apply(close_button, BUTTON_FAMILY_MODAL_CLOSE, Vector2(130.0, 70.0), TalkLocalization.ui_text(locale, "close"), locale, "credit_close", 1.0, BUTTON_FAMILY_CREDIT_CLOSE_ART_RECT)
 	refresh_credit_popup(panel, false)
 
 
@@ -212,7 +217,8 @@ static func refresh_settings_language(panel: Panel) -> void:
 	_set_label_text(vbox, "LabelLanguage", TalkLocalization.ui_text(locale, "language"))
 	if vbox.has_node("BtnSettingsClose"):
 		var close_button := vbox.get_node("BtnSettingsClose") as Button
-		close_button.text = ""
+		var close_locale := str(SaveData.normalize_language_code(SaveData.language_code))
+		ButtonFamilyRuntime.set_text(close_button, TalkLocalization.ui_text(close_locale, "close"), close_locale)
 	var grid := vbox.get_node_or_null("LanguageGrid") as GridContainer
 	if grid != null:
 		for option in TalkLocalization.LANGUAGE_OPTIONS:
@@ -349,15 +355,15 @@ static func _apply_panel(panel: Panel, texture_path: String, margin: float) -> v
 
 
 static func _layout_settings_popup(panel: Panel) -> void:
-	panel.position = Vector2(36.0, 42.0)
-	panel.size = Vector2(408.0, 760.0)
+	panel.position = Vector2(20.0, 17.0)
+	panel.size = Vector2(440.0, 820.0)
 	if not panel.has_node("VBox"):
 		return
 	var vbox := panel.get_node("VBox") as VBoxContainer
 	vbox.offset_left = 58.0
-	vbox.offset_top = 142.0
+	vbox.offset_top = 160.0
 	vbox.offset_right = -50.0
-	vbox.offset_bottom = -50.0
+	vbox.offset_bottom = -70.0
 	vbox.add_theme_constant_override("separation", 4)
 	if vbox.has_node("LabelBgm"):
 		(vbox.get_node("LabelBgm") as Label).add_theme_font_size_override("font_size", 24)
@@ -622,12 +628,12 @@ static func _layout_home_confirm_popup(panel: Panel) -> void:
 		notice.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	if panel.has_node("BtnConfirmYes"):
 		var yes_button: Button = panel.get_node("BtnConfirmYes")
-		yes_button.position = Vector2(55.0, 194.0)
-		yes_button.size = Vector2(150.0, 48.0)
+		yes_button.position = Vector2(93.0, 194.0)
+		yes_button.size = Vector2(112.0, 48.0)
 	if panel.has_node("BtnConfirmNo"):
 		var no_button: Button = panel.get_node("BtnConfirmNo")
 		no_button.position = Vector2(205.0, 194.0)
-		no_button.size = Vector2(150.0, 48.0)
+		no_button.size = Vector2(112.0, 48.0)
 
 
 static func _style_settings_content(panel: Panel) -> void:

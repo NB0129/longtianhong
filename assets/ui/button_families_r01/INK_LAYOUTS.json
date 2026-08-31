@@ -1,0 +1,43 @@
+{
+  "schema": "machi-ate.button_families_r01.ink_layouts.v1",
+  "base_sizes": {
+    "custom_start": [204, 54],
+    "custom_back": [154, 54],
+    "result_back": [260, 62],
+    "confirm_yes": [150, 48],
+    "confirm_no": [150, 48],
+    "close": [169, 92]
+  },
+  "inner_rects": {
+    "custom_start": [41, 8, 122, 38],
+    "custom_back": [31, 8, 92, 38],
+    "result_back": [52, 10, 156, 42],
+    "confirm_yes": [30, 8, 90, 32],
+    "confirm_no": [30, 8, 90, 32],
+    "close": [34, 24, 101, 44]
+  },
+  "layouts": {
+    "custom_start": {
+      "ja": [23, 42, 8], "en": [22, 44, 7], "zh_CN": [29, 44, 4], "zh_TW": [29, 44, 4], "ko": [29, 44, 4]
+    },
+    "custom_back": {
+      "ja": [26, 53, 5], "en": [26, 45, 6], "zh_CN": [26, 52, 6], "zh_TW": [26, 52, 6], "ko": [26, 53, 6]
+    },
+    "result_back": {
+      "ja": [32, 100, 5], "en": [32, 91, 5], "zh_CN": [32, 98, 4], "zh_TW": [32, 98, 4], "ko": [32, 101, 4]
+    },
+    "confirm_yes": {
+      "ja": [32, 43, -3], "en": [32, 48, -2], "zh_CN": [28, 61, 1], "zh_TW": [28, 61, 1], "ko": [26, 64, 3]
+    },
+    "confirm_no": {
+      "ja": [30, 29, 0], "en": [32, 53, -3], "zh_CN": [28, 61, 1], "zh_TW": [28, 61, 1], "ko": [27, 38, 2]
+    },
+    "close": {
+      "ja": [32, 38, 19], "en": [32, 42, 20], "zh_CN": [32, 53, 20], "zh_TW": [32, 52, 19], "ko": [32, 56, 20]
+    }
+  },
+  "close_callsite_targets": {
+    "settings_close": {"ja": [171, 92], "en": [169, 92], "zh_CN": [168, 92], "zh_TW": [169, 92], "ko": [170, 92]},
+    "credits_close": {"ja": [130, 70], "en": [128, 70], "zh_CN": [128, 70], "zh_TW": [128, 70], "ko": [129, 70]}
+  }
+}

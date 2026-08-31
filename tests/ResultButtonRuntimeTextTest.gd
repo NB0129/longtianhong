@@ -2,6 +2,7 @@ extends Control
 
 const GAME_SCENE := preload("res://game.tscn")
 const BLANK_FRAME_PATH := "res://assets/ui/result_buttons/result_button_blank_r02.png"
+const BUTTON_FAMILY_RESULT_BACK_PATH := "res://assets/ui/button_families_r02/result_back_compact_r02_170x62.png"
 const KAISEI_FONT_PATH := "res://assets/font/kaisei_decol_bold_700/KaiseiDecol-Bold.ttf"
 const CAPTURE_DIR := "res://artifacts/visual_evidence/result_r02_exact4_20260830"
 const RUNTIME_BUTTON_NAMES := ["BtnRetry", "BtnHome", "BtnSubmitRanking", "BtnShowAnswer"]
@@ -146,9 +147,13 @@ func _validate_runtime_structure() -> void:
 		_assert(button.get_theme_stylebox("focus") is StyleBoxFlat, "%s keeps a visible focus style" % button_name)
 	var btn_back := _button("BtnBackToResult")
 	_assert(not bool(btn_back.get_meta("result_runtime_text_button", false)), "BtnBackToResult remains outside exact4 runtime text")
-	_assert(btn_back.get_node_or_null("ResultButtonText") == null, "BtnBackToResult receives no new text child")
-	var back_art := btn_back.get_node_or_null("ResultButtonArt") as TextureRect
-	_assert(back_art != null and back_art.texture != null and back_art.texture.resource_path != BLANK_FRAME_PATH, "BtnBackToResult keeps its existing localized art")
+	_assert(bool(btn_back.get_meta("button_family_runtime_text", false)), "BtnBackToResult uses Button Families R02 runtime text")
+	_assert(btn_back.position == Vector2(112.5, 751.0) and btn_back.custom_minimum_size == Vector2(255.0, 93.0), "BtnBackToResult uses the owner-adopted 1.5x geometry")
+	var back_label := btn_back.get_node_or_null("ButtonFamilyText") as Label
+	_assert(back_label != null and back_label.text == "戻る", "BtnBackToResult renders its localized runtime label")
+	_assert(back_label != null and back_label.get_meta("button_family_ink_scale", Vector2.ZERO) == Vector2(1.5, 1.5), "BtnBackToResult text and frame scale together by 1.5")
+	var back_art := btn_back.get_node_or_null("ButtonFamilyArt") as TextureRect
+	_assert(back_art != null and back_art.texture != null and back_art.texture.resource_path == BUTTON_FAMILY_RESULT_BACK_PATH, "BtnBackToResult uses only the adopted R02 result frame")
 
 
 func _validate_all_locale_texts() -> void:
