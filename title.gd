@@ -933,6 +933,7 @@ func _update_credit_view(reset_scroll: bool) -> void:
 		body.custom_minimum_size = Vector2.ZERO
 		body.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if _credit_legal_view_active else HORIZONTAL_ALIGNMENT_CENTER
 		body.add_theme_font_size_override("font_size", 14 if _credit_legal_view_active else 16)
+		body.add_theme_constant_override("outline_size", 1 if _credit_legal_view_active else 4)
 	var licenses_button := _credit_popup.get_node_or_null("VBox/CreditActionRow/BtnLicenses") as Button
 	if licenses_button != null:
 		licenses_button.text = _text_value("back_to_credits") if _credit_legal_view_active else _text_value("licenses_oss")

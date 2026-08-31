@@ -1,6 +1,7 @@
 extends Control
 
 const TITLE_SCENE := preload("res://Title.tscn")
+const CONTAINMENT_AUDIT_SCRIPT := preload("res://tests/UiAuditVisualContainmentTest.gd")
 const SHARED_BLANK_TEXTURE := "res://assets/ui/popups/credit_buttons/owner_adopted_known_alpha_debt/popup_btn_credit_blank_r01.png"
 const PRIVACY_POLICY_URL := "https://rotenkogames.com/privacy"
 
@@ -89,6 +90,7 @@ func _validate_credit_and_legal_views() -> void:
 	_assert(not _privacy_button.visible, "Privacy Policy button is hidden in the legal view")
 	_assert(_licenses_button.text == LOCALIZED_BUTTON_TEXT["ja"][1], "Legal view exposes a localized Back to Credits action")
 	_assert(_button_texture_path(_licenses_button) == SHARED_BLANK_TEXTURE, "Legal view keeps the shared blank background")
+	_assert(_credit_body.get_theme_constant("outline_size") == 1, "Legal view uses a contained 1px text outline")
 
 	_title.call("_handle_system_back")
 	await get_tree().process_frame
@@ -100,9 +102,12 @@ func _validate_credit_and_legal_views() -> void:
 	_assert(_privacy_button.text == LOCALIZED_BUTTON_TEXT["ja"][2], "System Back restores the Japanese Privacy Policy label")
 	_assert(_button_texture_path(_licenses_button) == SHARED_BLANK_TEXTURE, "System Back restores the shared blank background")
 	_assert(_button_texture_path(_privacy_button) == SHARED_BLANK_TEXTURE, "System Back restores Privacy Policy's shared blank background")
+	_assert(_credit_body.get_theme_constant("outline_size") == 4, "System Back restores the normal Credits text outline")
 
 
 func _validate_localized_button_text() -> void:
+	var containment_audit := CONTAINMENT_AUDIT_SCRIPT.new() as Control
+	_assert(containment_audit != null, "Legal containment audit helper instantiates")
 	for locale: String in LOCALIZED_BUTTON_TEXT:
 		SaveData.language_code = locale
 		_title.call("_apply_title_language")
@@ -116,16 +121,27 @@ func _validate_localized_button_text() -> void:
 		_assert(str(_privacy_button.get_meta("locale_font_code", "")) == locale, "%s Privacy Policy uses its bundled locale font" % locale)
 		_licenses_button.pressed.emit()
 		await get_tree().process_frame
+		await get_tree().process_frame
 		_assert(_licenses_button.text == str(expected[1]), "%s Back to Credits label matches" % locale)
 		_assert(_button_texture_path(_licenses_button) == SHARED_BLANK_TEXTURE, "%s Back to Credits uses the shared blank background" % locale)
 		_assert(str(_licenses_button.get_meta("locale_font_code", "")) == locale, "%s Back to Credits uses its bundled locale font" % locale)
 		_assert(not _privacy_button.visible, "%s legal view hides Privacy Policy" % locale)
+		_assert(_credit_body.get_theme_constant("outline_size") == 1, "%s Legal uses the contained text outline" % locale)
+		if containment_audit != null:
+			var named_lines := containment_audit.call("_audit_named_legal_lines", _credit_body) as Dictionary
+			var widest_line := containment_audit.call("_widest_wrapped_source_line", _credit_body) as Dictionary
+			_assert(int(named_lines["exact_checked_count"]) >= 306, "%s Legal exact-checks all named URL/copyright lines" % locale)
+			_assert(int(named_lines["overflow_count"]) == 0, "%s Legal named URL/copyright lines stay inside the body" % locale)
+			_assert(not bool(widest_line["actual_right_overflow"]), "%s Legal widest wrapped source line stays inside the body" % locale)
 		_licenses_button.pressed.emit()
 		await get_tree().process_frame
 		_assert(_licenses_button.text == str(expected[0]), "%s Back action restores the Licenses / OSS label" % locale)
 		_assert(_privacy_button.text == str(expected[2]), "%s Back action restores the Privacy Policy label" % locale)
 		_assert(_privacy_button.visible, "%s Back action restores Privacy Policy" % locale)
+		_assert(_credit_body.get_theme_constant("outline_size") == 4, "%s Back action restores the normal Credits text outline" % locale)
 		_validate_action_layout()
+	if containment_audit != null:
+		containment_audit.free()
 
 
 func _validate_action_layout() -> void:
